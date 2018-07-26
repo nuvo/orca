@@ -1,7 +1,14 @@
 package main
 
-import "github.com/maorfr/orca/cmd"
+import (
+	"os"
+
+	"github.com/maorfr/orca/cmd"
+)
 
 func main() {
-	cmd.Execute()
+	cmd := cmd.NewRootCmd(os.Args[1:])
+	if err := cmd.Execute(); err != nil {
+		os.Exit(1)
+	}
 }
