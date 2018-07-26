@@ -3,7 +3,8 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/maorfr/orca/pkg/get"
+	"github.com/maorfr/orca/pkg/env"
+	"github.com/maorfr/orca/pkg/resource"
 	"github.com/spf13/cobra"
 )
 
@@ -23,8 +24,8 @@ to quickly create a Cobra application.`,
 }
 
 func init() {
-	getCmd.AddCommand(get.EnvCmd)
-	getCmd.AddCommand(get.ResourceCmd)
+	getCmd.AddCommand(env.GetCmd)
+	getCmd.AddCommand(resource.GetCmd)
 
 	// Here you will define your flags and configuration settings.
 

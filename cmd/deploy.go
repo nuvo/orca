@@ -3,7 +3,8 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/maorfr/orca/pkg/deploy"
+	"github.com/maorfr/orca/pkg/chart"
+	"github.com/maorfr/orca/pkg/env"
 	"github.com/spf13/cobra"
 )
 
@@ -23,8 +24,8 @@ to quickly create a Cobra application.`,
 }
 
 func init() {
-	deployCmd.AddCommand(deploy.ChartCmd)
-	deployCmd.AddCommand(deploy.EnvCmd)
+	deployCmd.AddCommand(chart.DeployCmd)
+	deployCmd.AddCommand(env.DeployCmd)
 
 	// Here you will define your flags and configuration settings.
 

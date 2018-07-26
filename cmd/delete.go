@@ -3,7 +3,8 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/maorfr/orca/pkg/delete"
+	"github.com/maorfr/orca/pkg/env"
+	"github.com/maorfr/orca/pkg/resource"
 	"github.com/spf13/cobra"
 )
 
@@ -23,8 +24,8 @@ to quickly create a Cobra application.`,
 }
 
 func init() {
-	deleteCmd.AddCommand(delete.EnvCmd)
-	deleteCmd.AddCommand(delete.ResourceCmd)
+	deleteCmd.AddCommand(env.DeleteCmd)
+	deleteCmd.AddCommand(resource.DeleteCmd)
 
 	// Here you will define your flags and configuration settings.
 

@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/maorfr/orca/pkg/push"
+	"github.com/maorfr/orca/pkg/chart"
 	"github.com/spf13/cobra"
 )
 
@@ -23,7 +23,7 @@ to quickly create a Cobra application.`,
 }
 
 func init() {
-	pushCmd.AddCommand(push.ChartCmd)
+	pushCmd.AddCommand(chart.PushCmd)
 
 	// Here you will define your flags and configuration settings.
 
