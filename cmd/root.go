@@ -8,16 +8,10 @@ import (
 func NewRootCmd(args []string) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "orca",
-		Short: "A brief description of your application",
-		Long: `A longer description that spans multiple lines and likely contains
-examples and usage of using your application. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
-		// Uncomment the following line if your bare application
-		// has an action associated with it:
-		//	Run: func(cmd *cobra.Command, args []string) { },
+		Short: "CI\\CD simplifier",
+		Long: `Orca is a CI\CD simplifier, the glue behind the process.
+Instead of writing scripts on top of scripts, Orca holds all the logic.
+Use it wisely...`,
 	}
 
 	out := cmd.OutOrStdout()

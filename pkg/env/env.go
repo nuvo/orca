@@ -19,13 +19,8 @@ func NewGetCmd(out io.Writer) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "env",
-		Short: "A brief description of your command",
-		Long: `A longer description that spans multiple lines and likely contains examples
-	and usage of using your command. For example:
-
-	Cobra is a CLI library for Go that empowers applications.
-	This application is a tool to generate the needed files
-	to quickly create a Cobra application.`,
+		Short: "Get list of Helm releases in an environment (Kubernetes namespace)",
+		Long:  ``,
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Println("get env called")
 		},
@@ -44,13 +39,8 @@ func NewDeployCmd(out io.Writer) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "env",
-		Short: "A brief description of your command",
-		Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+		Short: "Deploy a list of Helm charts to an environment (Kubernetes namespace)",
+		Long:  ``,
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Println("deploy env called")
 		},
@@ -69,13 +59,8 @@ func NewDeleteCmd(out io.Writer) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "env",
-		Short: "A brief description of your command",
-		Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+		Short: "Delete an environment (Kubernetes namespace) along with all Helm releases in it",
+		Long:  ``,
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Println("delete env called")
 		},
