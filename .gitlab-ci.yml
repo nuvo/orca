@@ -26,28 +26,23 @@ build_code:
   - docker:dind
   stage: build_image
   dependencies: [build_code]
+  variables:
+    DOCKER_HOST: tcp://localhost:2375
 
 build_image_candidate:
   <<: *build_image
-  variables:
-    DOCKER_HOST: tcp://localhost:2375
-    IMAGE_TAG: $CI_PIPELINE_ID
   script:
   - docker login -u $CI_REGISTRY_USER -p $CI_JOB_TOKEN $CI_REGISTRY
-  - docker build $DOCKER_OPTS -t $CI_REGISTRY_IMAGE:$IMAGE_TAG .
-  - docker push $CI_REGISTRY_IMAGE:$IMAGE_TAG
-  except:
-  - tags
+  - docker build $DOCKER_OPTS -t $CI_REGISTRY_IMAGE:$CI_PIPELINE_ID .
+  - docker push $CI_REGISTRY_IMAGE:$CI_PIPELINE_ID
 
 build_image_latest:
   <<: *build_image
-  variables:
-    DOCKER_HOST: tcp://localhost:2375
-    IMAGE_TAG: $CI_COMMIT_TAG
+  when: manual
+  before_script:
+  - git pull --tags
+  - git describe --exact-match --tags HEAD
   script:
   - docker login -u $CI_REGISTRY_USER -p $CI_JOB_TOKEN $CI_REGISTRY
-  - docker build $DOCKER_OPTS -t $CI_REGISTRY_IMAGE:$IMAGE_TAG -t $CI_REGISTRY_IMAGE:latest .
-  - docker push $CI_REGISTRY_IMAGE:$IMAGE_TAG
+  - docker build $DOCKER_OPTS -t $CI_REGISTRY_IMAGE:latest .
   - docker push $CI_REGISTRY_IMAGE:latest
-  only:
-  - tags
