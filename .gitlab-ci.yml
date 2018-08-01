@@ -7,6 +7,7 @@ stages:
 build_code:
   stage: build_code
   before_script:
+  - apk add --no-cache git
   - go get -u github.com/golang/dep/cmd/dep 
   - export GOPATH=$(dirname $CI_PROJECT_DIR)/go
   - mkdir -p $GOPATH/src
