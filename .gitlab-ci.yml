@@ -41,6 +41,7 @@ build_image_latest:
   when: manual
   before_script:
   - apk add --no-cache git
+  - git checkout $CI_BUILD_REF_NAME
   - git pull --tags
   - git describe --exact-match --tags HEAD
   script:
