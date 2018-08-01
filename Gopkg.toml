@@ -1,0 +1,12 @@
+
+[[constraint]]
+  name = "github.com/spf13/cobra"
+  version = "0.0.3"
+
+[[constraint]]
+  name = "gopkg.in/src-d/go-git.v4"
+  version = "4.5.0"
+
+[prune]
+  go-tests = true
+  unused-packages = true

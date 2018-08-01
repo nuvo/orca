@@ -1,0 +1,33 @@
+image: golang:1.10.3-alpine
+
+stages:
+  - build_code
+  - build_image
+
+build_code:
+  stage: build_code
+  before_script:
+  - go get -u github.com/golang/dep/cmd/dep 
+  - export GOPATH=$(dirname $CI_PROJECT_DIR)/go
+  - mkdir -p $GOPATH/src
+  - cd $GOPATH/src
+  - ln -s $CI_PROJECT_DIR
+  - cd $CI_PROJECT_NAME
+  - dep ensure -update
+  script:
+  - go build
+  artifacts:
+    paths: [orca]
+    expire_in: 1 hrs
+
+build_image:
+  only:
+  - tags
+  stage: build_image
+  variables:
+    IMAGE_TAG: $CI_COMMIT_TAG-$CI_PIPELINE_ID
+  script:
+  - docker login -u $CI_REGISTRY_USER -p $CI_JOB_TOKEN $CI_REGISTRY
+  - docker build $DOCKER_OPTS -t $CI_REGISTRY_IMAGE:$IMAGE_TAG -t $CI_REGISTRY_IMAGE:latest .
+  - docker push $CI_REGISTRY_IMAGE:$IMAGE_TAG
+  - docker push $CI_REGISTRY_IMAGE:latest
