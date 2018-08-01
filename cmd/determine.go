@@ -3,7 +3,8 @@ package cmd
 import (
 	"io"
 
-	"github.com/maorfr/orca/pkg/determine"
+	"orca/pkg/determine"
+
 	"github.com/spf13/cobra"
 )
 

@@ -6,9 +6,9 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/spf13/cobra"
+	"orca/pkg/utils"
 
-	"github.com/maorfr/orca/pkg/utils"
+	"github.com/spf13/cobra"
 )
 
 type determineCmd struct {

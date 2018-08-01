@@ -3,7 +3,8 @@ package cmd
 import (
 	"io"
 
-	"github.com/maorfr/orca/pkg/chart"
+	"orca/pkg/chart"
+
 	"github.com/spf13/cobra"
 )
 

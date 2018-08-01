@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/maorfr/orca/cmd"
+	"orca/cmd"
 )
 
 func main() {
