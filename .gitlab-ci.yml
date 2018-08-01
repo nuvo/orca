@@ -40,6 +40,7 @@ build_image_latest:
   <<: *build_image
   when: manual
   before_script:
+  - apk add --no-cache git
   - git pull --tags
   - git describe --exact-match --tags HEAD
   script:
