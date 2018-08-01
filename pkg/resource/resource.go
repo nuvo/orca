@@ -34,7 +34,7 @@ func NewGetCmd(out io.Writer) *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 
 			var data []map[string]interface{}
-			bytes := httputils.PerformRequest(s.url, s.headers)
+			bytes := httputils.PerformRequest(s.url, s.headers, 200)
 			if err := json.Unmarshal(bytes, &data); err != nil {
 				panic(err)
 			}

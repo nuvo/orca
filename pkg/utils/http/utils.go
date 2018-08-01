@@ -7,7 +7,8 @@ import (
 	"strings"
 )
 
-func PerformRequest(url string, headers []string) []byte {
+// PerformRequest performs an HTTP request to a given url with an expected status code (to support testing) and returns the body
+func PerformRequest(url string, headers []string, expectedStatusCode int) []byte {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		log.Fatal("NewRequest: ", err)
@@ -25,7 +26,7 @@ func PerformRequest(url string, headers []string) []byte {
 	defer res.Body.Close()
 
 	body, err := ioutil.ReadAll(res.Body)
-	if res.StatusCode != 200 {
+	if res.StatusCode != expectedStatusCode {
 		log.Fatal(string(body))
 	}
 
