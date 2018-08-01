@@ -4,10 +4,15 @@ import (
 	"regexp"
 	"strings"
 
+	"gopkg.in/src-d/go-git.v4/plumbing/object"
+
+	genutils "orca/pkg/utils/general"
+
 	git "gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
 )
 
+// CountLinesPerPathFilter get a list of path filters (regex=type) and counts matches from the paths that were changed
 func CountLinesPerPathFilter(pathFilter []string, changedPaths []string) (changedPathsPerFilter map[string]int, changedPathsPerFilterCount int) {
 
 	changedPathsPerFilter = map[string]int{}
@@ -31,39 +36,49 @@ func CountLinesPerPathFilter(pathFilter []string, changedPaths []string) (change
 	return changedPathsPerFilter, changedPathsPerFilterCount
 }
 
+// GetChangedPaths compares the current commit (HEAD) with the given commit and returns a list of the paths that were changed between them
 func GetChangedPaths(previousCommit string) []string {
-	r, _ := git.PlainOpen(".")
-	head, _ := r.Head()
+	r, err := git.PlainOpen(".")
+	if err != nil {
+		panic(err)
+	}
+	head, err := r.Head()
+	if err != nil {
+		panic(err)
+	}
 
-	currentCommitHash := head.Hash()
-	currentCommitObject, _ := r.CommitObject(currentCommitHash)
-	currentCommitTree, _ := currentCommitObject.Tree()
-
-	previousCommitHash := plumbing.NewHash(previousCommit)
-	previousCommitObject, _ := r.CommitObject(previousCommitHash)
-	previousCommitTree, _ := previousCommitObject.Tree()
-
-	changes, _ := currentCommitTree.Diff(previousCommitTree)
+	currentCommitTree := getTreeFromHash(head.Hash(), r)
+	previousCommitTree := getTreeFromStr(previousCommit, r)
+	changes, err := currentCommitTree.Diff(previousCommitTree)
+	if err != nil {
+		panic(err)
+	}
 
 	var changedFiles []string
 
 	for _, change := range changes {
-		if (!contains(changedFiles, change.From.Name)) && (change.From.Name != "") {
-			changedFiles = append(changedFiles, change.From.Name)
-		}
-		if (!contains(changedFiles, change.To.Name)) && (change.To.Name != "") {
-			changedFiles = append(changedFiles, change.To.Name)
-		}
+		changedFiles = genutils.AddIfNotContained(changedFiles, change.From.Name)
+		changedFiles = genutils.AddIfNotContained(changedFiles, change.To.Name)
 	}
 
 	return changedFiles
 }
 
-func contains(s []string, e string) bool {
-	for _, a := range s {
-		if a == e {
-			return true
-		}
+func getTreeFromStr(hash string, r *git.Repository) *object.Tree {
+	commitHash := plumbing.NewHash(hash)
+
+	return getTreeFromHash(commitHash, r)
+}
+
+func getTreeFromHash(hash plumbing.Hash, r *git.Repository) *object.Tree {
+	commitObject, err := r.CommitObject(hash)
+	if err != nil {
+		panic(err)
 	}
-	return false
+	commitTree, err := commitObject.Tree()
+	if err != nil {
+		panic(err)
+	}
+
+	return commitTree
 }
