@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"strings"
 
-	"orca/pkg/utils"
+	gitutils "orca/pkg/utils/git"
 
 	"github.com/spf13/cobra"
 )
@@ -49,7 +49,7 @@ func Buildtype(out io.Writer) *cobra.Command {
 			}
 
 			// Get changed paths
-			changedPaths := utils.GetChangedPaths(s.previousCommit)
+			changedPaths := gitutils.GetChangedPaths(s.previousCommit)
 
 			// If no paths were changed - default type
 			if len(changedPaths) == 0 {
@@ -64,7 +64,7 @@ func Buildtype(out io.Writer) *cobra.Command {
 			}
 
 			// Count lines per path filter
-			changedPathsPerFilter, changedPathsPerFilterCount := utils.CountLinesPerPathFilter(s.pathFilter, changedPaths)
+			changedPathsPerFilter, changedPathsPerFilterCount := gitutils.CountLinesPerPathFilter(s.pathFilter, changedPaths)
 
 			// If not all paths matched filters - default type
 			if changedPathsPerFilterCount != len(changedPaths) {

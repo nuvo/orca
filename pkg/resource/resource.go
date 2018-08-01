@@ -4,17 +4,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
-	"log"
-	"net/http"
 	"strings"
+
+	httputils "orca/pkg/utils/http"
 
 	"github.com/spf13/cobra"
 )
 
 type resourceCmd struct {
 	url            string
-	headers        string
+	headers        []string
 	key            string
 	value          string
 	offset         int
@@ -35,7 +34,7 @@ func NewGetCmd(out io.Writer) *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 
 			var data []map[string]interface{}
-			bytes := performRequest(s.url, s.headers)
+			bytes := httputils.PerformRequest(s.url, s.headers)
 			if err := json.Unmarshal(bytes, &data); err != nil {
 				panic(err)
 			}
@@ -73,7 +72,7 @@ func NewGetCmd(out io.Writer) *cobra.Command {
 	f := cmd.Flags()
 
 	f.StringVar(&s.url, "url", "", "url to send the request to")
-	f.StringVar(&s.headers, "headers", "", "headers help")
+	f.StringSliceVar(&s.headers, "headers", []string{}, "headers of the request (supports multiple)")
 	f.StringVar(&s.key, "key", "", "find the desired object according to this key")
 	f.StringVar(&s.value, "value", "", "find the desired object according to to key`s value")
 	f.IntVar(&s.offset, "offset", 0, "offset of the desired object from the reference key")
@@ -101,24 +100,4 @@ func NewDeleteCmd(out io.Writer) *cobra.Command {
 	f.StringVar(&s.url, "url", "", "url help")
 
 	return cmd
-}
-
-func performRequest(url string, headers string) []byte {
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		log.Fatal("NewRequest: ", err)
-	}
-	headersSplit := strings.Split(headers, ":")
-	header, value := headersSplit[0], headersSplit[1]
-	req.Header.Set(header, value)
-	client := &http.Client{}
-	res, err := client.Do(req)
-	if err != nil {
-		log.Fatal("Do: ", err)
-	}
-	defer res.Body.Close()
-
-	body, err := ioutil.ReadAll(res.Body)
-
-	return body
 }
