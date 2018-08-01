@@ -1,9 +1,35 @@
 package utils
 
 import (
+	"regexp"
+	"strings"
+
 	git "gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
 )
+
+func CountLinesPerPathFilter(pathFilter []string, changedPaths []string) (changedPathsPerFilter map[string]int, changedPathsPerFilterCount int) {
+
+	changedPathsPerFilter = map[string]int{}
+	changedPathsPerFilterCount = 0
+
+	for _, pf := range pathFilter {
+		pfSplit := strings.Split(pf, "=")
+		pfPath, _ := regexp.Compile(pfSplit[0])
+		pfBuildtype := pfSplit[1]
+
+		changedPathsPerFilter[pfBuildtype] = 0
+
+		for _, path := range changedPaths {
+			if pfPath.MatchString(path) {
+				changedPathsPerFilter[pfBuildtype]++
+				changedPathsPerFilterCount++
+			}
+		}
+	}
+
+	return changedPathsPerFilter, changedPathsPerFilterCount
+}
 
 func GetChangedPaths(previousCommit string) []string {
 	r, _ := git.PlainOpen(".")

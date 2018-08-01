@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"regexp"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -47,10 +48,46 @@ func Buildtype(out io.Writer) *cobra.Command {
 				return
 			}
 
+			// Get changed paths
 			changedPaths := utils.GetChangedPaths(s.previousCommit)
 
-			fmt.Println(changedPaths)
-			// fmt.Println("ERROR")
+			// If no paths were changed - default type
+			if len(changedPaths) == 0 {
+				fmt.Println(s.defaultType)
+				return
+			}
+
+			// If no path filters are defined - default type
+			if len(s.pathFilter) == 0 {
+				fmt.Println(s.defaultType)
+				return
+			}
+
+			// Count lines per path filter
+			changedPathsPerFilter, changedPathsPerFilterCount := utils.CountLinesPerPathFilter(s.pathFilter, changedPaths)
+
+			// If not all paths matched filters - default type
+			if changedPathsPerFilterCount != len(changedPaths) {
+				fmt.Println(s.defaultType)
+				return
+			}
+
+			// All paths matched a filter
+			multipleTypes := ""
+			for bt, btPathCount := range changedPathsPerFilter {
+				if (!strings.Contains(multipleTypes, bt)) && (btPathCount != 0) {
+					multipleTypes = multipleTypes + bt + ";"
+				}
+			}
+			multipleTypes = strings.TrimRight(multipleTypes, ";")
+
+			// If multiple is not allowed and there are multiple - default type
+			if (s.allowMultipleTypes == false) && (strings.Contains(multipleTypes, ";")) {
+				fmt.Println(s.defaultType)
+				return
+			}
+
+			fmt.Println(multipleTypes)
 		},
 	}
 
