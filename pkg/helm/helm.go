@@ -8,6 +8,7 @@ import (
 	genutils "orca/pkg/utils/general"
 )
 
+// AddRepository adds a chart repository to the repositories file
 func AddRepository(museum string) {
 	museumSplit := strings.Split(museum, "=")
 	museumName := museumSplit[0]
@@ -17,6 +18,7 @@ func AddRepository(museum string) {
 	genutils.Exec(cmd)
 }
 
+// FetchChart fetches a chart from museum by name and version and untars it in the local directory
 func FetchChart(museum, name, version string) {
 	museumSplit := strings.Split(museum, "=")
 	museumName := museumSplit[0]
@@ -25,6 +27,7 @@ func FetchChart(museum, name, version string) {
 	genutils.Exec(cmd)
 }
 
+// UpdateChartDependencies performs helm dependency update
 func UpdateChartDependencies(name string) {
 	currDir, _ := os.Getwd()
 	os.Chdir(name)
@@ -35,6 +38,7 @@ func UpdateChartDependencies(name string) {
 	os.Chdir(currDir)
 }
 
+// CreateValuesChain will create a chain of values files to use
 func CreateValuesChain(name string, packedValues []string) string {
 	currDir, _ := os.Getwd()
 	os.Chdir(name)
@@ -56,6 +60,7 @@ func CreateValuesChain(name string, packedValues []string) string {
 	return values
 }
 
+// CreateSetChain will create a chain of sets to use
 func CreateSetChain(name string, inputSet []string) string {
 	set := fmt.Sprintf(" --set fullnameOverride=%s", name)
 
@@ -66,6 +71,7 @@ func CreateSetChain(name string, inputSet []string) string {
 	return set
 }
 
+// UpgradeRelease performs helm upgrade -i
 func UpgradeRelease(name, releaseName, kubeContext, namespace, values, set string, tls bool, helmTLSStore string) {
 
 	currDir, _ := os.Getwd()
