@@ -4,10 +4,14 @@ import (
 	"fmt"
 	"io"
 
+	yamlutils "orca/pkg/utils/yaml"
+
 	"github.com/spf13/cobra"
 )
 
 type envCmd struct {
+	chartsFile string
+
 	nada string
 
 	out io.Writer
@@ -42,13 +46,19 @@ func NewDeployCmd(out io.Writer) *cobra.Command {
 		Short: "Deploy a list of Helm charts to an environment (Kubernetes namespace)",
 		Long:  ``,
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println("deploy env called")
+
+			charts := yamlutils.ChartsYamlToStruct(s.chartsFile)
+
+			for _, c := range charts {
+				c.Print()
+			}
+
 		},
 	}
 
 	f := cmd.Flags()
 
-	f.StringVar(&s.nada, "nada", "", "nada help")
+	f.StringVarP(&s.chartsFile, "charts-file", "c", "", "path to file with list of Helm charts to install")
 
 	return cmd
 }
@@ -63,6 +73,7 @@ func NewDeleteCmd(out io.Writer) *cobra.Command {
 		Long:  ``,
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Println("delete env called")
+
 		},
 	}
 
