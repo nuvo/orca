@@ -3,6 +3,8 @@ package env
 import (
 	"fmt"
 	"io"
+	"sync"
+	"time"
 
 	yamlutils "orca/pkg/utils/yaml"
 
@@ -49,10 +51,56 @@ func NewDeployCmd(out io.Writer) *cobra.Command {
 
 			charts := yamlutils.ChartsYamlToStruct(s.chartsFile)
 
-			for _, c := range charts {
-				c.Print()
-			}
+			var mutex = &sync.Mutex{}
 
+			var wg sync.WaitGroup
+			for len(charts) > 0 {
+
+				mutex.Lock()
+				for _, c := range charts {
+
+					wg.Add(1)
+					go func(c yamlutils.ChartSpec) {
+						defer wg.Done()
+						if len(c.Dependencies) != 0 {
+							return
+						}
+
+						mutex.Lock()
+						// Find index of chart in slice (may have changed by now since we are using go routines)
+						index := -1
+						for i, elem := range charts {
+							if elem.Name == c.Name {
+								index = i
+							}
+						}
+						// If chart was not found - another routine is taking care of it
+						if index == -1 {
+							mutex.Unlock()
+							return
+						}
+
+						// Remove chart from charts list
+						charts[index] = charts[len(charts)-1]
+						charts = charts[:len(charts)-1]
+
+						mutex.Unlock()
+
+						// deploy chart
+						fmt.Println(c.Name, "deployment: In progress")
+						time.Sleep(5 * time.Second)
+						fmt.Println(c.Name, "deployment: Done")
+
+						// Deployment is done, remove chart from dependencies
+						mutex.Lock()
+						charts = yamlutils.RemoveChartFromDependencies(charts, c.Name)
+						mutex.Unlock()
+
+					}(c)
+				}
+				mutex.Unlock()
+			}
+			wg.Wait()
 		},
 	}
 

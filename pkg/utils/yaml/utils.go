@@ -5,6 +5,8 @@ import (
 	"io/ioutil"
 	"log"
 
+	genutils "orca/pkg/utils/general"
+
 	yaml "gopkg.in/yaml.v2"
 )
 
@@ -53,4 +55,31 @@ func (c ChartSpec) Print() {
 	for _, dep := range c.Dependencies {
 		fmt.Println("depends_on: " + dep)
 	}
+}
+
+func RemoveChartFromDependencies(charts []ChartSpec, name string) []ChartSpec {
+
+	var outCharts []ChartSpec
+
+	for _, dependant := range charts {
+		if genutils.Contains(dependant.Dependencies, name) {
+
+			index := -1
+			for i, elem := range dependant.Dependencies {
+				if elem == name {
+					index = i
+				}
+			}
+			if index == -1 {
+				panic("Could not find element in dependencies")
+			}
+
+			dependant.Dependencies[index] = dependant.Dependencies[len(dependant.Dependencies)-1]
+			dependant.Dependencies[len(dependant.Dependencies)-1] = ""
+			dependant.Dependencies = dependant.Dependencies[:len(dependant.Dependencies)-1]
+		}
+		outCharts = append(outCharts, dependant)
+	}
+
+	return outCharts
 }
