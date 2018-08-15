@@ -17,6 +17,7 @@ build_code:
   - cd $CI_PROJECT_NAME
   - dep ensure -update
   script:
+  - pwd
   - go build cmd/orca.go -o orca
   artifacts:
     paths: [orca]
