@@ -8,8 +8,8 @@ import (
 )
 
 // PerformRequest performs an HTTP request to a given url with an expected status code (to support testing) and returns the body
-func PerformRequest(url string, headers []string, expectedStatusCode int) []byte {
-	req, err := http.NewRequest("GET", url, nil)
+func PerformRequest(method, url string, headers []string, expectedStatusCode int) []byte {
+	req, err := http.NewRequest(method, url, nil)
 	if err != nil {
 		log.Fatal("NewRequest: ", err)
 	}
