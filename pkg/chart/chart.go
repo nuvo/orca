@@ -3,12 +3,9 @@ package chart
 import (
 	"fmt"
 	"io"
-	"orca/pkg/helm"
-	"os"
+	"orca/pkg/helmflow"
 
 	"github.com/spf13/cobra"
-
-	genutils "orca/pkg/utils/general"
 )
 
 type chartCmd struct {
@@ -35,25 +32,7 @@ func NewDeployCmd(out io.Writer) *cobra.Command {
 		Short: "Deploy a Helm chart from chart museum",
 		Long:  ``,
 		Run: func(cmd *cobra.Command, args []string) {
-
-			// Create temporary directory
-			currDir, _ := os.Getwd()
-			tempDir := genutils.MkRandomDir()
-			os.Chdir(tempDir)
-
-			if s.releaseName == "" {
-				s.releaseName = s.name
-			}
-			helm.AddRepository(s.museum)
-			helm.FetchChart(s.museum, s.name, s.version)
-			helm.UpdateChartDependencies(s.name)
-			values := helm.CreateValuesChain(s.name, s.packedValues)
-			set := helm.CreateSetChain(s.name, s.set)
-
-			helm.UpgradeRelease(s.name, s.releaseName, s.kubeContext, s.namespace, values, set, s.tls, s.helmTLSStore)
-
-			os.Chdir(currDir)
-			os.RemoveAll(tempDir)
+			helmflow.DeployChartFromMuseum(s.releaseName, s.name, s.version, s.kubeContext, s.namespace, s.museum, s.helmTLSStore, s.tls, s.packedValues, s.set)
 		},
 	}
 
