@@ -18,6 +18,7 @@ build_code:
   - dep ensure -update
   script:
   - pwd
+  - ls -la
   - go build cmd/orca.go -o orca
   artifacts:
     paths: [orca]
