@@ -1,4 +1,4 @@
-package yamlutils
+package chartutils
 
 import (
 	"fmt"

@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	yamlutils "orca/pkg/utils/yaml"
+	chartutils "orca/pkg/utils/chart"
 
 	"github.com/spf13/cobra"
 )
@@ -49,7 +49,7 @@ func NewDeployCmd(out io.Writer) *cobra.Command {
 		Long:  ``,
 		Run: func(cmd *cobra.Command, args []string) {
 
-			charts := yamlutils.ChartsYamlToStruct(s.chartsFile)
+			charts := chartutils.ChartsYamlToStruct(s.chartsFile)
 
 			var mutex = &sync.Mutex{}
 
@@ -60,7 +60,7 @@ func NewDeployCmd(out io.Writer) *cobra.Command {
 				for _, c := range charts {
 
 					wg.Add(1)
-					go func(c yamlutils.ChartSpec) {
+					go func(c chartutils.ChartSpec) {
 						defer wg.Done()
 						if len(c.Dependencies) != 0 {
 							return
@@ -93,7 +93,7 @@ func NewDeployCmd(out io.Writer) *cobra.Command {
 
 						// Deployment is done, remove chart from dependencies
 						mutex.Lock()
-						charts = yamlutils.RemoveChartFromDependencies(charts, c.Name)
+						charts = chartutils.RemoveChartFromDependencies(charts, c.Name)
 						mutex.Unlock()
 
 					}(c)
