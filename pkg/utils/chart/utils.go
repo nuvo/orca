@@ -83,3 +83,18 @@ func RemoveChartFromDependencies(charts []ChartSpec, name string) []ChartSpec {
 
 	return outCharts
 }
+
+func GetChartIndex(charts []ChartSpec, name string) int {
+	index := -1
+	for i, elem := range charts {
+		if elem.Name == name {
+			index = i
+		}
+	}
+	return index
+}
+
+func RemoveChartFromCharts(charts []ChartSpec, index int) []ChartSpec {
+	charts[index] = charts[len(charts)-1]
+	return charts[:len(charts)-1]
+}

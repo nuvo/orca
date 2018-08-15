@@ -49,11 +49,10 @@ func NewDeployCmd(out io.Writer) *cobra.Command {
 		Long:  ``,
 		Run: func(cmd *cobra.Command, args []string) {
 
-			charts := chartutils.ChartsYamlToStruct(s.chartsFile)
-
 			var mutex = &sync.Mutex{}
-
 			var wg sync.WaitGroup
+
+			charts := chartutils.ChartsYamlToStruct(s.chartsFile)
 			for len(charts) > 0 {
 
 				mutex.Lock()
@@ -62,28 +61,23 @@ func NewDeployCmd(out io.Writer) *cobra.Command {
 					wg.Add(1)
 					go func(c chartutils.ChartSpec) {
 						defer wg.Done()
+
+						// If there are (still) any dependencies - leave this chart for a later iteration
 						if len(c.Dependencies) != 0 {
 							return
 						}
 
 						mutex.Lock()
-						// Find index of chart in slice (may have changed by now since we are using go routines)
-						index := -1
-						for i, elem := range charts {
-							if elem.Name == c.Name {
-								index = i
-							}
-						}
+						// Find index of chart in slice
+						// may have changed by now since we are using go routines
 						// If chart was not found - another routine is taking care of it
+						index := chartutils.GetChartIndex(charts, c.Name)
 						if index == -1 {
 							mutex.Unlock()
 							return
 						}
 
-						// Remove chart from charts list
-						charts[index] = charts[len(charts)-1]
-						charts = charts[:len(charts)-1]
-
+						charts = chartutils.RemoveChartFromCharts(charts, index)
 						mutex.Unlock()
 
 						// deploy chart
