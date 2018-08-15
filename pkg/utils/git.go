@@ -1,12 +1,10 @@
-package gitutils
+package utils
 
 import (
 	"regexp"
 	"strings"
 
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
-
-	genutils "orca/pkg/utils/general"
 
 	git "gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
@@ -65,8 +63,8 @@ func GetChangedPaths(previousCommit string) []string {
 	var changedFiles []string
 
 	for _, change := range changes {
-		changedFiles = genutils.AddIfNotContained(changedFiles, change.From.Name)
-		changedFiles = genutils.AddIfNotContained(changedFiles, change.To.Name)
+		changedFiles = AddIfNotContained(changedFiles, change.From.Name)
+		changedFiles = AddIfNotContained(changedFiles, change.To.Name)
 	}
 
 	return changedFiles

@@ -1,11 +1,9 @@
-package chartutils
+package utils
 
 import (
 	"fmt"
 	"io/ioutil"
 	"log"
-
-	genutils "orca/pkg/utils/general"
 
 	yaml "gopkg.in/yaml.v2"
 )
@@ -62,7 +60,7 @@ func RemoveChartFromDependencies(charts []ChartSpec, name string) []ChartSpec {
 	var outCharts []ChartSpec
 
 	for _, dependant := range charts {
-		if genutils.Contains(dependant.Dependencies, name) {
+		if Contains(dependant.Dependencies, name) {
 
 			index := -1
 			for i, elem := range dependant.Dependencies {

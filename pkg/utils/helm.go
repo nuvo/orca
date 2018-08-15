@@ -1,12 +1,31 @@
-package helmutils
+package utils
 
 import (
 	"fmt"
 	"os"
 	"strings"
-
-	genutils "orca/pkg/utils/general"
 )
+
+// DeployChartFromMuseum deploys a Helm chart from a chart museum
+func DeployChartFromMuseum(releaseName, name, version, kubeContext, namespace, museum, helmTLSStore string, tls bool, packedValues, set []string) {
+	currDir, _ := os.Getwd()
+	tempDir := MkRandomDir()
+	os.Chdir(tempDir)
+
+	if releaseName == "" {
+		releaseName = name
+	}
+	AddRepository(museum)
+	FetchChart(museum, name, version)
+	UpdateChartDependencies(name)
+	valuesChain := CreateValuesChain(name, packedValues)
+	setChain := CreateSetChain(name, set)
+
+	UpgradeRelease(name, releaseName, kubeContext, namespace, valuesChain, setChain, tls, helmTLSStore)
+
+	os.Chdir(currDir)
+	os.RemoveAll(tempDir)
+}
 
 // AddRepository adds a chart repository to the repositories file
 func AddRepository(museum string) {
@@ -15,7 +34,7 @@ func AddRepository(museum string) {
 	museumURL := museumSplit[1]
 
 	cmd := fmt.Sprintf("helm repo add %s %s", museumName, museumURL)
-	genutils.Exec(cmd)
+	Exec(cmd)
 }
 
 // FetchChart fetches a chart from museum by name and version and untars it in the local directory
@@ -24,7 +43,7 @@ func FetchChart(museum, name, version string) {
 	museumName := museumSplit[0]
 
 	cmd := fmt.Sprintf("helm fetch %s/%s --version %s --untar", museumName, name, version)
-	genutils.Exec(cmd)
+	Exec(cmd)
 }
 
 // UpdateChartDependencies performs helm dependency update
@@ -33,7 +52,7 @@ func UpdateChartDependencies(name string) {
 	os.Chdir(name)
 
 	cmd := fmt.Sprintf("helm dependency update")
-	genutils.Exec(cmd)
+	Exec(cmd)
 
 	os.Chdir(currDir)
 }
@@ -80,7 +99,7 @@ func UpgradeRelease(name, releaseName, kubeContext, namespace, values, set strin
 
 	cmd := fmt.Sprintf("helm upgrade%s -i %s --kube-context %s --namespace %s%s%s .", getTLS(tls, kubeContext, helmTLSStore), releaseName, kubeContext, namespace, values, set)
 	fmt.Println(cmd)
-	genutils.Exec(cmd)
+	Exec(cmd)
 
 	os.Chdir(currDir)
 }

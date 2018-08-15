@@ -1,4 +1,4 @@
-package genutils
+package utils
 
 import (
 	"fmt"

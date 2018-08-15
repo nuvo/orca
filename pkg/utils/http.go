@@ -1,4 +1,4 @@
-package httputils
+package utils
 
 import (
 	"io/ioutil"
