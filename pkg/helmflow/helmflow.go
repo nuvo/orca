@@ -3,8 +3,8 @@ package helmflow
 import (
 	"os"
 
-	"orca/pkg/helm"
 	genutils "orca/pkg/utils/general"
+	helmutils "orca/pkg/utils/helm"
 )
 
 // DeployChartFromMuseum deploys a Helm chart from a chart museum
@@ -16,13 +16,13 @@ func DeployChartFromMuseum(releaseName, name, version, kubeContext, namespace, m
 	if releaseName == "" {
 		releaseName = name
 	}
-	helm.AddRepository(museum)
-	helm.FetchChart(museum, name, version)
-	helm.UpdateChartDependencies(name)
-	valuesChain := helm.CreateValuesChain(name, packedValues)
-	setChain := helm.CreateSetChain(name, set)
+	helmutils.AddRepository(museum)
+	helmutils.FetchChart(museum, name, version)
+	helmutils.UpdateChartDependencies(name)
+	valuesChain := helmutils.CreateValuesChain(name, packedValues)
+	setChain := helmutils.CreateSetChain(name, set)
 
-	helm.UpgradeRelease(name, releaseName, kubeContext, namespace, valuesChain, setChain, tls, helmTLSStore)
+	helmutils.UpgradeRelease(name, releaseName, kubeContext, namespace, valuesChain, setChain, tls, helmTLSStore)
 
 	os.Chdir(currDir)
 	os.RemoveAll(tempDir)

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"os"
 
 	"orca/cmd"
@@ -9,6 +10,6 @@ import (
 func main() {
 	cmd := cmd.NewRootCmd(os.Args[1:])
 	if err := cmd.Execute(); err != nil {
-		os.Exit(1)
+		log.Fatal("Failed to execute command")
 	}
 }

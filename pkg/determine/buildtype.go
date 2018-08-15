@@ -3,8 +3,6 @@ package determine
 import (
 	"fmt"
 	"io"
-	"regexp"
-	"strings"
 
 	gitutils "orca/pkg/utils/git"
 
@@ -34,25 +32,12 @@ func Buildtype(out io.Writer) *cobra.Command {
 		Long:  ``,
 		Run: func(cmd *cobra.Command, args []string) {
 
-			relPattern, _ := regexp.Compile(s.releaseRef)
-
-			// If this is not the mainline or a release branch - default type
-			if (s.currentRef != s.mainRef) && !relPattern.MatchString(s.currentRef) {
+			if !gitutils.IsMainlineOrReleaseRef(s.currentRef, s.mainRef, s.releaseRef) {
 				fmt.Println(s.defaultType)
 				return
 			}
 
-			// If previous commit returned error - default type
-			if s.previousCommit == s.previousCommitErrorIndicator {
-				fmt.Println(s.defaultType)
-				return
-			}
-
-			// Get changed paths
-			changedPaths := gitutils.GetChangedPaths(s.previousCommit)
-
-			// If no paths were changed - default type
-			if len(changedPaths) == 0 {
+			if gitutils.IsCommitError(s.previousCommit, s.previousCommitErrorIndicator) {
 				fmt.Println(s.defaultType)
 				return
 			}
@@ -63,31 +48,12 @@ func Buildtype(out io.Writer) *cobra.Command {
 				return
 			}
 
-			// Count lines per path filter
-			changedPathsPerFilter, changedPathsPerFilterCount := gitutils.CountLinesPerPathFilter(s.pathFilter, changedPaths)
+			// Get changed paths
+			changedPaths := gitutils.GetChangedPaths(s.previousCommit)
 
-			// If not all paths matched filters - default type
-			if changedPathsPerFilterCount != len(changedPaths) {
-				fmt.Println(s.defaultType)
-				return
-			}
-
-			// All paths matched a filter
-			multipleTypes := ""
-			for bt, btPathCount := range changedPathsPerFilter {
-				if (!strings.Contains(multipleTypes, bt)) && (btPathCount != 0) {
-					multipleTypes = multipleTypes + bt + ";"
-				}
-			}
-			multipleTypes = strings.TrimRight(multipleTypes, ";")
-
-			// If multiple is not allowed and there are multiple - default type
-			if (s.allowMultipleTypes == false) && (strings.Contains(multipleTypes, ";")) {
-				fmt.Println(s.defaultType)
-				return
-			}
-
-			fmt.Println(multipleTypes)
+			// Some paths changed, check against path filters
+			buildTypeByPathFilters := gitutils.GetBuildTypeByPathFilters(s.defaultType, changedPaths, s.pathFilter, s.allowMultipleTypes)
+			fmt.Println(buildTypeByPathFilters)
 		},
 	}
 
