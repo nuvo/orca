@@ -17,9 +17,7 @@ build_code:
   - cd $CI_PROJECT_NAME
   - dep ensure -update
   script:
-  - pwd
-  - ls -la
-  - go build cmd/orca.go -o orca
+  - go build -o orca cmd/orca.go
   artifacts:
     paths: [orca]
     expire_in: 1 hrs
