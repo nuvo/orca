@@ -16,6 +16,8 @@ build_code:
   - ln -s $CI_PROJECT_DIR
   - cd $CI_PROJECT_NAME
   - dep ensure -update
+  - go get k8s.io/client-go/...
+  - go get k8s.io/api/core/v1
   script:
   - go build -o orca cmd/orca.go
   artifacts:
