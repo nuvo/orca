@@ -33,7 +33,7 @@ func NewDeployChartCmd(out io.Writer) *cobra.Command {
 		Short: "Deploy a Helm chart from chart museum",
 		Long:  ``,
 		Run: func(cmd *cobra.Command, args []string) {
-			utils.DeployChartFromMuseum(c.releaseName, c.name, c.version, c.kubeContext, c.namespace, c.museum, c.helmTLSStore, c.tls, c.packedValues, c.set)
+			utils.DeployChartFromMuseum(c.releaseName, c.name, c.version, c.kubeContext, c.namespace, c.museum, c.helmTLSStore, c.tls, c.packedValues, c.set, true)
 		},
 	}
 

@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"fmt"
 	"math/rand"
 	"os"
 	exec "os/exec"
@@ -11,7 +10,7 @@ import (
 )
 
 // Exec takes a command as a string and executes it
-func Exec(cmd string) {
+func Exec(cmd string) string {
 	args := strings.Split(cmd, " ")
 	binary := args[0]
 	_, lookErr := exec.LookPath(binary)
@@ -23,7 +22,7 @@ func Exec(cmd string) {
 	if err != nil {
 		panic(string(output))
 	}
-	fmt.Print(string(output))
+	return string(output)
 }
 
 // MkRandomDir creates a new directory with a random name made of numbers

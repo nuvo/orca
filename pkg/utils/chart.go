@@ -8,14 +8,42 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
-type ChartSpec struct {
-	Name         string
-	Version      string
+type ReleaseSpec struct {
+	ReleaseName  string
+	ChartName    string
+	ChartVersion string
 	Dependencies []string
 }
 
-func ChartsYamlToStruct(file string) []ChartSpec {
-	var charts []ChartSpec
+func GetReleasesDelta(fromReleases, toReleases []ReleaseSpec) []ReleaseSpec {
+	var releasesDelta []ReleaseSpec
+	var releasesExists []ReleaseSpec
+
+	for _, fromRelease := range fromReleases {
+		exists := false
+		for _, toRelease := range toReleases {
+			if fromRelease.ReleaseName == toRelease.ReleaseName &&
+				fromRelease.ChartName == toRelease.ChartName &&
+				fromRelease.ChartVersion == toRelease.ChartVersion {
+				exists = true
+				releasesExists = append(releasesExists, toRelease)
+				break
+			}
+		}
+		if !exists {
+			releasesDelta = append(releasesDelta, fromRelease)
+		}
+	}
+
+	for _, releaseExists := range releasesExists {
+		releasesDelta = RemoveChartFromDependencies(releasesDelta, releaseExists.ChartName)
+	}
+
+	return releasesDelta
+}
+
+func ChartsYamlToStruct(file, env string) []ReleaseSpec {
+	var charts []ReleaseSpec
 
 	data, err := ioutil.ReadFile(file)
 	if err != nil {
@@ -30,10 +58,11 @@ func ChartsYamlToStruct(file string) []ChartSpec {
 
 	for _, chart := range v["charts"] {
 
-		var c ChartSpec
+		var c ReleaseSpec
 
-		c.Name = chart["name"].(string)
-		c.Version = chart["version"].(string)
+		c.ReleaseName = env + "-" + chart["name"].(string)
+		c.ChartName = chart["name"].(string)
+		c.ChartVersion = chart["version"].(string)
 
 		if chart["depends_on"] != nil {
 			for _, dep := range chart["depends_on"].([]interface{}) {
@@ -47,17 +76,18 @@ func ChartsYamlToStruct(file string) []ChartSpec {
 	return charts
 }
 
-func (c ChartSpec) Print() {
-	fmt.Println("name: " + c.Name)
-	fmt.Println("name: " + c.Version)
+func (c ReleaseSpec) Print() {
+	fmt.Println("release name: " + c.ReleaseName)
+	fmt.Println("chart name: " + c.ChartName)
+	fmt.Println("chart version: " + c.ChartVersion)
 	for _, dep := range c.Dependencies {
 		fmt.Println("depends_on: " + dep)
 	}
 }
 
-func RemoveChartFromDependencies(charts []ChartSpec, name string) []ChartSpec {
+func RemoveChartFromDependencies(charts []ReleaseSpec, name string) []ReleaseSpec {
 
-	var outCharts []ChartSpec
+	var outCharts []ReleaseSpec
 
 	for _, dependant := range charts {
 		if Contains(dependant.Dependencies, name) {
@@ -82,17 +112,17 @@ func RemoveChartFromDependencies(charts []ChartSpec, name string) []ChartSpec {
 	return outCharts
 }
 
-func GetChartIndex(charts []ChartSpec, name string) int {
+func GetChartIndex(charts []ReleaseSpec, name string) int {
 	index := -1
 	for i, elem := range charts {
-		if elem.Name == name {
+		if elem.ChartName == name {
 			index = i
 		}
 	}
 	return index
 }
 
-func RemoveChartFromCharts(charts []ChartSpec, index int) []ChartSpec {
+func RemoveChartFromCharts(charts []ReleaseSpec, index int) []ReleaseSpec {
 	charts[index] = charts[len(charts)-1]
 	return charts[:len(charts)-1]
 }
