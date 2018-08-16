@@ -14,3 +14,7 @@
 [[constraint]]
   name = "gopkg.in/yaml.v2"
   version = "2.2.1"
+
+[[constraint]]
+  branch = "master"
+  name = "k8s.io/api"

@@ -20,6 +20,7 @@ type envCmd struct {
 	tls          bool
 	helmTLSStore string
 	museum       string
+	createNS     bool
 
 	nada string
 
@@ -55,6 +56,11 @@ func NewDeployEnvCmd(out io.Writer) *cobra.Command {
 		Short: "Deploy a list of Helm charts to an environment (Kubernetes namespace)",
 		Long:  ``,
 		Run: func(cmd *cobra.Command, args []string) {
+
+			if e.createNS {
+				utils.CreateNamespace(e.kubeContext, e.name)
+				log.Println("Created namespace:", e.name)
+			}
 
 			var mutex = &sync.Mutex{}
 			var wg sync.WaitGroup
@@ -131,6 +137,7 @@ func NewDeployEnvCmd(out io.Writer) *cobra.Command {
 	f.StringSliceVarP(&e.set, "set", "s", []string{}, "set additional parameters")
 	f.BoolVar(&e.tls, "tls", false, "should use communication over TLS")
 	f.StringVar(&e.helmTLSStore, "helm-tls-store", "", "directory with TLS certs and keys")
+	f.BoolVar(&e.createNS, "create-ns", false, "should create new namespace")
 
 	return cmd
 }
