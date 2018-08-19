@@ -8,16 +8,17 @@ build_code:
   image: golang:1.10.3-alpine
   stage: build_code
   before_script:
-  - apk add --no-cache git
-  - go get -u github.com/golang/dep/cmd/dep 
+  - apk add --no-cache git glide
+  # - go get -u github.com/golang/dep/cmd/dep 
   - export GOPATH=$(dirname $CI_PROJECT_DIR)/go
   - mkdir -p $GOPATH/src
   - cd $GOPATH/src
   - ln -s $CI_PROJECT_DIR
   - cd $CI_PROJECT_NAME
-  - dep ensure -update
-  - go get k8s.io/client-go/...
-  - go get k8s.io/api/core/v1
+  # - dep ensure -update
+  # - go get k8s.io/client-go/...
+  # - go get k8s.io/api/core/v1
+  - glide up -v
   script:
   - go build -o orca cmd/orca.go
   artifacts:

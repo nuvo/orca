@@ -1,0 +1,25 @@
+package: orca
+import:
+- package: github.com/spf13/cobra
+  version: v0.0.3
+- package: gopkg.in/src-d/go-git.v4
+  version: v4.6.0
+  subpackages:
+  - plumbing
+  - plumbing/object
+- package: gopkg.in/yaml.v2
+  version: v2.2.1
+- package: k8s.io/api
+  version: kubernetes-1.11.2
+  subpackages:
+  - core/v1
+- package: k8s.io/apimachinery
+  version: kubernetes-1.11.2
+  subpackages:
+  - pkg/apis/meta/v1
+- package: k8s.io/client-go
+  version: kubernetes-1.11.2
+  subpackages:
+  - kubernetes
+  - rest
+  - tools/clientcmd
