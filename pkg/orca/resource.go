@@ -92,13 +92,14 @@ func NewDeleteResourceCmd(out io.Writer) *cobra.Command {
 		Short: "Delete a resource from REST API",
 		Long:  ``,
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println("delete resource called")
+			utils.PerformRequest("DELETE", r.url, r.headers, 204)
 		},
 	}
 
 	f := cmd.Flags()
 
 	f.StringVar(&r.url, "url", "", "url help")
+	f.StringSliceVar(&r.headers, "headers", []string{}, "headers of the request (supports multiple)")
 
 	return cmd
 }
