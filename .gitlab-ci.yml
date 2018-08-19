@@ -48,7 +48,7 @@ build_image_candidate:
   - apk add --no-cache git
   - git checkout $CI_BUILD_REF_NAME
   - git pull --tags
-  - export IMAGE_TAG=$(git describe --exact-match --tags HEAD)
+  - export IMAGE_TAG=$(git describe --exact-match --tags $CI_COMMIT_SHA)
   - docker login -u $CI_REGISTRY_USER -p $CI_JOB_TOKEN $CI_REGISTRY
 
 tag_image:
