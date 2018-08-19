@@ -2,6 +2,8 @@ package orca
 
 import (
 	"io"
+	"log"
+	"os"
 
 	"orca/pkg/utils"
 
@@ -32,6 +34,9 @@ func NewDeployChartCmd(out io.Writer) *cobra.Command {
 		Short: "Deploy a Helm chart from chart museum",
 		Long:  ``,
 		Run: func(cmd *cobra.Command, args []string) {
+			if c.tls && c.helmTLSStore == "" {
+				log.Fatal("TLS is set to true and HELM_TLS_STORE is not defined")
+			}
 			utils.DeployChartFromMuseum(c.releaseName, c.name, c.version, c.kubeContext, c.namespace, c.museum, c.helmTLSStore, c.tls, c.packedValues, c.set, true)
 		},
 	}
@@ -46,8 +51,8 @@ func NewDeployChartCmd(out io.Writer) *cobra.Command {
 	f.StringVarP(&c.namespace, "namespace", "n", "", "kubernetes namespace to deploy to")
 	f.StringSliceVarP(&c.packedValues, "values", "f", []string{}, "values file to use (packaged within the chart)")
 	f.StringSliceVarP(&c.set, "set", "s", []string{}, "set additional parameters")
-	f.BoolVar(&c.tls, "tls", false, "should use communication over TLS")
-	f.StringVar(&c.helmTLSStore, "helm-tls-store", "", "directory with TLS certs and keys")
+	f.BoolVar(&c.tls, "tls", true, "should use communication over TLS")
+	f.StringVar(&c.helmTLSStore, "helm-tls-store", os.Getenv("HELM_TLS_STORE"), "directory with TLS certs and keys")
 
 	return cmd
 }

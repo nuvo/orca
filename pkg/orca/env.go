@@ -3,6 +3,8 @@ package orca
 import (
 	"fmt"
 	"io"
+	"log"
+	"os"
 
 	"orca/pkg/utils"
 
@@ -33,6 +35,9 @@ func NewGetEnvCmd(out io.Writer) *cobra.Command {
 		Short: "Get list of Helm releases in an environment (Kubernetes namespace)",
 		Long:  ``,
 		Run: func(cmd *cobra.Command, args []string) {
+			if e.tls && e.helmTLSStore == "" {
+				log.Fatal("TLS is set to true and HELM_TLS_STORE is not defined")
+			}
 			releases := utils.GetInstalledReleases(e.kubeContext, e.name, e.helmTLSStore, e.tls, true, true)
 
 			fmt.Println("charts:")
@@ -47,8 +52,8 @@ func NewGetEnvCmd(out io.Writer) *cobra.Command {
 
 	f.StringVar(&e.name, "name", "", "name of environment (namespace) to get")
 	f.StringVar(&e.kubeContext, "kube-context", "", "kubernetes context to get from")
-	f.BoolVar(&e.tls, "tls", false, "should use communication over TLS")
-	f.StringVar(&e.helmTLSStore, "helm-tls-store", "", "directory with TLS certs and keys")
+	f.BoolVar(&e.tls, "tls", true, "should use communication over TLS")
+	f.StringVar(&e.helmTLSStore, "helm-tls-store", os.Getenv("HELM_TLS_STORE"), "directory with TLS certs and keys")
 	return cmd
 }
 
@@ -61,7 +66,9 @@ func NewDeployEnvCmd(out io.Writer) *cobra.Command {
 		Short: "Deploy a list of Helm charts to an environment (Kubernetes namespace)",
 		Long:  ``,
 		Run: func(cmd *cobra.Command, args []string) {
-
+			if e.tls && e.helmTLSStore == "" {
+				log.Fatal("TLS is set to true and HELM_TLS_STORE is not defined")
+			}
 			if e.createNS {
 				utils.CreateNamespace(e.name, e.kubeContext)
 			}
@@ -91,8 +98,8 @@ func NewDeployEnvCmd(out io.Writer) *cobra.Command {
 	f.StringVar(&e.kubeContext, "kube-context", "", "kubernetes context to deploy to")
 	f.StringSliceVarP(&e.packedValues, "values", "f", []string{}, "values file to use (packaged within the chart)")
 	f.StringSliceVarP(&e.set, "set", "s", []string{}, "set additional parameters")
-	f.BoolVar(&e.tls, "tls", false, "should use communication over TLS")
-	f.StringVar(&e.helmTLSStore, "helm-tls-store", "", "directory with TLS certs and keys")
+	f.BoolVar(&e.tls, "tls", true, "should use communication over TLS")
+	f.StringVar(&e.helmTLSStore, "helm-tls-store", os.Getenv("HELM_TLS_STORE"), "directory with TLS certs and keys")
 	f.BoolVar(&e.createNS, "create-ns", false, "should create new namespace")
 
 	return cmd
@@ -107,6 +114,9 @@ func NewDeleteEnvCmd(out io.Writer) *cobra.Command {
 		Short: "Delete an environment (Kubernetes namespace) along with all Helm releases in it",
 		Long:  ``,
 		Run: func(cmd *cobra.Command, args []string) {
+			if e.tls && e.helmTLSStore == "" {
+				log.Fatal("TLS is set to true and HELM_TLS_STORE is not defined")
+			}
 			releases := utils.GetInstalledReleases(e.kubeContext, e.name, e.helmTLSStore, e.tls, true, true)
 			utils.DeleteReleases(releases, e.kubeContext, e.helmTLSStore, e.tls)
 			utils.DeleteNamespace(e.name, e.kubeContext)
@@ -117,8 +127,8 @@ func NewDeleteEnvCmd(out io.Writer) *cobra.Command {
 
 	f.StringVar(&e.name, "name", "", "name of environment (namespace) to delete")
 	f.StringVar(&e.kubeContext, "kube-context", "", "kubernetes context to delete in")
-	f.BoolVar(&e.tls, "tls", false, "should use communication over TLS")
-	f.StringVar(&e.helmTLSStore, "helm-tls-store", "", "directory with TLS certs and keys")
+	f.BoolVar(&e.tls, "tls", true, "should use communication over TLS")
+	f.StringVar(&e.helmTLSStore, "helm-tls-store", os.Getenv("HELM_TLS_STORE"), "directory with TLS certs and keys")
 
 	return cmd
 }
