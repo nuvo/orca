@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"strings"
 
 	"orca/pkg/utils"
@@ -36,7 +37,7 @@ func NewGetResourceCmd(out io.Writer) *cobra.Command {
 			var data []map[string]interface{}
 			bytes := utils.PerformRequest("GET", r.url, r.headers, 200)
 			if err := json.Unmarshal(bytes, &data); err != nil {
-				panic(err)
+				log.Fatal(err)
 			}
 			if r.key == "" {
 				if r.printKey != "" {

@@ -3,9 +3,6 @@ package orca
 import (
 	"fmt"
 	"io"
-	"log"
-	"sync"
-	"time"
 
 	"orca/pkg/utils"
 
@@ -15,6 +12,7 @@ import (
 type envCmd struct {
 	chartsFile   string
 	name         string
+	override     []string
 	packedValues []string
 	set          []string
 	kubeContext  string
@@ -22,8 +20,6 @@ type envCmd struct {
 	helmTLSStore string
 	museum       string
 	createNS     bool
-
-	nada string
 
 	out io.Writer
 }
@@ -37,14 +33,22 @@ func NewGetEnvCmd(out io.Writer) *cobra.Command {
 		Short: "Get list of Helm releases in an environment (Kubernetes namespace)",
 		Long:  ``,
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println("get env called")
+			releases := utils.GetInstalledReleases(e.kubeContext, e.name, e.helmTLSStore, e.tls, true, true)
+
+			fmt.Println("charts:")
+			for _, r := range releases {
+				fmt.Println("- name:", r.ChartName)
+				fmt.Println("  vesrion:", r.ChartVersion)
+			}
 		},
 	}
 
 	f := cmd.Flags()
 
-	f.StringVar(&e.nada, "nada", "", "nada help")
-
+	f.StringVar(&e.name, "name", "", "name of environment (namespace) to get")
+	f.StringVar(&e.kubeContext, "kube-context", "", "kubernetes context to get from")
+	f.BoolVar(&e.tls, "tls", false, "should use communication over TLS")
+	f.StringVar(&e.helmTLSStore, "helm-tls-store", "", "directory with TLS certs and keys")
 	return cmd
 }
 
@@ -59,82 +63,29 @@ func NewDeployEnvCmd(out io.Writer) *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 
 			if e.createNS {
-				utils.CreateNamespace(e.kubeContext, e.name)
-				log.Println("Created namespace:", e.name)
+				utils.CreateNamespace(e.name, e.kubeContext)
 			}
 
-			var mutex = &sync.Mutex{}
-			var wg sync.WaitGroup
-
 			desiredReleases := utils.ChartsYamlToStruct(e.chartsFile, e.name)
-			installedReleases := utils.GetInstalledReleases(e.kubeContext, e.name, e.helmTLSStore, e.tls, true)
+			desiredReleases = utils.OverrideReleases(desiredReleases, e.override)
+			installedReleases := utils.GetInstalledReleases(e.kubeContext, e.name, e.helmTLSStore, e.tls, true, false)
 			releasesToInstall := utils.GetReleasesDelta(desiredReleases, installedReleases)
 
 			utils.AddRepository(e.museum, false)
 			utils.UpdateRepository(e.museum, false)
+			utils.DeployChartsFromMuseum(releasesToInstall, e.kubeContext, e.name, e.museum, e.helmTLSStore, e.tls, e.packedValues, e.set)
 
-			for len(releasesToInstall) > 0 {
-
-				mutex.Lock()
-				for _, c := range releasesToInstall {
-
-					wg.Add(1)
-					go func(c utils.ReleaseSpec) {
-						defer wg.Done()
-
-						// If there are (still) any dependencies - leave this chart for a later iteration
-						if len(c.Dependencies) != 0 {
-							return
-						}
-
-						// Find index of chart in slice
-						// may have changed by now since we are using go routines
-						// If chart was not found - another routine is taking care of it
-						mutex.Lock()
-						index := utils.GetChartIndex(releasesToInstall, c.ChartName)
-						if index == -1 {
-							mutex.Unlock()
-							return
-						}
-						releasesToInstall = utils.RemoveChartFromCharts(releasesToInstall, index)
-						mutex.Unlock()
-
-						// deploy chart
-						log.Println("deploying chart", c.ChartName, "version", c.ChartVersion)
-						utils.DeployChartFromMuseum(c.ReleaseName, c.ChartName, c.ChartVersion, e.kubeContext, e.name, e.museum, e.helmTLSStore, e.tls, e.packedValues, e.set, false)
-						log.Println("deployed chart", c.ChartName, "version", c.ChartVersion)
-
-						// Deployment is done, remove chart from dependencies
-						mutex.Lock()
-						releasesToInstall = utils.RemoveChartFromDependencies(releasesToInstall, c.ChartName)
-						mutex.Unlock()
-
-					}(c)
-				}
-				mutex.Unlock()
-				time.Sleep(5 * time.Second)
-			}
-			wg.Wait()
-
-			installedReleases = utils.GetInstalledReleases(e.kubeContext, e.name, e.helmTLSStore, e.tls, true)
+			installedReleases = utils.GetInstalledReleases(e.kubeContext, e.name, e.helmTLSStore, e.tls, true, false)
 			releasesToDelete := utils.GetReleasesDelta(installedReleases, desiredReleases)
 
-			for _, c := range releasesToDelete {
-				wg.Add(1)
-				go func(c utils.ReleaseSpec) {
-					defer wg.Done()
-					log.Println("deleting", c.ReleaseName)
-					utils.DeleteRelease(c.ReleaseName, e.kubeContext, e.tls, e.helmTLSStore, false)
-					log.Println("deleted", c.ReleaseName)
-				}(c)
-			}
-			wg.Wait()
+			utils.DeleteReleases(releasesToDelete, e.kubeContext, e.helmTLSStore, e.tls)
 		},
 	}
 
 	f := cmd.Flags()
 
 	f.StringVarP(&e.chartsFile, "charts-file", "c", "", "path to file with list of Helm charts to install")
+	f.StringSliceVar(&e.override, "override", []string{}, "chart to override with different version (can specify multiple): chart=version")
 	f.StringVar(&e.name, "name", "", "name of environment (namespace) to deploy to")
 	f.StringVar(&e.museum, "museum", "", "chart museum instance (name=url)")
 	f.StringVar(&e.kubeContext, "kube-context", "", "kubernetes context to deploy to")
@@ -156,14 +107,18 @@ func NewDeleteEnvCmd(out io.Writer) *cobra.Command {
 		Short: "Delete an environment (Kubernetes namespace) along with all Helm releases in it",
 		Long:  ``,
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println("delete env called")
-
+			releases := utils.GetInstalledReleases(e.kubeContext, e.name, e.helmTLSStore, e.tls, true, true)
+			utils.DeleteReleases(releases, e.kubeContext, e.helmTLSStore, e.tls)
+			utils.DeleteNamespace(e.name, e.kubeContext)
 		},
 	}
 
 	f := cmd.Flags()
 
-	f.StringVar(&e.nada, "nada", "", "nada help")
+	f.StringVar(&e.name, "name", "", "name of environment (namespace) to delete")
+	f.StringVar(&e.kubeContext, "kube-context", "", "kubernetes context to delete in")
+	f.BoolVar(&e.tls, "tls", false, "should use communication over TLS")
+	f.StringVar(&e.helmTLSStore, "helm-tls-store", "", "directory with TLS certs and keys")
 
 	return cmd
 }

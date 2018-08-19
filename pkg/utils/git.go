@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"log"
 	"regexp"
 	"strings"
 
@@ -46,18 +47,18 @@ func GetBuildTypeByPathFilters(defaultType string, changedPaths, pathFilter []st
 func GetChangedPaths(previousCommit string) []string {
 	r, err := git.PlainOpen(".")
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	head, err := r.Head()
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	currentCommitTree := getTreeFromHash(head.Hash(), r)
 	previousCommitTree := getTreeFromStr(previousCommit, r)
 	changes, err := currentCommitTree.Diff(previousCommitTree)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	var changedFiles []string
@@ -114,11 +115,11 @@ func getTreeFromStr(hash string, r *git.Repository) *object.Tree {
 func getTreeFromHash(hash plumbing.Hash, r *git.Repository) *object.Tree {
 	commitObject, err := r.CommitObject(hash)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	commitTree, err := commitObject.Tree()
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	return commitTree

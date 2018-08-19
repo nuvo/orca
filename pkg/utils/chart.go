@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"strings"
 
 	yaml "gopkg.in/yaml.v2"
 )
@@ -22,9 +23,7 @@ func GetReleasesDelta(fromReleases, toReleases []ReleaseSpec) []ReleaseSpec {
 	for _, fromRelease := range fromReleases {
 		exists := false
 		for _, toRelease := range toReleases {
-			if fromRelease.ReleaseName == toRelease.ReleaseName &&
-				fromRelease.ChartName == toRelease.ChartName &&
-				fromRelease.ChartVersion == toRelease.ChartVersion {
+			if fromRelease.Equals(toRelease) {
 				exists = true
 				releasesExists = append(releasesExists, toRelease)
 				break
@@ -76,13 +75,25 @@ func ChartsYamlToStruct(file, env string) []ReleaseSpec {
 	return charts
 }
 
-func (c ReleaseSpec) Print() {
-	fmt.Println("release name: " + c.ReleaseName)
-	fmt.Println("chart name: " + c.ChartName)
-	fmt.Println("chart version: " + c.ChartVersion)
-	for _, dep := range c.Dependencies {
-		fmt.Println("depends_on: " + dep)
+func OverrideReleases(releases []ReleaseSpec, overrides []string) []ReleaseSpec {
+	var outReleases []ReleaseSpec
+
+	for _, r := range releases {
+		for _, override := range overrides {
+			oSplit := strings.Split(override, "=")
+			oChartName := oSplit[0]
+			oChartVersion := oSplit[1]
+
+			if r.ChartName == oChartName && r.ChartVersion != oChartVersion {
+				r.ChartName = oChartName
+				r.ChartVersion = oChartVersion
+			}
+
+			outReleases = append(outReleases, r)
+		}
 	}
+
+	return outReleases
 }
 
 func RemoveChartFromDependencies(charts []ReleaseSpec, name string) []ReleaseSpec {
@@ -99,7 +110,7 @@ func RemoveChartFromDependencies(charts []ReleaseSpec, name string) []ReleaseSpe
 				}
 			}
 			if index == -1 {
-				panic("Could not find element in dependencies")
+				log.Fatal("Could not find element in dependencies")
 			}
 
 			dependant.Dependencies[index] = dependant.Dependencies[len(dependant.Dependencies)-1]
@@ -147,4 +158,24 @@ func UpdateChartVersion(path, append string) string {
 	ioutil.WriteFile(filePath, data, 0755)
 
 	return newVersion
+}
+
+func (r ReleaseSpec) Print() {
+	fmt.Println("release name: " + r.ReleaseName)
+	fmt.Println("chart name: " + r.ChartName)
+	fmt.Println("chart version: " + r.ChartVersion)
+	for _, dep := range r.Dependencies {
+		fmt.Println("depends_on: " + dep)
+	}
+}
+
+func (a ReleaseSpec) Equals(b ReleaseSpec) bool {
+	equals := false
+	if a.ReleaseName == b.ReleaseName &&
+		a.ChartName == b.ChartName &&
+		a.ChartVersion == b.ChartVersion {
+		equals = true
+	}
+
+	return equals
 }

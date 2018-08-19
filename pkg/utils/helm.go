@@ -2,12 +2,15 @@ package utils
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"strings"
+	"sync"
+	"time"
 )
 
 // GetInstalledReleases gets the installed Helm releases in a given namespace
-func GetInstalledReleases(kubeContext, namespace, helmTLSStore string, tls, onlyManaged bool) []ReleaseSpec {
+func GetInstalledReleases(kubeContext, namespace, helmTLSStore string, tls, onlyManaged, includeFailed bool) []ReleaseSpec {
 
 	const ReleaseNameCol = 0
 	const statusCol = 7
@@ -29,7 +32,7 @@ func GetInstalledReleases(kubeContext, namespace, helmTLSStore string, tls, only
 
 			words := strings.Fields(line)
 
-			if words[statusCol] == "FAILED" {
+			if words[statusCol] == "FAILED" && !includeFailed {
 				continue
 			}
 
@@ -44,6 +47,56 @@ func GetInstalledReleases(kubeContext, namespace, helmTLSStore string, tls, only
 	}
 
 	return releaseSpecs
+}
+
+// DeployChartsFromMuseum deploys a list of Helm charts from a museum in parallel
+func DeployChartsFromMuseum(releasesToInstall []ReleaseSpec, kubeContext, namespace, museum, helmTLSStore string, tls bool, packedValues, set []string) {
+
+	var mutex = &sync.Mutex{}
+	var wg sync.WaitGroup
+
+	for len(releasesToInstall) > 0 {
+
+		mutex.Lock()
+		for _, c := range releasesToInstall {
+
+			wg.Add(1)
+			go func(c ReleaseSpec) {
+				defer wg.Done()
+
+				// If there are (still) any dependencies - leave this chart for a later iteration
+				if len(c.Dependencies) != 0 {
+					return
+				}
+
+				// Find index of chart in slice
+				// may have changed by now since we are using go routines
+				// If chart was not found - another routine is taking care of it
+				mutex.Lock()
+				index := GetChartIndex(releasesToInstall, c.ChartName)
+				if index == -1 {
+					mutex.Unlock()
+					return
+				}
+				releasesToInstall = RemoveChartFromCharts(releasesToInstall, index)
+				mutex.Unlock()
+
+				// deploy chart
+				log.Println("deploying chart", c.ChartName, "version", c.ChartVersion)
+				DeployChartFromMuseum(c.ReleaseName, c.ChartName, c.ChartVersion, kubeContext, namespace, museum, helmTLSStore, tls, packedValues, set, false)
+				log.Println("deployed chart", c.ChartName, "version", c.ChartVersion)
+
+				// Deployment is done, remove chart from dependencies
+				mutex.Lock()
+				releasesToInstall = RemoveChartFromDependencies(releasesToInstall, c.ChartName)
+				mutex.Unlock()
+
+			}(c)
+		}
+		mutex.Unlock()
+		time.Sleep(5 * time.Second)
+	}
+	wg.Wait()
 }
 
 // DeployChartFromMuseum deploys a Helm chart from a chart museum
@@ -198,6 +251,22 @@ func UpgradeRelease(name, releaseName, kubeContext, namespace, values, set strin
 		fmt.Println(cmd)
 		fmt.Print(output)
 	}
+}
+
+// DeleteReleases deletes a list of releases in parallel
+func DeleteReleases(releasesToDelete []ReleaseSpec, kubeContext, helmTLSStore string, tls bool) {
+	var wg sync.WaitGroup
+
+	for _, c := range releasesToDelete {
+		wg.Add(1)
+		go func(c ReleaseSpec) {
+			defer wg.Done()
+			log.Println("deleting", c.ReleaseName)
+			DeleteRelease(c.ReleaseName, kubeContext, tls, helmTLSStore, false)
+			log.Println("deleted", c.ReleaseName)
+		}(c)
+	}
+	wg.Wait()
 }
 
 // DeleteRelease deletes a release from Kubernetes
