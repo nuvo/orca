@@ -58,7 +58,8 @@ func DeployChartFromMuseum(releaseName, name, version, kubeContext, namespace, m
 		UpdateRepository(museum, isIsolated)
 	}
 	FetchChart(museum, name, version, tempDir, isIsolated)
-	UpdateChartDependencies(name, tempDir, isIsolated)
+	path := fmt.Sprintf("%s/%s", tempDir, name)
+	UpdateChartDependencies(path, isIsolated)
 	valuesChain := CreateValuesChain(name, tempDir, packedValues)
 	setChain := CreateSetChain(name, set)
 
@@ -67,12 +68,34 @@ func DeployChartFromMuseum(releaseName, name, version, kubeContext, namespace, m
 	os.RemoveAll(tempDir)
 }
 
+// PushChartToMuseum packages and pushes a Helm chart to a chart repository
+func PushChartToMuseum(path, append, museum string, lint, print bool) {
+	newVersion := UpdateChartVersion(path, append)
+	if lint {
+		Lint(path, print)
+	}
+	AddRepository(museum, print)
+	UpdateChartDependencies(path, print)
+	PushChart(museum, path, print)
+	fmt.Println(newVersion)
+}
+
 // List get a list of installed releases in a given namespace
 func List(kubeContext, namespace, helmTLSStore string, tls bool) string {
 	cmd := fmt.Sprintf("helm ls%s --kube-context %s --namespace %s", getTLS(tls, kubeContext, helmTLSStore), kubeContext, namespace)
 	list := Exec(cmd)
 
 	return list
+}
+
+// Lint takes a path to a chart and runs a series of tests to verify that the chart is well-formed
+func Lint(path string, print bool) {
+	cmd := fmt.Sprintf("helm lint %s", path)
+	output := Exec(cmd)
+	if print {
+		fmt.Println(cmd)
+		fmt.Print(output)
+	}
 }
 
 // AddRepository adds a chart repository to the repositories file
@@ -112,9 +135,22 @@ func FetchChart(museum, name, version, dir string, print bool) {
 	}
 }
 
+// PushChart pushes a helm chart to a chart repository
+func PushChart(museum, path string, print bool) {
+	museumSplit := strings.Split(museum, "=")
+	museumName := museumSplit[0]
+
+	cmd := fmt.Sprintf("helm push %s %s", path, museumName)
+	output := Exec(cmd)
+	if print {
+		fmt.Println(cmd)
+		fmt.Print(output)
+	}
+}
+
 // UpdateChartDependencies performs helm dependency update
-func UpdateChartDependencies(name, dir string, print bool) {
-	cmd := fmt.Sprintf("helm dependency update %s/%s", dir, name)
+func UpdateChartDependencies(path string, print bool) {
+	cmd := fmt.Sprintf("helm dependency update %s", path)
 	output := Exec(cmd)
 	if print {
 		fmt.Println(cmd)
@@ -164,6 +200,7 @@ func UpgradeRelease(name, releaseName, kubeContext, namespace, values, set strin
 	}
 }
 
+// DeleteRelease deletes a release from Kubernetes
 func DeleteRelease(releaseName, kubeContext string, tls bool, helmTLSStore string, print bool) {
 	cmd := fmt.Sprintf("helm delete%s --purge %s --kube-context %s", getTLS(tls, kubeContext, helmTLSStore), releaseName, kubeContext)
 	output := Exec(cmd)

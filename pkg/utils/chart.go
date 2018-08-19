@@ -126,3 +126,25 @@ func RemoveChartFromCharts(charts []ReleaseSpec, index int) []ReleaseSpec {
 	charts[index] = charts[len(charts)-1]
 	return charts[:len(charts)-1]
 }
+
+func UpdateChartVersion(path, append string) string {
+	filePath := path + "Chart.yaml"
+	data, err := ioutil.ReadFile(filePath)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	var v map[string]interface{}
+	err = yaml.Unmarshal(data, &v)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	newVersion := fmt.Sprintf("%s-%s", v["version"], append)
+	v["version"] = newVersion
+
+	data, err = yaml.Marshal(v)
+	ioutil.WriteFile(filePath, data, 0755)
+
+	return newVersion
+}

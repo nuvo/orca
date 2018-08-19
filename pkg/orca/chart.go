@@ -1,7 +1,6 @@
 package orca
 
 import (
-	"fmt"
 	"io"
 
 	"orca/pkg/utils"
@@ -53,22 +52,34 @@ func NewDeployChartCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
+type chartPushCmd struct {
+	path   string
+	append string
+	museum string
+	lint   bool
+
+	out io.Writer
+}
+
 // NewPushChartCmd represents the push chart command
 func NewPushChartCmd(out io.Writer) *cobra.Command {
-	c := &chartCmd{out: out}
+	c := &chartPushCmd{out: out}
 
 	cmd := &cobra.Command{
 		Use:   "chart",
 		Short: "Push Helm chart to chart museum",
 		Long:  ``,
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println("push chart called")
+			utils.PushChartToMuseum(c.path, c.append, c.museum, c.lint, false)
 		},
 	}
 
 	f := cmd.Flags()
 
-	f.StringVar(&c.name, "name", "", "name help")
+	f.StringVar(&c.path, "path", "", "path to chart")
+	f.StringVar(&c.append, "append", "", "string to append to version")
+	f.StringVar(&c.museum, "museum", "", "chart museum instance (name=url)")
+	f.BoolVar(&c.lint, "lint", false, "should perform lint before push")
 
 	return cmd
 }
