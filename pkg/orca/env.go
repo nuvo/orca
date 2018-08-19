@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"sync"
+	"time"
 
 	"orca/pkg/utils"
 
@@ -69,6 +70,9 @@ func NewDeployEnvCmd(out io.Writer) *cobra.Command {
 			installedReleases := utils.GetInstalledReleases(e.kubeContext, e.name, e.helmTLSStore, e.tls, true)
 			releasesToInstall := utils.GetReleasesDelta(desiredReleases, installedReleases)
 
+			utils.AddRepository(e.museum, false)
+			utils.UpdateRepository(e.museum, false)
+
 			for len(releasesToInstall) > 0 {
 
 				mutex.Lock()
@@ -108,6 +112,7 @@ func NewDeployEnvCmd(out io.Writer) *cobra.Command {
 					}(c)
 				}
 				mutex.Unlock()
+				time.Sleep(5 * time.Second)
 			}
 			wg.Wait()
 

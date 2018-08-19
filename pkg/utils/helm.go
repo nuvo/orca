@@ -6,9 +6,11 @@ import (
 	"strings"
 )
 
+// GetInstalledReleases gets the installed Helm releases in a given namespace
 func GetInstalledReleases(kubeContext, namespace, helmTLSStore string, tls, onlyManaged bool) []ReleaseSpec {
 
 	const ReleaseNameCol = 0
+	const statusCol = 7
 	const VersionCol = 8
 
 	var releaseSpecs []ReleaseSpec
@@ -24,8 +26,14 @@ func GetInstalledReleases(kubeContext, namespace, helmTLSStore string, tls, only
 			if !(onlyManaged && strings.HasPrefix(line, namespace)) {
 				continue
 			}
-			var releaseSpec ReleaseSpec
+
 			words := strings.Fields(line)
+
+			if words[statusCol] == "FAILED" {
+				continue
+			}
+
+			var releaseSpec ReleaseSpec
 			releaseSpec.ReleaseName = words[ReleaseNameCol]
 			releaseSpec.ChartName = strings.TrimLeft(releaseSpec.ReleaseName, namespace) // Strange behavior when replacing namespace+"-"
 			releaseSpec.ChartName = strings.TrimLeft(releaseSpec.ChartName, "-")
@@ -39,20 +47,22 @@ func GetInstalledReleases(kubeContext, namespace, helmTLSStore string, tls, only
 }
 
 // DeployChartFromMuseum deploys a Helm chart from a chart museum
-func DeployChartFromMuseum(releaseName, name, version, kubeContext, namespace, museum, helmTLSStore string, tls bool, packedValues, set []string, print bool) {
+func DeployChartFromMuseum(releaseName, name, version, kubeContext, namespace, museum, helmTLSStore string, tls bool, packedValues, set []string, isIsolated bool) {
 	tempDir := MkRandomDir()
 
 	if releaseName == "" {
 		releaseName = name
 	}
-	AddRepository(museum, print)
-	UpdateRepository(print)
-	FetchChart(museum, name, version, tempDir, print)
-	UpdateChartDependencies(name, tempDir, print)
+	if isIsolated {
+		AddRepository(museum, isIsolated)
+		UpdateRepository(museum, isIsolated)
+	}
+	FetchChart(museum, name, version, tempDir, isIsolated)
+	UpdateChartDependencies(name, tempDir, isIsolated)
 	valuesChain := CreateValuesChain(name, tempDir, packedValues)
 	setChain := CreateSetChain(name, set)
 
-	UpgradeRelease(name, releaseName, kubeContext, namespace, valuesChain, setChain, tls, helmTLSStore, tempDir, print)
+	UpgradeRelease(name, releaseName, kubeContext, namespace, valuesChain, setChain, tls, helmTLSStore, tempDir, isIsolated)
 
 	os.RemoveAll(tempDir)
 }
@@ -80,7 +90,7 @@ func AddRepository(museum string, print bool) {
 }
 
 // UpdateRepository updates helm repositories
-func UpdateRepository(print bool) {
+func UpdateRepository(museum string, print bool) {
 	cmd := fmt.Sprintf("helm repo update")
 	output := Exec(cmd)
 	if print {

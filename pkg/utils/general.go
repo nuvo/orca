@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"log"
 	"math/rand"
 	"os"
 	exec "os/exec"
@@ -13,14 +14,14 @@ import (
 func Exec(cmd string) string {
 	args := strings.Split(cmd, " ")
 	binary := args[0]
-	_, lookErr := exec.LookPath(binary)
-	if lookErr != nil {
-		panic(lookErr)
+	_, err := exec.LookPath(binary)
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	output, err := exec.Command(binary, args[1:]...).CombinedOutput()
 	if err != nil {
-		panic(string(output))
+		log.Fatal(string(output))
 	}
 	return string(output)
 }
@@ -50,14 +51,4 @@ func Contains(s []string, e string) bool {
 		}
 	}
 	return false
-}
-
-func Truncate(s []string) []string {
-	var r []string
-	for _, str := range s {
-		if str != "" {
-			r = append(r, str)
-		}
-	}
-	return r
 }
