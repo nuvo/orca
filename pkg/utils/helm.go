@@ -46,6 +46,7 @@ func DeployChartFromMuseum(releaseName, name, version, kubeContext, namespace, m
 		releaseName = name
 	}
 	AddRepository(museum, print)
+	UpdateRepository(print)
 	FetchChart(museum, name, version, tempDir, print)
 	UpdateChartDependencies(name, tempDir, print)
 	valuesChain := CreateValuesChain(name, tempDir, packedValues)
@@ -71,6 +72,16 @@ func AddRepository(museum string, print bool) {
 	museumURL := museumSplit[1]
 
 	cmd := fmt.Sprintf("helm repo add %s %s", museumName, museumURL)
+	output := Exec(cmd)
+	if print {
+		fmt.Println(cmd)
+		fmt.Print(output)
+	}
+}
+
+// UpdateRepository updates helm repositories
+func UpdateRepository(print bool) {
+	cmd := fmt.Sprintf("helm repo update")
 	output := Exec(cmd)
 	if print {
 		fmt.Println(cmd)
