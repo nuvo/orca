@@ -20,7 +20,7 @@ func GetBuildTypeByPathFilters(defaultType string, changedPaths, pathFilter []st
 	}
 
 	// Count lines per path filter
-	changedPathsPerFilter, changedPathsPerFilterCount := countLinesPerPathFilter(pathFilter, changedPaths)
+	changedPathsPerFilter, changedPathsPerFilterCount := CountLinesPerPathFilter(pathFilter, changedPaths)
 
 	// If not all paths matched filters - default type
 	if changedPathsPerFilterCount != len(changedPaths) {
@@ -82,8 +82,8 @@ func IsCommitError(commit, commitErrorIndicator string) bool {
 	return commit == commitErrorIndicator
 }
 
-// countLinesPerPathFilter get a list of path filters (regex=type) and counts matches from the paths that were changed
-func countLinesPerPathFilter(pathFilter []string, changedPaths []string) (changedPathsPerFilter map[string]int, changedPathsPerFilterCount int) {
+// CountLinesPerPathFilter get a list of path filters (regex=type) and counts matches from the paths that were changed
+func CountLinesPerPathFilter(pathFilter []string, changedPaths []string) (changedPathsPerFilter map[string]int, changedPathsPerFilterCount int) {
 
 	changedPathsPerFilter = map[string]int{}
 	changedPathsPerFilterCount = 0
