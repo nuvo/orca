@@ -59,14 +59,14 @@ func NewDetermineBuildtype(out io.Writer) *cobra.Command {
 
 	f := cmd.Flags()
 
-	f.StringVar(&d.defaultType, "default-type", "default", "default build type (default: default)")
+	f.StringVar(&d.defaultType, "default-type", "default", "default build type")
 	f.StringSliceVar(&d.pathFilter, "path-filter", []string{}, "path filter (supports multiple), can use regex: path=buildtype")
-	f.BoolVar(&d.allowMultipleTypes, "allow-multiple-types", false, "allow multiple build types (default: false)")
-	f.StringVar(&d.mainRef, "main-ref", "master", "name of the reference which is the main line (default: master)")
-	f.StringVar(&d.releaseRef, "rel-ref", "^.*/rel-.*$", "release reference name (or regex) (default: ^.*/rel-.*$)")
+	f.BoolVar(&d.allowMultipleTypes, "allow-multiple-types", false, "allow multiple build types")
+	f.StringVar(&d.mainRef, "main-ref", "master", "name of the reference which is the main line")
+	f.StringVar(&d.releaseRef, "rel-ref", "^.*/rel-.*$", "release reference name (or regex)")
 	f.StringVar(&d.currentRef, "curr-ref", "", "current reference name")
 	f.StringVar(&d.previousCommit, "prev-commit", "", "previous commit for paths comparison")
-	f.StringVar(&d.previousCommitErrorIndicator, "prev-commit-error", "E", "identify an error with the previous commit by this string (default: E)")
+	f.StringVar(&d.previousCommitErrorIndicator, "prev-commit-error", "E", "identify an error with the previous commit by this string")
 
 	return cmd
 }
