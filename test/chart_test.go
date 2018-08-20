@@ -45,6 +45,20 @@ func TestChartsYamlToStruct(t *testing.T) {
 	}
 }
 
+func TestCheckCircularDependencies(t *testing.T) {
+	file := "data/charts.yaml"
+	circular := utils.CheckCircularDependencies(utils.ChartsYamlToStruct(file, "test"))
+	if circular {
+		t.Errorf("Expected: false, Actual: true")
+	}
+
+	file = "data/circular.yaml"
+	circular = utils.CheckCircularDependencies(utils.ChartsYamlToStruct(file, "test"))
+	if !circular {
+		t.Errorf("Expected: true, Actual: false")
+	}
+}
+
 func TestOverrideReleases(t *testing.T) {
 	rel0 := utils.ReleaseSpec{ChartName: "cassandra", ChartVersion: "0.4.0", ReleaseName: "test-cassandra"}
 	rel1 := utils.ReleaseSpec{ChartName: "mariadb", ChartVersion: "0.5.4", ReleaseName: "test-mariadb"}

@@ -74,6 +74,37 @@ func ChartsYamlToStruct(file, env string) []ReleaseSpec {
 	return charts
 }
 
+func CheckCircularDependencies(releases []ReleaseSpec) bool {
+
+	startLen := len(releases)
+	endLen := -1
+
+	// while a release was processed
+	for startLen != endLen && endLen != 0 {
+		startLen = len(releases)
+		var indexesToRemove []int
+		// find releases to process
+		for i := 0; i < len(releases); i++ {
+			if len(releases[i].Dependencies) != 0 {
+				continue
+			}
+			indexesToRemove = append(indexesToRemove, i)
+		}
+		// "process" the releases
+		for i := len(indexesToRemove) - 1; i >= 0; i-- {
+			releases = RemoveChartFromDependencies(releases, releases[indexesToRemove[i]].ChartName)
+			releases = RemoveChartFromCharts(releases, indexesToRemove[i])
+		}
+		endLen = len(releases)
+	}
+
+	// if there are any releases left to process - there is a circular dependency
+	if endLen != 0 {
+		return true
+	}
+	return false
+}
+
 func OverrideReleases(releases []ReleaseSpec, overrides []string) []ReleaseSpec {
 	var outReleases []ReleaseSpec
 

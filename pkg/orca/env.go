@@ -73,6 +73,9 @@ func NewDeployEnvCmd(out io.Writer) *cobra.Command {
 				utils.CreateNamespace(e.name, e.kubeContext)
 			}
 
+			if circular := utils.CheckCircularDependencies(utils.ChartsYamlToStruct(e.chartsFile, e.name)); circular {
+				log.Fatal("Circular dependency found")
+			}
 			desiredReleases := utils.ChartsYamlToStruct(e.chartsFile, e.name)
 			desiredReleases = utils.OverrideReleases(desiredReleases, e.override)
 			installedReleases := utils.GetInstalledReleases(e.kubeContext, e.name, e.helmTLSStore, e.tls, true, false)
