@@ -19,6 +19,7 @@ build_code:
   # - dep ensure -update
   - glide up -v
   script:
+  - for f in $(find test -type f -name "*.go"); do go test -v $f; done
   - go build -o orca cmd/orca.go
   artifacts:
     paths: [orca]
