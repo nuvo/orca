@@ -49,8 +49,8 @@ func GetInstalledReleases(kubeContext, namespace, helmTLSStore string, tls, only
 	return releaseSpecs
 }
 
-// DeployChartsFromMuseum deploys a list of Helm charts from a museum in parallel
-func DeployChartsFromMuseum(releasesToInstall []ReleaseSpec, kubeContext, namespace, museum, helmTLSStore string, tls bool, packedValues, set []string) {
+// DeployChartsFromRepository deploys a list of Helm charts from a repository in parallel
+func DeployChartsFromRepository(releasesToInstall []ReleaseSpec, kubeContext, namespace, repo, helmTLSStore string, tls bool, packedValues, set []string) {
 
 	var mutex = &sync.Mutex{}
 	var wg sync.WaitGroup
@@ -83,7 +83,7 @@ func DeployChartsFromMuseum(releasesToInstall []ReleaseSpec, kubeContext, namesp
 
 				// deploy chart
 				log.Println("deploying chart", c.ChartName, "version", c.ChartVersion)
-				DeployChartFromMuseum(c.ReleaseName, c.ChartName, c.ChartVersion, kubeContext, namespace, museum, helmTLSStore, tls, packedValues, set, false)
+				DeployChartFromRepository(c.ReleaseName, c.ChartName, c.ChartVersion, kubeContext, namespace, repo, helmTLSStore, tls, packedValues, set, false)
 				log.Println("deployed chart", c.ChartName, "version", c.ChartVersion)
 
 				// Deployment is done, remove chart from dependencies
@@ -99,18 +99,18 @@ func DeployChartsFromMuseum(releasesToInstall []ReleaseSpec, kubeContext, namesp
 	wg.Wait()
 }
 
-// DeployChartFromMuseum deploys a Helm chart from a chart museum
-func DeployChartFromMuseum(releaseName, name, version, kubeContext, namespace, museum, helmTLSStore string, tls bool, packedValues, set []string, isIsolated bool) {
+// DeployChartFromRepository deploys a Helm chart from a chart repository
+func DeployChartFromRepository(releaseName, name, version, kubeContext, namespace, repo, helmTLSStore string, tls bool, packedValues, set []string, isIsolated bool) {
 	tempDir := MkRandomDir()
 
 	if releaseName == "" {
 		releaseName = name
 	}
 	if isIsolated {
-		AddRepository(museum, isIsolated)
-		UpdateRepository(museum, isIsolated)
+		AddRepository(repo, isIsolated)
+		UpdateRepositories(isIsolated)
 	}
-	FetchChart(museum, name, version, tempDir, isIsolated)
+	FetchChart(repo, name, version, tempDir, isIsolated)
 	path := fmt.Sprintf("%s/%s", tempDir, name)
 	UpdateChartDependencies(path, isIsolated)
 	valuesChain := CreateValuesChain(name, tempDir, packedValues)
@@ -119,18 +119,6 @@ func DeployChartFromMuseum(releaseName, name, version, kubeContext, namespace, m
 	UpgradeRelease(name, releaseName, kubeContext, namespace, valuesChain, setChain, tls, helmTLSStore, tempDir, isIsolated)
 
 	os.RemoveAll(tempDir)
-}
-
-// PushChartToMuseum packages and pushes a Helm chart to a chart repository
-func PushChartToMuseum(path, append, museum string, lint, print bool) {
-	newVersion := UpdateChartVersion(path, append)
-	if lint {
-		Lint(path, print)
-	}
-	AddRepository(museum, print)
-	UpdateChartDependencies(path, print)
-	PushChart(museum, path, print)
-	fmt.Println(newVersion)
 }
 
 // List get a list of installed releases in a given namespace
@@ -152,12 +140,12 @@ func Lint(path string, print bool) {
 }
 
 // AddRepository adds a chart repository to the repositories file
-func AddRepository(museum string, print bool) {
-	museumSplit := strings.Split(museum, "=")
-	museumName := museumSplit[0]
-	museumURL := museumSplit[1]
+func AddRepository(repo string, print bool) {
+	repoSplit := strings.Split(repo, "=")
+	repoName := repoSplit[0]
+	repoURL := repoSplit[1]
 
-	cmd := fmt.Sprintf("helm repo add %s %s", museumName, museumURL)
+	cmd := fmt.Sprintf("helm repo add %s %s", repoName, repoURL)
 	output := Exec(cmd)
 	if print {
 		fmt.Println(cmd)
@@ -165,8 +153,8 @@ func AddRepository(museum string, print bool) {
 	}
 }
 
-// UpdateRepository updates helm repositories
-func UpdateRepository(museum string, print bool) {
+// UpdateRepositories updates helm repositories
+func UpdateRepositories(print bool) {
 	cmd := fmt.Sprintf("helm repo update")
 	output := Exec(cmd)
 	if print {
@@ -175,12 +163,12 @@ func UpdateRepository(museum string, print bool) {
 	}
 }
 
-// FetchChart fetches a chart from museum by name and version and untars it in the local directory
-func FetchChart(museum, name, version, dir string, print bool) {
-	museumSplit := strings.Split(museum, "=")
-	museumName := museumSplit[0]
+// FetchChart fetches a chart from chart repository by name and version and untars it in the local directory
+func FetchChart(repo, name, version, dir string, print bool) {
+	repoSplit := strings.Split(repo, "=")
+	repoName := repoSplit[0]
 
-	cmd := fmt.Sprintf("helm fetch %s/%s --version %s --untar -d %s", museumName, name, version, dir)
+	cmd := fmt.Sprintf("helm fetch %s/%s --version %s --untar -d %s", repoName, name, version, dir)
 	output := Exec(cmd)
 	if print {
 		fmt.Println(cmd)
@@ -188,12 +176,24 @@ func FetchChart(museum, name, version, dir string, print bool) {
 	}
 }
 
-// PushChart pushes a helm chart to a chart repository
-func PushChart(museum, path string, print bool) {
-	museumSplit := strings.Split(museum, "=")
-	museumName := museumSplit[0]
+// PushChartToRepository packages and pushes a Helm chart to a chart repository
+func PushChartToRepository(path, append, repo string, lint, print bool) {
+	newVersion := UpdateChartVersion(path, append)
+	if lint {
+		Lint(path, print)
+	}
+	AddRepository(repo, print)
+	UpdateChartDependencies(path, print)
+	PushChart(repo, path, print)
+	fmt.Println(newVersion)
+}
 
-	cmd := fmt.Sprintf("helm push %s %s", path, museumName)
+// PushChart pushes a helm chart to a chart repository
+func PushChart(repo, path string, print bool) {
+	repoSplit := strings.Split(repo, "=")
+	repoName := repoSplit[0]
+
+	cmd := fmt.Sprintf("helm push %s %s", path, repoName)
 	output := Exec(cmd)
 	if print {
 		fmt.Println(cmd)

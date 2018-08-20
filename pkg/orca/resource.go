@@ -77,8 +77,8 @@ func NewGetResourceCmd(out io.Writer) *cobra.Command {
 	f.StringVar(&r.key, "key", "", "find the desired object according to this key")
 	f.StringVar(&r.value, "value", "", "find the desired object according to to key`s value")
 	f.IntVar(&r.offset, "offset", 0, "offset of the desired object from the reference key")
-	f.StringVarP(&r.errorIndicator, "error-indicator", "e", "E", "url to send the request to")
-	f.StringVarP(&r.printKey, "print-key", "p", "", "url to send the request to")
+	f.StringVarP(&r.errorIndicator, "error-indicator", "e", "E", "string indicating an error in the request")
+	f.StringVarP(&r.printKey, "print-key", "p", "", "key to print. If not specified - prints the response")
 
 	return cmd
 }
@@ -98,7 +98,7 @@ func NewDeleteResourceCmd(out io.Writer) *cobra.Command {
 
 	f := cmd.Flags()
 
-	f.StringVar(&r.url, "url", "", "url help")
+	f.StringVar(&r.url, "url", "", "url to send the request to")
 	f.StringSliceVar(&r.headers, "headers", []string{}, "headers of the request (supports multiple)")
 
 	return cmd
