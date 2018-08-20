@@ -51,9 +51,9 @@ func NewGetEnvCmd(out io.Writer) *cobra.Command {
 	f := cmd.Flags()
 
 	f.StringVar(&e.name, "name", "", "name of environment (namespace) to get")
-	f.StringVar(&e.kubeContext, "kube-context", "", "kubernetes context to get from")
-	f.BoolVar(&e.tls, "tls", true, "should use communication over TLS")
-	f.StringVar(&e.helmTLSStore, "helm-tls-store", os.Getenv("HELM_TLS_STORE"), "directory with TLS certs and keys (default $HELM_TLS_STORE)")
+	f.StringVar(&e.kubeContext, "kube-context", "", "name of the kubeconfig context to use")
+	f.BoolVar(&e.tls, "tls", true, "enable TLS for request")
+	f.StringVar(&e.helmTLSStore, "helm-tls-store", os.Getenv("HELM_TLS_STORE"), "path to TLS certs and keys. Overrides $HELM_TLS_STORE")
 	return cmd
 }
 
@@ -95,11 +95,11 @@ func NewDeployEnvCmd(out io.Writer) *cobra.Command {
 	f.StringSliceVar(&e.override, "override", []string{}, "chart to override with different version (can specify multiple): chart=version")
 	f.StringVar(&e.name, "name", "", "name of environment (namespace) to deploy to")
 	f.StringVar(&e.repo, "repo", "", "chart repository (name=url)")
-	f.StringVar(&e.kubeContext, "kube-context", "", "kubernetes context to deploy to")
+	f.StringVar(&e.kubeContext, "kube-context", "", "name of the kubeconfig context to use")
 	f.StringSliceVarP(&e.packedValues, "values", "f", []string{}, "values file to use (packaged within the chart)")
 	f.StringSliceVarP(&e.set, "set", "s", []string{}, "set additional parameters")
-	f.BoolVar(&e.tls, "tls", true, "should use communication over TLS")
-	f.StringVar(&e.helmTLSStore, "helm-tls-store", os.Getenv("HELM_TLS_STORE"), "directory with TLS certs and keys (default $HELM_TLS_STORE)")
+	f.BoolVar(&e.tls, "tls", true, "enable TLS for request")
+	f.StringVar(&e.helmTLSStore, "helm-tls-store", os.Getenv("HELM_TLS_STORE"), "path to TLS certs and keys. Overrides $HELM_TLS_STORE")
 	f.BoolVar(&e.createNS, "create-ns", false, "should create new namespace")
 
 	return cmd
@@ -126,9 +126,9 @@ func NewDeleteEnvCmd(out io.Writer) *cobra.Command {
 	f := cmd.Flags()
 
 	f.StringVar(&e.name, "name", "", "name of environment (namespace) to delete")
-	f.StringVar(&e.kubeContext, "kube-context", "", "kubernetes context to delete in")
-	f.BoolVar(&e.tls, "tls", true, "should use communication over TLS")
-	f.StringVar(&e.helmTLSStore, "helm-tls-store", os.Getenv("HELM_TLS_STORE"), "directory with TLS certs and keys (default $HELM_TLS_STORE)")
+	f.StringVar(&e.kubeContext, "kube-context", "", "name of the kubeconfig context to use")
+	f.BoolVar(&e.tls, "tls", true, "enable TLS for request")
+	f.StringVar(&e.helmTLSStore, "helm-tls-store", os.Getenv("HELM_TLS_STORE"), "path to TLS certs and keys. Overrides $HELM_TLS_STORE")
 
 	return cmd
 }
