@@ -141,9 +141,7 @@ func Lint(path string, print bool) {
 
 // AddRepository adds a chart repository to the repositories file
 func AddRepository(repo string, print bool) {
-	repoSplit := strings.Split(repo, "=")
-	repoName := repoSplit[0]
-	repoURL := repoSplit[1]
+	repoName, repoURL := SplitInTwo(repo, "=")
 
 	cmd := fmt.Sprintf("helm repo add %s %s", repoName, repoURL)
 	output := Exec(cmd)
@@ -165,8 +163,7 @@ func UpdateRepositories(print bool) {
 
 // FetchChart fetches a chart from chart repository by name and version and untars it in the local directory
 func FetchChart(repo, name, version, dir string, print bool) {
-	repoSplit := strings.Split(repo, "=")
-	repoName := repoSplit[0]
+	repoName, _ := SplitInTwo(repo, "=")
 
 	cmd := fmt.Sprintf("helm fetch %s/%s --version %s --untar -d %s", repoName, name, version, dir)
 	output := Exec(cmd)
@@ -190,8 +187,7 @@ func PushChartToRepository(path, append, repo string, lint, print bool) {
 
 // PushChart pushes a helm chart to a chart repository
 func PushChart(repo, path string, print bool) {
-	repoSplit := strings.Split(repo, "=")
-	repoName := repoSplit[0]
+	repoName, _ := SplitInTwo(repo, "=")
 
 	cmd := fmt.Sprintf("helm push %s %s", path, repoName)
 	output := Exec(cmd)

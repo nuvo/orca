@@ -4,7 +4,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"strings"
 )
 
 // PerformRequest performs an HTTP request to a given url with an expected status code (to support testing) and returns the body
@@ -14,8 +13,7 @@ func PerformRequest(method, url string, headers []string, expectedStatusCode int
 		log.Fatal("NewRequest: ", err)
 	}
 	for _, header := range headers {
-		headersSplit := strings.Split(header, ":")
-		header, value := headersSplit[0], headersSplit[1]
+		header, value := SplitInTwo(header, ":")
 		req.Header.Add(header, value)
 	}
 	client := &http.Client{}

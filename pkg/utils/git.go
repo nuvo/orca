@@ -89,9 +89,8 @@ func countLinesPerPathFilter(pathFilter []string, changedPaths []string) (change
 	changedPathsPerFilterCount = 0
 
 	for _, pf := range pathFilter {
-		pfSplit := strings.Split(pf, "=")
-		pfPath, _ := regexp.Compile(pfSplit[0])
-		pfBuildtype := pfSplit[1]
+		pfPathRegex, pfBuildtype := SplitInTwo(pf, "=")
+		pfPath, _ := regexp.Compile(pfPathRegex)
 
 		changedPathsPerFilter[pfBuildtype] = 0
 

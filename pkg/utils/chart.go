@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"strings"
 
 	yaml "gopkg.in/yaml.v2"
 )
@@ -80,9 +79,7 @@ func OverrideReleases(releases []ReleaseSpec, overrides []string) []ReleaseSpec 
 
 	for _, r := range releases {
 		for _, override := range overrides {
-			oSplit := strings.Split(override, "=")
-			oChartName := oSplit[0]
-			oChartVersion := oSplit[1]
+			oChartName, oChartVersion := SplitInTwo(override, "=")
 
 			if r.ChartName == oChartName && r.ChartVersion != oChartVersion {
 				r.ChartName = oChartName
