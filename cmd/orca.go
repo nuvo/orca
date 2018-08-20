@@ -23,7 +23,7 @@ func NewRootCmd(args []string) *cobra.Command {
 		Short: "CI\\CD simplifier",
 		Long: `Orca is a CI\CD simplifier, the glue behind the process.
 Instead of writing scripts on top of scripts, Orca holds all the logic.
-Use it wisely...`,
+`,
 	}
 
 	out := cmd.OutOrStdout()
