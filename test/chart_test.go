@@ -57,7 +57,7 @@ func TestCheckCircularDependencies_True(t *testing.T) {
 		t.Errorf("Expected: true, Actual: false")
 	}
 }
-func TestOverrideReleases(t *testing.T) {
+func TestOverrideReleases_WithOverride(t *testing.T) {
 	rel0 := utils.ReleaseSpec{ChartName: "cassandra", ChartVersion: "0.4.0", ReleaseName: "test-cassandra"}
 	rel1 := utils.ReleaseSpec{ChartName: "mariadb", ChartVersion: "0.5.4", ReleaseName: "test-mariadb"}
 	rel2 := utils.ReleaseSpec{ChartName: "kaa", ChartVersion: "0.1.7", ReleaseName: "test-kaa"}
@@ -68,6 +68,25 @@ func TestOverrideReleases(t *testing.T) {
 	overrideReleases := utils.OverrideReleases(releases, []string{"kaa=7.1.0"})
 
 	if !overrideReleases[2].Equals(rel2override) {
+		t.Errorf("Expected: true, Actual: false")
+	}
+}
+func TestOverrideReleases_WithoutOverride(t *testing.T) {
+	rel0 := utils.ReleaseSpec{ChartName: "cassandra", ChartVersion: "0.4.0", ReleaseName: "test-cassandra"}
+	rel1 := utils.ReleaseSpec{ChartName: "mariadb", ChartVersion: "0.5.4", ReleaseName: "test-mariadb"}
+	rel2 := utils.ReleaseSpec{ChartName: "kaa", ChartVersion: "0.1.7", ReleaseName: "test-kaa"}
+
+	releases := []utils.ReleaseSpec{rel0, rel1, rel2}
+
+	overrideReleases := utils.OverrideReleases(releases, []string{})
+
+	if !overrideReleases[0].Equals(rel0) {
+		t.Errorf("Expected: true, Actual: false")
+	}
+	if !overrideReleases[1].Equals(rel1) {
+		t.Errorf("Expected: true, Actual: false")
+	}
+	if !overrideReleases[2].Equals(rel2) {
 		t.Errorf("Expected: true, Actual: false")
 	}
 }
