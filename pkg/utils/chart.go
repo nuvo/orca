@@ -116,9 +116,8 @@ func OverrideReleases(releases []ReleaseSpec, overrides []string) []ReleaseSpec 
 				r.ChartName = oChartName
 				r.ChartVersion = oChartVersion
 			}
-
-			outReleases = append(outReleases, r)
 		}
+		outReleases = append(outReleases, r)
 	}
 
 	return outReleases
