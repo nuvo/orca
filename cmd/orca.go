@@ -3,8 +3,9 @@ package main
 import (
 	"io"
 	"log"
-	"orca/pkg/orca"
 	"os"
+
+	"github.com/maorfr/orca/pkg/orca"
 
 	"github.com/spf13/cobra"
 )

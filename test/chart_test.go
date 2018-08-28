@@ -1,8 +1,9 @@
 package test
 
 import (
-	"orca/pkg/utils"
 	"testing"
+
+	"github.com/maorfr/orca/pkg/utils"
 )
 
 func TestGetReleasesDelta(t *testing.T) {
