@@ -4,7 +4,7 @@ COPY . .
 RUN apk --no-cache add git glide \
     && glide up \
     && for f in $(find test -type f -name "*.go"); do go test -v $f; done \
-    && CGO_ENABLED=0 GOOS=linux go build -o skbn cmd/skbn.go
+    && CGO_ENABLED=0 GOOS=linux go build -o orca cmd/orca.go
 
 FROM alpine:3.8
 ARG HELM_VERSION=v2.9.1
