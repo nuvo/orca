@@ -1,27 +1,7 @@
 stages:
-  # - build_code
   - build_image
   - tag_image
   - tag_image_latest
-
-# build_code:
-#   except: [tags]
-#   image: golang:1.10.3-alpine
-#   stage: build_code
-#   before_script:
-#   - apk add --no-cache git glide
-#   - export GOPATH=$(dirname $CI_PROJECT_DIR)/go
-#   - mkdir -p $GOPATH/src
-#   - cd $GOPATH/src
-#   - ln -s $CI_PROJECT_DIR
-#   - cd $CI_PROJECT_NAME
-#   - glide up -v
-#   script:
-#   - for f in $(find test -type f -name "*.go"); do go test -v $f; done
-#   - go build -o orca cmd/orca.go
-#   artifacts:
-#     paths: [orca]
-#     expire_in: 1 hrs
 
 .image: &image
   except: [tags]
