@@ -22,6 +22,7 @@ type envCmd struct {
 	helmTLSStore string
 	repo         string
 	createNS     bool
+	onlyManaged  bool
 
 	out io.Writer
 }
@@ -38,9 +39,11 @@ func NewGetEnvCmd(out io.Writer) *cobra.Command {
 			if e.tls && e.helmTLSStore == "" {
 				log.Fatal("TLS is set to true and HELM_TLS_STORE is not defined")
 			}
-			releases := utils.GetInstalledReleases(e.kubeContext, e.name, e.helmTLSStore, e.tls, true, true)
+			releases := utils.GetInstalledReleases(e.kubeContext, e.name, e.helmTLSStore, e.tls, e.onlyManaged, true)
 
-			fmt.Println("charts:")
+			if len(releases) != 0 {
+				fmt.Println("charts:")
+			}
 			for _, r := range releases {
 				fmt.Println("- name:", r.ChartName)
 				fmt.Println("  vesrion:", r.ChartVersion)
@@ -54,6 +57,7 @@ func NewGetEnvCmd(out io.Writer) *cobra.Command {
 	f.StringVar(&e.kubeContext, "kube-context", "", "name of the kubeconfig context to use")
 	f.BoolVar(&e.tls, "tls", true, "enable TLS for request")
 	f.StringVar(&e.helmTLSStore, "helm-tls-store", os.Getenv("HELM_TLS_STORE"), "path to TLS certs and keys. Overrides $HELM_TLS_STORE")
+	f.BoolVar(&e.onlyManaged, "only-managed", true, "list only releases managed by orca")
 	return cmd
 }
 

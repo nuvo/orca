@@ -26,7 +26,7 @@ func GetInstalledReleases(kubeContext, namespace, helmTLSStore string, tls, only
 			continue
 		}
 		if didHeadersRowPass && strings.Trim(line, " ") != "" {
-			if !(onlyManaged && strings.HasPrefix(line, namespace)) {
+			if onlyManaged && !strings.HasPrefix(line, namespace) {
 				continue
 			}
 
@@ -38,9 +38,8 @@ func GetInstalledReleases(kubeContext, namespace, helmTLSStore string, tls, only
 
 			var releaseSpec ReleaseSpec
 			releaseSpec.ReleaseName = words[ReleaseNameCol]
-			releaseSpec.ChartName = strings.TrimLeft(releaseSpec.ReleaseName, namespace) // Strange behavior when replacing namespace+"-"
-			releaseSpec.ChartName = strings.TrimLeft(releaseSpec.ChartName, "-")
-			releaseSpec.ChartVersion = strings.TrimLeft(words[VersionCol], releaseSpec.ChartName+"-")
+			releaseSpec.ChartVersion = strings.TrimLeft(words[VersionCol], releaseSpec.ReleaseName+"-")
+			releaseSpec.ChartName = strings.TrimRight(words[VersionCol], "-"+releaseSpec.ChartVersion)
 
 			releaseSpecs = append(releaseSpecs, releaseSpec)
 		}
