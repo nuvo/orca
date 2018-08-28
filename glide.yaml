@@ -1,7 +1,4 @@
-package: orca
-ignore:
-- orca/pkg/orca
-- orca/pkg/utils
+package: github.com/maorfr/orca
 import:
 - package: github.com/spf13/cobra
   version: v0.0.3
