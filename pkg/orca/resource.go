@@ -57,7 +57,7 @@ func NewGetResourceCmd(out io.Writer) *cobra.Command {
 				fmt.Println(r.errorIndicator)
 				return
 			}
-			if desiredIndex+r.offset > len(data) {
+			if desiredIndex+r.offset >= len(data) {
 				fmt.Println(r.errorIndicator)
 				return
 			}
