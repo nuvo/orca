@@ -51,6 +51,7 @@ func NewGetResourceCmd(out io.Writer) *cobra.Command {
 			for i := 0; i < len(data); i++ {
 				if data[i][r.key] == r.value {
 					desiredIndex = i
+					break
 				}
 			}
 			if desiredIndex == -1 {
