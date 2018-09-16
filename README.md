@@ -38,6 +38,37 @@ get resource            Get a resource from REST API
 push chart              Push Helm chart to chart repository
 ```
 
+## Why should you use Orca?
+
+* If you want to create environments dynamically (as part of a Pull Request for example) -
+
+```
+# Get the "stable" environment (this could be production)
+orca get env --name $SRC_RELEASE_NS --kube-context $SRC_KUBE_CONTEXT > charts.yaml
+# Deploy the same configuration to a new namespace (you can override specific versions to have a great test environment)
+orca deploy env --name $COMMIT_HASH -c charts.yaml --kube-context $DST_KUBE_CONTEXT --override $CHART_NAME=$CHART_TEST_VERSION
+```
+
+* If you want to achieve different CI processes depending on changed paths -
+
+```
+# Get the previous pipeline`s commit
+orca get resource --url $PIPELINES_API_URL --headers "PRIVATE-TOKEN:$USER_TOKEN" --key sha --value $CI_COMMIT_SHA --offset 1 -p sha > previous_pipeline_commit
+# Determine the build type based on path filters
+orca determine buildtype --default-type code --path-filter ^config.*$=config --prev-commit $(cat previous_pipeline_commit) > .buildtype
+```
+
+* If you want to delete a resource through REST API by ID, but only have the name of the resource -
+```
+# Get the resource ID
+ID=$(orca get resource --url $API_URL --headers "PRIVATE-TOKEN:$USER_TOKEN" --key name --value $NAME -p id)
+# Delete the resouce
+orca delete resource --url $API_URL/$ENV_ID --headers "PRIVATE-TOKEN:$USER_TOKEN"
+```
+
+See the Examples section for more examples!
+
+
 ## Examples
 
 ### Build type determination
@@ -140,3 +171,4 @@ orca deploy env \
     --kube-context <kubeContext> \
     -f prod-values.yaml
 ```
+
