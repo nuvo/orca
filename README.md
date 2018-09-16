@@ -63,7 +63,7 @@ orca determine buildtype --default-type code --path-filter ^config.*$=config --p
 # Get the resource ID
 ID=$(orca get resource --url $API_URL --headers "PRIVATE-TOKEN:$USER_TOKEN" --key name --value $NAME -p id)
 # Delete the resouce
-orca delete resource --url $API_URL/$ENV_ID --headers "PRIVATE-TOKEN:$USER_TOKEN"
+orca delete resource --url $API_URL/$ID --headers "PRIVATE-TOKEN:$USER_TOKEN"
 ```
 
 See the Examples section for more examples!
