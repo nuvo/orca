@@ -10,7 +10,12 @@ Orca is a simplifier. It focuses on the world around Kubernetes and CI\CD, but i
 2. [glide](https://github.com/Masterminds/glide)
 3. [helm](https://helm.sh/) (required for runtime)
 
-### Install from source
+### Install
+```
+wget -qO- https://github.com/maorfr/orca/releases/download/0.1.3/orca.tar.gz | sudo tar xvz -C /usr/local/bin
+
+```
+### Build from source
 
 Orca uses glide as a dependency management tool, since some of the referenced packages are not available using [dep](https://github.com/golang/dep).
 
