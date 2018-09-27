@@ -219,8 +219,8 @@ func PrintReleasesYaml(releases []ReleaseSpec) {
 
 func PrintReleasesMarkdown(releases []ReleaseSpec) {
 	if len(releases) != 0 {
-		fmt.Println("| Component | Version |")
-		fmt.Println("|-----------|---------|")
+		fmt.Println("| Name | Version |")
+		fmt.Println("|------|---------|")
 	}
 	for _, r := range releases {
 		fmt.Println(fmt.Sprintf("| %s | %s |", r.ChartName, r.ChartVersion))
