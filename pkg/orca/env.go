@@ -1,7 +1,6 @@
 package orca
 
 import (
-	"fmt"
 	"io"
 	"log"
 	"os"
@@ -23,6 +22,7 @@ type envCmd struct {
 	repo         string
 	createNS     bool
 	onlyManaged  bool
+	output       string
 
 	out io.Writer
 }
@@ -41,12 +41,11 @@ func NewGetEnvCmd(out io.Writer) *cobra.Command {
 			}
 			releases := utils.GetInstalledReleases(e.kubeContext, e.name, e.helmTLSStore, e.tls, e.onlyManaged, true)
 
-			if len(releases) != 0 {
-				fmt.Println("charts:")
-			}
-			for _, r := range releases {
-				fmt.Println("- name:", r.ChartName)
-				fmt.Println("  vesrion:", r.ChartVersion)
+			switch e.output {
+			case "yaml":
+				utils.PrintReleasesYaml(releases)
+			case "md":
+				utils.PrintReleasesMarkdown(releases)
 			}
 		},
 	}
@@ -58,6 +57,7 @@ func NewGetEnvCmd(out io.Writer) *cobra.Command {
 	f.BoolVar(&e.tls, "tls", true, "enable TLS for request")
 	f.StringVar(&e.helmTLSStore, "helm-tls-store", os.Getenv("HELM_TLS_STORE"), "path to TLS certs and keys. Overrides $HELM_TLS_STORE")
 	f.BoolVar(&e.onlyManaged, "only-managed", true, "list only releases managed by orca")
+	f.StringVarP(&e.output, "output", "o", "yaml", "output format (yaml, md)")
 	return cmd
 }
 

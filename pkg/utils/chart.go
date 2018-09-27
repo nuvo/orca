@@ -206,3 +206,23 @@ func (a ReleaseSpec) Equals(b ReleaseSpec) bool {
 
 	return equals
 }
+
+func PrintReleasesYaml(releases []ReleaseSpec) {
+	if len(releases) != 0 {
+		fmt.Println("charts:")
+	}
+	for _, r := range releases {
+		fmt.Println("- name:", r.ChartName)
+		fmt.Println("  vesrion:", r.ChartVersion)
+	}
+}
+
+func PrintReleasesMarkdown(releases []ReleaseSpec) {
+	if len(releases) != 0 {
+		fmt.Println("| Component | Version |")
+		fmt.Println("|-----------|---------|")
+	}
+	for _, r := range releases {
+		fmt.Println(fmt.Sprintf("| %s | %s |", r.ChartName, r.ChartVersion))
+	}
+}
