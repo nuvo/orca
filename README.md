@@ -172,3 +172,14 @@ orca deploy env \
     -f prod-values.yaml
 ```
 
+## Credentials
+
+
+### Kubernetes
+
+Orca tries to get credentials in the following order:
+1. if `KUBECONFIG` environment variable is set - orca will use the current context from that config file
+2. if `~/.kube/config` exists - orca will use the current context from that config file with an [out-of-cluster client configuration](https://github.com/kubernetes/client-go/tree/master/examples/out-of-cluster-client-configuration)
+3. if `~/.kube/config` does not exist - orca will assume it is working from inside a pod and will use an [in-cluster client configuration](https://github.com/kubernetes/client-go/tree/master/examples/in-cluster-client-configuration)
+
+
