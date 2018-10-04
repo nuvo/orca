@@ -54,7 +54,7 @@ func NewGetEnvCmd(out io.Writer) *cobra.Command {
 
 	f.StringVar(&e.name, "name", "", "name of environment (namespace) to get")
 	f.StringVar(&e.kubeContext, "kube-context", "", "name of the kubeconfig context to use")
-	f.BoolVar(&e.tls, "tls", true, "enable TLS for request")
+	f.BoolVar(&e.tls, "tls", utils.IsEnvVarTrue("ORCA_TLS"), "enable TLS for request")
 	f.StringVar(&e.helmTLSStore, "helm-tls-store", os.Getenv("HELM_TLS_STORE"), "path to TLS certs and keys. Overrides $HELM_TLS_STORE")
 	f.BoolVar(&e.onlyManaged, "only-managed", true, "list only releases managed by orca")
 	f.StringVarP(&e.output, "output", "o", "yaml", "output format (yaml, md)")
@@ -105,7 +105,7 @@ func NewDeployEnvCmd(out io.Writer) *cobra.Command {
 	f.StringVar(&e.kubeContext, "kube-context", "", "name of the kubeconfig context to use")
 	f.StringSliceVarP(&e.packedValues, "values", "f", []string{}, "values file to use (packaged within the chart)")
 	f.StringSliceVarP(&e.set, "set", "s", []string{}, "set additional parameters")
-	f.BoolVar(&e.tls, "tls", true, "enable TLS for request")
+	f.BoolVar(&e.tls, "tls", utils.IsEnvVarTrue("ORCA_TLS"), "enable TLS for request")
 	f.StringVar(&e.helmTLSStore, "helm-tls-store", os.Getenv("HELM_TLS_STORE"), "path to TLS certs and keys. Overrides $HELM_TLS_STORE")
 	f.BoolVar(&e.createNS, "create-ns", false, "should create new namespace")
 
@@ -134,7 +134,7 @@ func NewDeleteEnvCmd(out io.Writer) *cobra.Command {
 
 	f.StringVar(&e.name, "name", "", "name of environment (namespace) to delete")
 	f.StringVar(&e.kubeContext, "kube-context", "", "name of the kubeconfig context to use")
-	f.BoolVar(&e.tls, "tls", true, "enable TLS for request")
+	f.BoolVar(&e.tls, "tls", utils.IsEnvVarTrue("ORCA_TLS"), "enable TLS for request")
 	f.StringVar(&e.helmTLSStore, "helm-tls-store", os.Getenv("HELM_TLS_STORE"), "path to TLS certs and keys. Overrides $HELM_TLS_STORE")
 
 	return cmd

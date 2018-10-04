@@ -51,7 +51,7 @@ func NewDeployChartCmd(out io.Writer) *cobra.Command {
 	f.StringVarP(&c.namespace, "namespace", "n", "", "kubernetes namespace to deploy to")
 	f.StringSliceVarP(&c.packedValues, "values", "f", []string{}, "values file to use (packaged within the chart)")
 	f.StringSliceVarP(&c.set, "set", "s", []string{}, "set additional parameters")
-	f.BoolVar(&c.tls, "tls", true, "enable TLS for request")
+	f.BoolVar(&c.tls, "tls", utils.IsEnvVarTrue("ORCA_TLS"), "enable TLS for request")
 	f.StringVar(&c.helmTLSStore, "helm-tls-store", os.Getenv("HELM_TLS_STORE"), "path to TLS certs and keys. Overrides $HELM_TLS_STORE")
 
 	return cmd

@@ -61,3 +61,8 @@ func SplitInTwo(s, sep string) (string, string) {
 	split := strings.Split(s, sep)
 	return split[0], split[1]
 }
+
+// IsEnvVarTrue returns true if the specified environment variable is set to true
+func IsEnvVarTrue(name string) bool {
+	return strings.ToLower(os.Getenv(name)) == "true"
+}
