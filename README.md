@@ -12,7 +12,7 @@ Orca is a simplifier. It focuses on the world around Kubernetes and CI\CD, but i
 
 ### Install
 ```
-wget -qO- https://github.com/maorfr/orca/releases/download/0.1.3/orca.tar.gz | sudo tar xvz -C /usr/local/bin
+wget -qO- https://github.com/maorfr/orca/releases/download/0.1.5/orca.tar.gz | sudo tar xvz -C /usr/local/bin
 
 ```
 ### Build from source
