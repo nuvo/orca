@@ -240,11 +240,13 @@ func CreateSetChain(name string, inputSet []string) string {
 
 // UpgradeRelease performs helm upgrade -i
 func UpgradeRelease(name, releaseName, kubeContext, namespace, values, set string, tls bool, helmTLSStore, dir string, print, inject bool) {
-	injectStr := ""
+	var injectStr string
+	kubeContextFlag := "kube-context"
 	if inject {
 		injectStr = "inject "
+		kubeContextFlag = "kubecontext"
 	}
-	cmd := fmt.Sprintf("helm %supgrade%s -i %s --kube-context %s --namespace %s%s%s %s/%s", injectStr, getTLS(tls, kubeContext, helmTLSStore), releaseName, kubeContext, namespace, values, set, dir, name)
+	cmd := fmt.Sprintf("helm %supgrade%s -i %s --%s %s --namespace %s%s%s %s/%s", injectStr, getTLS(tls, kubeContext, helmTLSStore), releaseName, kubeContextFlag, kubeContext, namespace, values, set, dir, name)
 	output := Exec(cmd)
 	if print {
 		fmt.Println(cmd)
