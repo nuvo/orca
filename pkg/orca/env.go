@@ -23,6 +23,7 @@ type envCmd struct {
 	createNS     bool
 	onlyManaged  bool
 	output       string
+	inject       bool
 
 	out io.Writer
 }
@@ -87,7 +88,7 @@ func NewDeployEnvCmd(out io.Writer) *cobra.Command {
 
 			utils.AddRepository(e.repo, false)
 			utils.UpdateRepositories(false)
-			utils.DeployChartsFromRepository(releasesToInstall, e.kubeContext, e.name, e.repo, e.helmTLSStore, e.tls, e.packedValues, e.set)
+			utils.DeployChartsFromRepository(releasesToInstall, e.kubeContext, e.name, e.repo, e.helmTLSStore, e.tls, e.packedValues, e.set, e.inject)
 
 			installedReleases = utils.GetInstalledReleases(e.kubeContext, e.name, e.helmTLSStore, e.tls, true, false)
 			releasesToDelete := utils.GetReleasesDelta(installedReleases, desiredReleases)
@@ -108,6 +109,7 @@ func NewDeployEnvCmd(out io.Writer) *cobra.Command {
 	f.BoolVar(&e.tls, "tls", utils.IsEnvVarTrue("ORCA_TLS"), "enable TLS for request")
 	f.StringVar(&e.helmTLSStore, "helm-tls-store", os.Getenv("HELM_TLS_STORE"), "path to TLS certs and keys. Overrides $HELM_TLS_STORE")
 	f.BoolVar(&e.createNS, "create-ns", false, "should create new namespace")
+	f.BoolVar(&e.inject, "inject", false, "enable injection during helm upgrade")
 
 	return cmd
 }

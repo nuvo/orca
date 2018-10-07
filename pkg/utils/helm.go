@@ -49,7 +49,7 @@ func GetInstalledReleases(kubeContext, namespace, helmTLSStore string, tls, only
 }
 
 // DeployChartsFromRepository deploys a list of Helm charts from a repository in parallel
-func DeployChartsFromRepository(releasesToInstall []ReleaseSpec, kubeContext, namespace, repo, helmTLSStore string, tls bool, packedValues, set []string) {
+func DeployChartsFromRepository(releasesToInstall []ReleaseSpec, kubeContext, namespace, repo, helmTLSStore string, tls bool, packedValues, set []string, inject bool) {
 
 	var mutex = &sync.Mutex{}
 	var wg sync.WaitGroup
@@ -82,7 +82,7 @@ func DeployChartsFromRepository(releasesToInstall []ReleaseSpec, kubeContext, na
 
 				// deploy chart
 				log.Println("deploying chart", c.ChartName, "version", c.ChartVersion)
-				DeployChartFromRepository(c.ReleaseName, c.ChartName, c.ChartVersion, kubeContext, namespace, repo, helmTLSStore, tls, packedValues, set, false)
+				DeployChartFromRepository(c.ReleaseName, c.ChartName, c.ChartVersion, kubeContext, namespace, repo, helmTLSStore, tls, packedValues, set, false, inject)
 				log.Println("deployed chart", c.ChartName, "version", c.ChartVersion)
 
 				// Deployment is done, remove chart from dependencies
@@ -99,7 +99,7 @@ func DeployChartsFromRepository(releasesToInstall []ReleaseSpec, kubeContext, na
 }
 
 // DeployChartFromRepository deploys a Helm chart from a chart repository
-func DeployChartFromRepository(releaseName, name, version, kubeContext, namespace, repo, helmTLSStore string, tls bool, packedValues, set []string, isIsolated bool) {
+func DeployChartFromRepository(releaseName, name, version, kubeContext, namespace, repo, helmTLSStore string, tls bool, packedValues, set []string, isIsolated, inject bool) {
 	tempDir := MkRandomDir()
 
 	if releaseName == "" {
@@ -115,7 +115,7 @@ func DeployChartFromRepository(releaseName, name, version, kubeContext, namespac
 	valuesChain := CreateValuesChain(name, tempDir, packedValues)
 	setChain := CreateSetChain(name, set)
 
-	UpgradeRelease(name, releaseName, kubeContext, namespace, valuesChain, setChain, tls, helmTLSStore, tempDir, isIsolated)
+	UpgradeRelease(name, releaseName, kubeContext, namespace, valuesChain, setChain, tls, helmTLSStore, tempDir, isIsolated, inject)
 
 	os.RemoveAll(tempDir)
 }
@@ -239,8 +239,12 @@ func CreateSetChain(name string, inputSet []string) string {
 }
 
 // UpgradeRelease performs helm upgrade -i
-func UpgradeRelease(name, releaseName, kubeContext, namespace, values, set string, tls bool, helmTLSStore, dir string, print bool) {
-	cmd := fmt.Sprintf("helm upgrade%s -i %s --kube-context %s --namespace %s%s%s %s/%s", getTLS(tls, kubeContext, helmTLSStore), releaseName, kubeContext, namespace, values, set, dir, name)
+func UpgradeRelease(name, releaseName, kubeContext, namespace, values, set string, tls bool, helmTLSStore, dir string, print, inject bool) {
+	injectStr := ""
+	if inject {
+		injectStr = "inject "
+	}
+	cmd := fmt.Sprintf("helm %supgrade%s -i %s --kube-context %s --namespace %s%s%s %s/%s", injectStr, getTLS(tls, kubeContext, helmTLSStore), releaseName, kubeContext, namespace, values, set, dir, name)
 	output := Exec(cmd)
 	if print {
 		fmt.Println(cmd)

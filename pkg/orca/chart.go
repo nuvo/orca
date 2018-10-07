@@ -21,6 +21,7 @@ type chartCmd struct {
 	tls          bool
 	helmTLSStore string
 	repo         string
+	inject       bool
 
 	out io.Writer
 }
@@ -37,7 +38,7 @@ func NewDeployChartCmd(out io.Writer) *cobra.Command {
 			if c.tls && c.helmTLSStore == "" {
 				log.Fatal("TLS is set to true and HELM_TLS_STORE is not defined")
 			}
-			utils.DeployChartFromRepository(c.releaseName, c.name, c.version, c.kubeContext, c.namespace, c.repo, c.helmTLSStore, c.tls, c.packedValues, c.set, true)
+			utils.DeployChartFromRepository(c.releaseName, c.name, c.version, c.kubeContext, c.namespace, c.repo, c.helmTLSStore, c.tls, c.packedValues, c.set, true, c.inject)
 		},
 	}
 
@@ -53,6 +54,7 @@ func NewDeployChartCmd(out io.Writer) *cobra.Command {
 	f.StringSliceVarP(&c.set, "set", "s", []string{}, "set additional parameters")
 	f.BoolVar(&c.tls, "tls", utils.IsEnvVarTrue("ORCA_TLS"), "enable TLS for request")
 	f.StringVar(&c.helmTLSStore, "helm-tls-store", os.Getenv("HELM_TLS_STORE"), "path to TLS certs and keys. Overrides $HELM_TLS_STORE")
+	f.BoolVar(&c.inject, "inject", false, "enable injection during helm upgrade")
 
 	return cmd
 }
