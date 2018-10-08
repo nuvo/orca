@@ -34,6 +34,7 @@ Instead of writing scripts on top of scripts, Orca holds all the logic.
 	cmd.AddCommand(NewDetermineCmd(out))
 	cmd.AddCommand(NewGetCmd(out))
 	cmd.AddCommand(NewPushCmd(out))
+	cmd.AddCommand(NewPostCmd(out))
 
 	return cmd
 }
@@ -102,6 +103,19 @@ func NewPushCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd.AddCommand(orca.NewPushChartCmd(out))
+
+	return cmd
+}
+
+// NewPostCmd represents the post command
+func NewPostCmd(out io.Writer) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "post",
+		Short: "Post functions",
+		Long:  ``,
+	}
+
+	cmd.AddCommand(orca.NewPostResourceCmd(out))
 
 	return cmd
 }

@@ -84,6 +84,27 @@ func NewGetResourceCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
+// NewPostResourceCmd represents the post resource command
+func NewPostResourceCmd(out io.Writer) *cobra.Command {
+	r := &resourceCmd{out: out}
+
+	cmd := &cobra.Command{
+		Use:   "resource",
+		Short: "Post a resource to REST API",
+		Long:  ``,
+		Run: func(cmd *cobra.Command, args []string) {
+			utils.PerformRequest("POST", r.url, r.headers, 201)
+		},
+	}
+
+	f := cmd.Flags()
+
+	f.StringVar(&r.url, "url", "", "url to send the request to")
+	f.StringSliceVar(&r.headers, "headers", []string{}, "headers of the request (supports multiple)")
+
+	return cmd
+}
+
 // NewDeleteResourceCmd represents the delete resource command
 func NewDeleteResourceCmd(out io.Writer) *cobra.Command {
 	r := &resourceCmd{out: out}
