@@ -36,6 +36,7 @@ determine buildtype     Determine build type based on path filters
 get env                 Get list of Helm releases in an environment (Kubernetes namespace)
 get resource            Get a resource from REST API
 push chart              Push Helm chart to chart repository
+post resource           Post a resource to REST API
 ```
 
 ## Why should you use Orca?
