@@ -60,7 +60,7 @@ func NewDeployChartCmd(out io.Writer) *cobra.Command {
 	f.StringSliceVarP(&c.set, "set", "s", []string{}, "set additional parameters")
 	f.BoolVar(&c.tls, "tls", utils.GetBoolEnvVar("ORCA_TLS", false), "enable TLS for request. Overrides $ORCA_TLS")
 	f.StringVar(&c.helmTLSStore, "helm-tls-store", os.Getenv("HELM_TLS_STORE"), "path to TLS certs and keys. Overrides $HELM_TLS_STORE")
-	f.BoolVar(&c.inject, "inject", utils.GetBoolEnvVar("ORCA_INJECT", false), "enable injection during helm upgrade. Overrides $ORCA_INJECT")
+	f.BoolVar(&c.inject, "inject", utils.GetBoolEnvVar("ORCA_INJECT", false), "enable injection during helm upgrade. Overrides $ORCA_INJECT (requires helm inject plugin: https://github.com/maorfr/helm-inject)")
 
 	return cmd
 }
@@ -80,7 +80,7 @@ func NewPushChartCmd(out io.Writer) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "chart",
-		Short: "Push Helm chart to chart repository",
+		Short: "Push Helm chart to chart repository (requires helm push plugin: https://github.com/chartmuseum/helm-push)",
 		Long:  ``,
 		Args: func(cmd *cobra.Command, args []string) error {
 			if c.repo == "" {
