@@ -20,7 +20,8 @@ wget -qO- https://github.com/maorfr/orca/releases/download/0.1.5/orca.tar.gz | s
 Orca uses glide as a dependency management tool, since some of the referenced packages are not available using [dep](https://github.com/golang/dep).
 
 ```
-glide up -v
+go get -u github.com/Masterminds/glide
+glide install --strip-vendor
 go build -o orca cmd/orca.go
 ```
 
