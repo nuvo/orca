@@ -21,6 +21,7 @@ type resourceCmd struct {
 	offset         int
 	errorIndicator string
 	printKey       string
+	method         string
 	update         bool
 
 	out io.Writer
@@ -95,9 +96,9 @@ func NewCreateResourceCmd(out io.Writer) *cobra.Command {
 		Short: "Create or update a resource in REST API",
 		Long:  ``,
 		Run: func(cmd *cobra.Command, args []string) {
-			method := "POST"
+			method := r.method
 			if r.update {
-				method = "PUT"
+				method = "PATCH"
 			}
 			utils.PerformRequest(method, r.url, r.headers, 201)
 		},
@@ -106,6 +107,7 @@ func NewCreateResourceCmd(out io.Writer) *cobra.Command {
 	f := cmd.Flags()
 
 	f.StringVar(&r.url, "url", os.Getenv("ORCA_URL"), "url to send the request to. Overrides $ORCA_URL")
+	f.StringVar(&r.method, "method", utils.GetStringEnvVar("ORCA_METHOD", "POST"), "method to use in the request. Overrides $ORCA_METHOD")
 	f.BoolVar(&r.update, "update", utils.GetBoolEnvVar("ORCA_UPDATE", false), "should method be PUT instead of POST. Overrides $ORCA_UPDATE")
 	f.StringSliceVar(&r.headers, "headers", []string{}, "headers of the request (supports multiple)")
 
