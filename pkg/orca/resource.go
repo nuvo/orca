@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"os"
 	"strings"
 
 	"github.com/maorfr/orca/pkg/utils"
@@ -20,6 +21,7 @@ type resourceCmd struct {
 	offset         int
 	errorIndicator string
 	printKey       string
+	update         bool
 
 	out io.Writer
 }
@@ -73,33 +75,38 @@ func NewGetResourceCmd(out io.Writer) *cobra.Command {
 
 	f := cmd.Flags()
 
-	f.StringVar(&r.url, "url", "", "url to send the request to")
+	f.StringVar(&r.url, "url", os.Getenv("ORCA_URL"), "url to send the request to. Overrides $ORCA_URL")
 	f.StringSliceVar(&r.headers, "headers", []string{}, "headers of the request (supports multiple)")
-	f.StringVar(&r.key, "key", "", "find the desired object according to this key")
-	f.StringVar(&r.value, "value", "", "find the desired object according to to key`s value")
-	f.IntVar(&r.offset, "offset", 0, "offset of the desired object from the reference key")
-	f.StringVarP(&r.errorIndicator, "error-indicator", "e", "E", "string indicating an error in the request")
-	f.StringVarP(&r.printKey, "print-key", "p", "", "key to print. If not specified - prints the response")
+	f.StringVar(&r.key, "key", os.Getenv("ORCA_KEY"), "find the desired object according to this key. Overrides $ORCA_KEY")
+	f.StringVar(&r.value, "value", os.Getenv("ORCA_VALUE"), "find the desired object according to to key`s value. Overrides $ORCA_VALUE")
+	f.IntVar(&r.offset, "offset", utils.GetIntEnvVar("ORCA_OFFSET", 0), "offset of the desired object from the reference key. Overrides $ORCA_OFFSET")
+	f.StringVarP(&r.errorIndicator, "error-indicator", "e", utils.GetStringEnvVar("ORCA_ERROR_INDICATOR", "E"), "string indicating an error in the request. Overrides $ORCA_ERROR_INDICATOR")
+	f.StringVarP(&r.printKey, "print-key", "p", os.Getenv("ORCA_PRINT_KEY"), "key to print. If not specified - prints the response. Overrides $ORCA_PRINT_KEY")
 
 	return cmd
 }
 
-// NewPostResourceCmd represents the post resource command
-func NewPostResourceCmd(out io.Writer) *cobra.Command {
+// NewCreateResourceCmd represents the create resource command
+func NewCreateResourceCmd(out io.Writer) *cobra.Command {
 	r := &resourceCmd{out: out}
 
 	cmd := &cobra.Command{
 		Use:   "resource",
-		Short: "Post a resource to REST API",
+		Short: "Create or update a resource in REST API",
 		Long:  ``,
 		Run: func(cmd *cobra.Command, args []string) {
-			utils.PerformRequest("POST", r.url, r.headers, 201)
+			method := "POST"
+			if r.update {
+				method = "PUT"
+			}
+			utils.PerformRequest(method, r.url, r.headers, 201)
 		},
 	}
 
 	f := cmd.Flags()
 
-	f.StringVar(&r.url, "url", "", "url to send the request to")
+	f.StringVar(&r.url, "url", os.Getenv("ORCA_URL"), "url to send the request to. Overrides $ORCA_URL")
+	f.BoolVar(&r.update, "update", utils.GetBoolEnvVar("ORCA_UPDATE", false), "should method be PUT instead of POST. Overrides $ORCA_UPDATE")
 	f.StringSliceVar(&r.headers, "headers", []string{}, "headers of the request (supports multiple)")
 
 	return cmd
@@ -120,7 +127,7 @@ func NewDeleteResourceCmd(out io.Writer) *cobra.Command {
 
 	f := cmd.Flags()
 
-	f.StringVar(&r.url, "url", "", "url to send the request to")
+	f.StringVar(&r.url, "url", os.Getenv("ORCA_URL"), "url to send the request to. Overrides $ORCA_URL")
 	f.StringSliceVar(&r.headers, "headers", []string{}, "headers of the request (supports multiple)")
 
 	return cmd

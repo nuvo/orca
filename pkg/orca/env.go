@@ -1,8 +1,8 @@
 package orca
 
 import (
+	"errors"
 	"io"
-	"log"
 	"os"
 
 	"github.com/maorfr/orca/pkg/utils"
@@ -36,10 +36,13 @@ func NewGetEnvCmd(out io.Writer) *cobra.Command {
 		Use:   "env",
 		Short: "Get list of Helm releases in an environment (Kubernetes namespace)",
 		Long:  ``,
-		Run: func(cmd *cobra.Command, args []string) {
+		Args: func(cmd *cobra.Command, args []string) error {
 			if e.tls && e.helmTLSStore == "" {
-				log.Fatal("TLS is set to true and HELM_TLS_STORE is not defined")
+				return errors.New("TLS is set to true and HELM_TLS_STORE is not defined")
 			}
+			return nil
+		},
+		Run: func(cmd *cobra.Command, args []string) {
 			releases := utils.GetInstalledReleases(e.kubeContext, e.name, e.helmTLSStore, e.tls, e.onlyManaged, true)
 
 			switch e.output {
@@ -47,18 +50,20 @@ func NewGetEnvCmd(out io.Writer) *cobra.Command {
 				utils.PrintReleasesYaml(releases)
 			case "md":
 				utils.PrintReleasesMarkdown(releases)
+			case "":
+				utils.PrintReleasesYaml(releases)
 			}
 		},
 	}
 
 	f := cmd.Flags()
 
-	f.StringVar(&e.name, "name", "", "name of environment (namespace) to get")
-	f.StringVar(&e.kubeContext, "kube-context", "", "name of the kubeconfig context to use")
-	f.BoolVar(&e.tls, "tls", utils.IsEnvVarTrue("ORCA_TLS"), "enable TLS for request")
+	f.StringVar(&e.name, "name", os.Getenv("ORCA_NAME"), "name of environment (namespace) to get. Overrides $ORCA_NAME")
+	f.StringVar(&e.kubeContext, "kube-context", os.Getenv("ORCA_KUBE_CONTEXT"), "name of the kubeconfig context to use. Overrides $ORCA_KUBE_CONTEXT")
+	f.BoolVar(&e.tls, "tls", utils.GetBoolEnvVar("ORCA_TLS", false), "enable TLS for request. Overrides $ORCA_TLS")
 	f.StringVar(&e.helmTLSStore, "helm-tls-store", os.Getenv("HELM_TLS_STORE"), "path to TLS certs and keys. Overrides $HELM_TLS_STORE")
-	f.BoolVar(&e.onlyManaged, "only-managed", true, "list only releases managed by orca")
-	f.StringVarP(&e.output, "output", "o", "yaml", "output format (yaml, md)")
+	f.BoolVar(&e.onlyManaged, "only-managed", utils.GetBoolEnvVar("ORCA_ONLY_MANAGED", true), "list only releases managed by orca. Overrides $ORCA_ONLY_MANAGED")
+	f.StringVarP(&e.output, "output", "o", os.Getenv("ORCA_OUTPUT"), "output format (yaml, md). Overrides $ORCA_OUTPUT")
 	return cmd
 }
 
@@ -70,17 +75,20 @@ func NewDeployEnvCmd(out io.Writer) *cobra.Command {
 		Use:   "env",
 		Short: "Deploy a list of Helm charts to an environment (Kubernetes namespace)",
 		Long:  ``,
-		Run: func(cmd *cobra.Command, args []string) {
+		Args: func(cmd *cobra.Command, args []string) error {
 			if e.tls && e.helmTLSStore == "" {
-				log.Fatal("TLS is set to true and HELM_TLS_STORE is not defined")
+				return errors.New("TLS is set to true and HELM_TLS_STORE is not defined")
 			}
+			if circular := utils.CheckCircularDependencies(utils.ChartsYamlToStruct(e.chartsFile, e.name)); circular {
+				return errors.New("Circular dependency found")
+			}
+			return nil
+		},
+		Run: func(cmd *cobra.Command, args []string) {
 			if e.createNS {
 				utils.CreateNamespace(e.name, e.kubeContext)
 			}
 
-			if circular := utils.CheckCircularDependencies(utils.ChartsYamlToStruct(e.chartsFile, e.name)); circular {
-				log.Fatal("Circular dependency found")
-			}
 			desiredReleases := utils.ChartsYamlToStruct(e.chartsFile, e.name)
 			desiredReleases = utils.OverrideReleases(desiredReleases, e.override)
 			installedReleases := utils.GetInstalledReleases(e.kubeContext, e.name, e.helmTLSStore, e.tls, true, false)
@@ -99,17 +107,17 @@ func NewDeployEnvCmd(out io.Writer) *cobra.Command {
 
 	f := cmd.Flags()
 
-	f.StringVarP(&e.chartsFile, "charts-file", "c", "", "path to file with list of Helm charts to install")
+	f.StringVarP(&e.chartsFile, "charts-file", "c", os.Getenv("ORCA_CHARTS_FILE"), "path to file with list of Helm charts to install. Overrides $ORCA_CHARTS_FILE")
 	f.StringSliceVar(&e.override, "override", []string{}, "chart to override with different version (can specify multiple): chart=version")
-	f.StringVar(&e.name, "name", "", "name of environment (namespace) to deploy to")
-	f.StringVar(&e.repo, "repo", "", "chart repository (name=url)")
-	f.StringVar(&e.kubeContext, "kube-context", "", "name of the kubeconfig context to use")
+	f.StringVar(&e.name, "name", os.Getenv("ORCA_NAME"), "name of environment (namespace) to deploy to. Overrides $ORCA_NAME")
+	f.StringVar(&e.repo, "repo", os.Getenv("ORCA_REPO"), "chart repository (name=url). Overrides $ORCA_REPO")
+	f.StringVar(&e.kubeContext, "kube-context", os.Getenv("ORCA_KUBE_CONTEXT"), "name of the kubeconfig context to use. Overrides $ORCA_KUBE_CONTEXT")
 	f.StringSliceVarP(&e.packedValues, "values", "f", []string{}, "values file to use (packaged within the chart)")
 	f.StringSliceVarP(&e.set, "set", "s", []string{}, "set additional parameters")
-	f.BoolVar(&e.tls, "tls", utils.IsEnvVarTrue("ORCA_TLS"), "enable TLS for request")
+	f.BoolVar(&e.tls, "tls", utils.GetBoolEnvVar("ORCA_TLS", false), "enable TLS for request. Overrides $ORCA_TLS")
 	f.StringVar(&e.helmTLSStore, "helm-tls-store", os.Getenv("HELM_TLS_STORE"), "path to TLS certs and keys. Overrides $HELM_TLS_STORE")
-	f.BoolVar(&e.createNS, "create-ns", false, "should create new namespace")
-	f.BoolVar(&e.inject, "inject", false, "enable injection during helm upgrade")
+	f.BoolVar(&e.createNS, "create-ns", utils.GetBoolEnvVar("ORCA_CREATE_NS", false), "should create new namespace. Overrides $ORCA_CREATE_NS")
+	f.BoolVar(&e.inject, "inject", utils.GetBoolEnvVar("ORCA_INJECT", false), "enable injection during helm upgrade. Overrides $ORCA_INJECT")
 
 	return cmd
 }
@@ -122,10 +130,13 @@ func NewDeleteEnvCmd(out io.Writer) *cobra.Command {
 		Use:   "env",
 		Short: "Delete an environment (Kubernetes namespace) along with all Helm releases in it",
 		Long:  ``,
-		Run: func(cmd *cobra.Command, args []string) {
+		Args: func(cmd *cobra.Command, args []string) error {
 			if e.tls && e.helmTLSStore == "" {
-				log.Fatal("TLS is set to true and HELM_TLS_STORE is not defined")
+				return errors.New("TLS is set to true and HELM_TLS_STORE is not defined")
 			}
+			return nil
+		},
+		Run: func(cmd *cobra.Command, args []string) {
 			releases := utils.GetInstalledReleases(e.kubeContext, e.name, e.helmTLSStore, e.tls, true, true)
 			utils.DeleteReleases(releases, e.kubeContext, e.helmTLSStore, e.tls)
 			utils.DeleteNamespace(e.name, e.kubeContext)
@@ -134,9 +145,9 @@ func NewDeleteEnvCmd(out io.Writer) *cobra.Command {
 
 	f := cmd.Flags()
 
-	f.StringVar(&e.name, "name", "", "name of environment (namespace) to delete")
-	f.StringVar(&e.kubeContext, "kube-context", "", "name of the kubeconfig context to use")
-	f.BoolVar(&e.tls, "tls", utils.IsEnvVarTrue("ORCA_TLS"), "enable TLS for request")
+	f.StringVar(&e.name, "name", os.Getenv("ORCA_NAME"), "name of environment (namespace) to delete. Overrides $ORCA_NAME")
+	f.StringVar(&e.kubeContext, "kube-context", os.Getenv("ORCA_KUBE_CONTEXT"), "name of the kubeconfig context to use. Overrides $ORCA_KUBE_CONTEXT")
+	f.BoolVar(&e.tls, "tls", utils.GetBoolEnvVar("ORCA_TLS", false), "enable TLS for request. Overrides $ORCA_TLS")
 	f.StringVar(&e.helmTLSStore, "helm-tls-store", os.Getenv("HELM_TLS_STORE"), "path to TLS certs and keys. Overrides $HELM_TLS_STORE")
 
 	return cmd

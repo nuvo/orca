@@ -28,6 +28,7 @@ go build -o orca cmd/orca.go
 
 The following commands are available:
 ```
+create resource         Create or update a resource in REST API
 delete env              Delete an environment (Kubernetes namespace) along with all Helm releases in it
 delete resource         Delete a resource from REST API
 deploy chart            Deploy a Helm chart from chart repository
@@ -36,7 +37,6 @@ determine buildtype     Determine build type based on path filters
 get env                 Get list of Helm releases in an environment (Kubernetes namespace)
 get resource            Get a resource from REST API
 push chart              Push Helm chart to chart repository
-post resource           Post a resource to REST API
 ```
 
 ## Why should you use Orca?
@@ -171,6 +171,25 @@ orca deploy env \
     -c charts.yaml \
     --kube-context <kubeContext> \
     -f prod-values.yaml
+```
+
+## Environment variables support
+
+Orca commands support the usage of environment variables instead of most of the flags. For example:
+The `get env` command can be executed as mentioned in the example:
+```
+orca get env \
+    --kube-context <kubeContext> \
+    --name <namespace>
+```
+
+You can also set the appropriate envrionment variables (ORCA_FLAG, _ instead of -):
+
+```
+export ORCA_KUBE_CONTEXT=<kubeContext>
+export ORCA_NAME=<namespace>
+
+orca get env
 ```
 
 ## Credentials

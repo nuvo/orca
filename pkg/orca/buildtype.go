@@ -3,6 +3,7 @@ package orca
 import (
 	"fmt"
 	"io"
+	"os"
 
 	"github.com/maorfr/orca/pkg/utils"
 
@@ -59,14 +60,14 @@ func NewDetermineBuildtype(out io.Writer) *cobra.Command {
 
 	f := cmd.Flags()
 
-	f.StringVar(&d.defaultType, "default-type", "default", "default build type")
-	f.StringSliceVar(&d.pathFilter, "path-filter", []string{}, "path filter (supports multiple), can use regex: path=buildtype")
-	f.BoolVar(&d.allowMultipleTypes, "allow-multiple-types", false, "allow multiple build types")
-	f.StringVar(&d.mainRef, "main-ref", "", "name of the reference which is the main line")
-	f.StringVar(&d.releaseRef, "rel-ref", "", "release reference name (or regex)")
-	f.StringVar(&d.currentRef, "curr-ref", "", "current reference name")
-	f.StringVar(&d.previousCommit, "prev-commit", "", "previous commit for paths comparison")
-	f.StringVar(&d.previousCommitErrorIndicator, "prev-commit-error", "E", "identify an error with the previous commit by this string")
+	f.StringVar(&d.defaultType, "default-type", utils.GetStringEnvVar("ORCA_DEFAULT_TYPE", "default"), "default build type. Overrides $ORCA_DEFAULT_TYPE")
+	f.StringSliceVar(&d.pathFilter, "path-filter", []string{}, "path filter (supports multiple) in the path=buildtype form (supports regex)")
+	f.BoolVar(&d.allowMultipleTypes, "allow-multiple-types", utils.GetBoolEnvVar("ORCA_ALLOW_MULTIPLE_TYPES", false), "allow multiple build types. Overrides $ORCA_ALLOW_MULTIPLE_TYPES")
+	f.StringVar(&d.mainRef, "main-ref", os.Getenv("ORCA_MAIN_REF"), "name of the reference which is the main line. Overrides $ORCA_MAIN_REF")
+	f.StringVar(&d.releaseRef, "rel-ref", os.Getenv("ORCA_REL_REF"), "release reference name (or regex). Overrides $ORCA_REL_REF")
+	f.StringVar(&d.currentRef, "curr-ref", os.Getenv("ORCA_CURR_REF"), "current reference name. Overrides $ORCA_CURR_REF")
+	f.StringVar(&d.previousCommit, "prev-commit", os.Getenv("ORCA_PREV_COMMIT"), "previous commit for paths comparison. Overrides $ORCA_PREV_COMMIT")
+	f.StringVar(&d.previousCommitErrorIndicator, "prev-commit-error", utils.GetStringEnvVar("ORCA_PREV_COMMIT_ERROR", "E"), "identify an error with the previous commit by this string. Overrides $ORCA_PREV_COMMIT_ERROR")
 
 	return cmd
 }
