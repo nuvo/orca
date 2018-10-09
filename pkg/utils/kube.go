@@ -48,18 +48,16 @@ func buildConfigFromFlags(context, kubeconfigPath string) (*rest.Config, error) 
 func getClientSet(kubeContext string) *kubernetes.Clientset {
 	var kubeconfig string
 	if kubeConfigPath := os.Getenv("KUBECONFIG"); kubeConfigPath != "" {
-		kubeconfig = kubeConfigPath // CI process
+		kubeconfig = kubeConfigPath
 	} else {
-		kubeconfig = filepath.Join(os.Getenv("HOME"), ".kube", "config") // Development environment
+		kubeconfig = filepath.Join(os.Getenv("HOME"), ".kube", "config")
 	}
 
-	// use the current context in kubeconfig
 	config, err := buildConfigFromFlags(kubeContext, kubeconfig)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
 
-	// create the clientset
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
 		log.Fatal(err.Error())
