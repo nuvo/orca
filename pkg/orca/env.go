@@ -113,6 +113,9 @@ func NewDeployEnvCmd(out io.Writer) *cobra.Command {
 				log.Printf("created environment \"%s\"", e.name)
 			}
 
+			utils.AddRepository(e.repo, print)
+			utils.UpdateRepositories(print)
+
 			var desiredReleases []utils.ReleaseSpec
 			if nsPreExists && e.deployOnlyOverrideIfEnvExists {
 				desiredReleases = utils.InitReleases(e.name, e.override)
@@ -121,15 +124,12 @@ func NewDeployEnvCmd(out io.Writer) *cobra.Command {
 				desiredReleases = utils.OverrideReleases(desiredReleases, e.override)
 			}
 
+			lockEnvironment(e.name, e.kubeContext, print)
 			onlyManaged := true
 			includeFailed := false
 			installedReleases := utils.GetInstalledReleases(e.kubeContext, e.name, e.helmTLSStore, e.tls, onlyManaged, includeFailed)
 			releasesToInstall := utils.GetReleasesDelta(desiredReleases, installedReleases)
 
-			utils.AddRepository(e.repo, print)
-			utils.UpdateRepositories(print)
-
-			lockEnvironment(e.name, e.kubeContext, print)
 			utils.DeployChartsFromRepository(releasesToInstall, e.kubeContext, e.name, e.repo, e.helmTLSStore, e.tls, e.packedValues, e.set, e.inject)
 
 			if !e.deployOnlyOverrideIfEnvExists {
