@@ -229,7 +229,7 @@ func PrintReleasesYaml(releases []ReleaseSpec) {
 	}
 	for _, r := range releases {
 		fmt.Println("- name:", r.ChartName)
-		fmt.Println("  vesrion:", r.ChartVersion)
+		fmt.Println("  version:", r.ChartVersion)
 	}
 }
 
