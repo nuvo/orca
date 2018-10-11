@@ -29,15 +29,18 @@ go build -o orca cmd/orca.go
 
 The following commands are available:
 ```
-create resource         Create or update a resource in REST API
-delete env              Delete an environment (Kubernetes namespace) along with all Helm releases in it
-delete resource         Delete a resource from REST API
 deploy chart            Deploy a Helm chart from chart repository
-deploy env              Deploy a list of Helm charts to an environment (Kubernetes namespace)
-determine buildtype     Determine build type based on path filters
-get env                 Get list of Helm releases in an environment (Kubernetes namespace)
-get resource            Get a resource from REST API
 push chart              Push Helm chart to chart repository
+
+get env                 Get list of Helm releases in an environment (Kubernetes namespace)
+deploy env              Deploy a list of Helm charts to an environment (Kubernetes namespace)
+delete env              Delete an environment (Kubernetes namespace) along with all Helm releases in it
+
+create resource         Create or update a resource via REST API
+get resource            Get a resource via REST API
+delete resource         Delete a resource via REST API
+
+determine buildtype     Determine build type based on path filters
 ```
 
 ## Why should you use Orca?
@@ -200,3 +203,156 @@ orca get env
 
 Orca tries to get credentials in the following order:
 if `KUBECONFIG` environment variable is set - orca will use the current context from that config file. Otherwise it will use `~/.kube/config` with an [out-of-cluster client configuration](https://github.com/kubernetes/client-go/tree/master/examples/out-of-cluster-client-configuration)
+
+## All commands
+
+### Deploy chart
+```
+Deploy a Helm chart from chart repository
+
+Usage:
+  orca deploy chart [flags]
+
+Flags:
+      --helm-tls-store string   path to TLS certs and keys. Overrides $HELM_TLS_STORE
+      --inject                  enable injection during helm upgrade. Overrides $ORCA_INJECT (requires helm inject plugin: https://github.com/maorfr/helm-inject)
+      --kube-context string     name of the kubeconfig context to use. Overrides $ORCA_KUBE_CONTEXT
+      --name string             name of chart to deploy. Overrides $ORCA_NAME
+  -n, --namespace string        kubernetes namespace to deploy to. Overrides $ORCA_NAMESPACE
+      --release-name string     release name. Overrides $ORCA_RELEASE_NAME
+      --repo string             chart repository (name=url). Overrides $ORCA_REPO
+  -s, --set strings             set additional parameters
+      --tls                     enable TLS for request. Overrides $ORCA_TLS
+  -f, --values strings          values file to use (packaged within the chart)
+      --version string          version of chart to deploy. Overrides $ORCA_VERSION
+```
+
+### Push chart
+```
+Push Helm chart to chart repository (requires helm push plugin: https://github.com/chartmuseum/helm-push)
+
+Usage:
+  orca push chart [flags]
+
+Flags:
+      --append string   string to append to version. Overrides $ORCA_APPEND
+      --lint            should perform lint before push. Overrides $ORCA_LINT
+      --path string     path to chart. Overrides $ORCA_PATH
+      --repo string     chart repository (name=url). Overrides $ORCA_REPO
+```
+
+### Get env
+```
+Get list of Helm releases in an environment (Kubernetes namespace)
+
+Usage:
+  orca get env [flags]
+
+Flags:
+      --helm-tls-store string   path to TLS certs and keys. Overrides $HELM_TLS_STORE
+      --kube-context string     name of the kubeconfig context to use. Overrides $ORCA_KUBE_CONTEXT
+  -n, --name string             name of environment (namespace) to get. Overrides $ORCA_NAME
+      --only-managed            list only releases managed by orca. Overrides $ORCA_ONLY_MANAGED (default true)
+  -o, --output string           output format (yaml, md). Overrides $ORCA_OUTPUT
+      --tls                     enable TLS for request. Overrides $ORCA_TLS
+```
+
+### Deploy env
+```
+Deploy a list of Helm charts to an environment (Kubernetes namespace)
+
+Usage:
+  orca deploy env [flags]
+
+Aliases:
+  env, environment
+
+Flags:
+  -c, --charts-file string                   path to file with list of Helm charts to install. Overrides $ORCA_CHARTS_FILE
+  -x, --deploy-only-override-if-env-exists   if environment exists - deploy only override(s) (support for features spanning multiple services). Overrides $ORCA_DEPLOY_ONLY_OVERRIDE_IF_ENV_EXISTS
+      --helm-tls-store string                path to TLS certs and keys. Overrides $HELM_TLS_STORE
+      --inject                               enable injection during helm upgrade. Overrides $ORCA_INJECT (requires helm inject plugin: https://github.com/maorfr/helm-inject)
+      --kube-context string                  name of the kubeconfig context to use. Overrides $ORCA_KUBE_CONTEXT
+  -n, --name string                          name of environment (namespace) to deploy to. Overrides $ORCA_NAME
+      --override strings                     chart to override with different version (can specify multiple): chart=version
+      --repo string                          chart repository (name=url). Overrides $ORCA_REPO
+  -s, --set strings                          set additional parameters
+      --tls                                  enable TLS for request. Overrides $ORCA_TLS
+  -f, --values strings                       values file to use (packaged within the chart)
+```
+
+### Delete env
+```
+Delete an environment (Kubernetes namespace) along with all Helm releases in it
+
+Usage:
+  orca delete env [flags]
+
+Flags:
+      --force                   force environment deletion. Overrides $ORCA_FORCE
+      --helm-tls-store string   path to TLS certs and keys. Overrides $HELM_TLS_STORE
+      --kube-context string     name of the kubeconfig context to use. Overrides $ORCA_KUBE_CONTEXT
+  -n, --name string             name of environment (namespace) to delete. Overrides $ORCA_NAME
+      --tls                     enable TLS for request. Overrides $ORCA_TLS
+```
+
+### Create resource
+```
+Create or update a resource via REST API
+
+Usage:
+  orca create resource [flags]
+
+Flags:
+      --headers strings   headers of the request (supports multiple)
+      --method string     method to use in the request. Overrides $ORCA_METHOD (default "POST")
+      --update            should method be PUT instead of POST. Overrides $ORCA_UPDATE
+      --url string        url to send the request to. Overrides $ORCA_URL
+```
+
+### Get resource
+```
+Get a resource via REST API
+
+Usage:
+  orca get resource [flags]
+
+Flags:
+  -e, --error-indicator string   string indicating an error in the request. Overrides $ORCA_ERROR_INDICATOR (default "E")
+      --headers strings          headers of the request (supports multiple)
+      --key string               find the desired object according to this key. Overrides $ORCA_KEY
+      --offset int               offset of the desired object from the reference key. Overrides $ORCA_OFFSET
+  -p, --print-key string         key to print. If not specified - prints the response. Overrides $ORCA_PRINT_KEY
+      --url string               url to send the request to. Overrides $ORCA_URL
+      --value string             find the desired object according to to key`s value. Overrides $ORCA_VALUE
+```
+
+### Delete resource
+```
+Delete a resource via REST API
+
+Usage:
+  orca delete resource [flags]
+
+Flags:
+      --headers strings   headers of the request (supports multiple)
+      --url string        url to send the request to. Overrides $ORCA_URL
+```
+
+### Determine buildtype
+```
+Determine build type based on path filters
+
+Usage:
+  orca determine buildtype [flags]
+
+Flags:
+      --allow-multiple-types       allow multiple build types. Overrides $ORCA_ALLOW_MULTIPLE_TYPES
+      --curr-ref string            current reference name. Overrides $ORCA_CURR_REF
+      --default-type string        default build type. Overrides $ORCA_DEFAULT_TYPE (default "default")
+      --main-ref string            name of the reference which is the main line. Overrides $ORCA_MAIN_REF
+      --path-filter strings        path filter (supports multiple) in the path=buildtype form (supports regex)
+      --prev-commit string         previous commit for paths comparison. Overrides $ORCA_PREV_COMMIT
+      --prev-commit-error string   identify an error with the previous commit by this string. Overrides $ORCA_PREV_COMMIT_ERROR (default "E")
+      --rel-ref string             release reference name (or regex). Overrides $ORCA_REL_REF
+```
