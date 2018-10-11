@@ -40,7 +40,7 @@ func GetReleasesDelta(fromReleases, toReleases []ReleaseSpec) []ReleaseSpec {
 	return releasesDelta
 }
 
-func ChartsYamlToStruct(file, env string) []ReleaseSpec {
+func InitReleasesFromChartsFile(file, env string) []ReleaseSpec {
 	var charts []ReleaseSpec
 
 	data, err := ioutil.ReadFile(file)
@@ -56,11 +56,7 @@ func ChartsYamlToStruct(file, env string) []ReleaseSpec {
 
 	for _, chart := range v["charts"] {
 
-		var c ReleaseSpec
-
-		c.ReleaseName = env + "-" + chart["name"].(string)
-		c.ChartName = chart["name"].(string)
-		c.ChartVersion = chart["version"].(string)
+		c := initReleaseSpec(env, chart["name"].(string), chart["version"].(string))
 
 		if chart["depends_on"] != nil {
 			for _, dep := range chart["depends_on"].([]interface{}) {
@@ -72,6 +68,26 @@ func ChartsYamlToStruct(file, env string) []ReleaseSpec {
 	}
 
 	return charts
+}
+
+func InitReleases(env string, releases []string) []ReleaseSpec {
+	var outReleases []ReleaseSpec
+
+	for _, release := range releases {
+		chartName, chartVersion := SplitInTwo(release, "=")
+		r := initReleaseSpec(env, chartName, chartVersion)
+		outReleases = append(outReleases, r)
+	}
+
+	return outReleases
+}
+
+func initReleaseSpec(env, name, version string) ReleaseSpec {
+	return ReleaseSpec{
+		ReleaseName:  env + "-" + name,
+		ChartName:    name,
+		ChartVersion: version,
+	}
 }
 
 func CheckCircularDependencies(releases []ReleaseSpec) bool {

@@ -36,7 +36,13 @@ func NewDeployChartCmd(out io.Writer) *cobra.Command {
 		Long:  ``,
 		Args: func(cmd *cobra.Command, args []string) error {
 			if c.tls && c.helmTLSStore == "" {
-				return errors.New("TLS is set to true and HELM_TLS_STORE is not defined")
+				return errors.New("tls is set to true and helm-tls-store is not defined")
+			}
+			if c.name == "" {
+				return errors.New("name can not be empty")
+			}
+			if c.version == "" {
+				return errors.New("version can not be empty")
 			}
 			if c.repo == "" {
 				return errors.New("repo can not be empty")

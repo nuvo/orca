@@ -23,13 +23,13 @@ func TestGetReleasesDelta(t *testing.T) {
 		t.Errorf("Expected: true, Actual: false")
 	}
 }
-func TestChartsYamlToStruct(t *testing.T) {
+func TestChartsYamlToReleases(t *testing.T) {
 	file := "data/charts.yaml"
 	rel0 := utils.ReleaseSpec{ChartName: "cassandra", ChartVersion: "0.4.0", ReleaseName: "test-cassandra"}
 	rel1 := utils.ReleaseSpec{ChartName: "mariadb", ChartVersion: "0.5.4", ReleaseName: "test-mariadb"}
 	rel2 := utils.ReleaseSpec{ChartName: "kaa", ChartVersion: "0.1.7", ReleaseName: "test-kaa"}
 
-	releases := utils.ChartsYamlToStruct(file, "test")
+	releases := utils.InitReleasesFromChartsFile(file, "test")
 
 	if len(releases) != 3 {
 		t.Errorf("Expected: 3, Actual: " + (string)(len(releases)))
@@ -46,14 +46,14 @@ func TestChartsYamlToStruct(t *testing.T) {
 }
 func TestCheckCircularDependencies_False(t *testing.T) {
 	file := "data/charts.yaml"
-	circular := utils.CheckCircularDependencies(utils.ChartsYamlToStruct(file, "test"))
+	circular := utils.CheckCircularDependencies(utils.InitReleasesFromChartsFile(file, "test"))
 	if circular {
 		t.Errorf("Expected: false, Actual: true")
 	}
 }
 func TestCheckCircularDependencies_True(t *testing.T) {
 	file := "data/circular.yaml"
-	circular := utils.CheckCircularDependencies(utils.ChartsYamlToStruct(file, "test"))
+	circular := utils.CheckCircularDependencies(utils.InitReleasesFromChartsFile(file, "test"))
 	if !circular {
 		t.Errorf("Expected: true, Actual: false")
 	}
@@ -93,7 +93,7 @@ func TestOverrideReleases_WithoutOverride(t *testing.T) {
 }
 func TestRemoveChartFromDependencies(t *testing.T) {
 	file := "data/charts.yaml"
-	releases := utils.ChartsYamlToStruct(file, "test")
+	releases := utils.InitReleasesFromChartsFile(file, "test")
 	releases = utils.RemoveChartFromDependencies(releases, "mariadb")
 
 	if len(releases[2].Dependencies) != 1 {
@@ -105,7 +105,7 @@ func TestRemoveChartFromDependencies(t *testing.T) {
 }
 func TestGetChartIndex(t *testing.T) {
 	file := "data/charts.yaml"
-	releases := utils.ChartsYamlToStruct(file, "test")
+	releases := utils.InitReleasesFromChartsFile(file, "test")
 	index := utils.GetChartIndex(releases, "cassandra")
 
 	if index != 0 {
@@ -116,7 +116,7 @@ func TestRemoveChartFromCharts(t *testing.T) {
 	rel1 := utils.ReleaseSpec{ChartName: "mariadb", ChartVersion: "0.5.4", ReleaseName: "test-mariadb"}
 	rel0 := utils.ReleaseSpec{ChartName: "kaa", ChartVersion: "0.1.7", ReleaseName: "test-kaa"}
 	file := "data/charts.yaml"
-	releases := utils.ChartsYamlToStruct(file, "test")
+	releases := utils.InitReleasesFromChartsFile(file, "test")
 	index := utils.GetChartIndex(releases, "cassandra")
 	releases = utils.RemoveChartFromCharts(releases, index)
 
