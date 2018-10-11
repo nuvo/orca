@@ -12,9 +12,16 @@ Orca is a simplifier. It focuses on the world around Kubernetes and CI\CD, but i
 
 ### Install
 ```
-wget -qO- https://github.com/maorfr/orca/releases/download/0.1.5/orca.tar.gz | sudo tar xvz -C /usr/local/bin
+wget -qO- https://github.com/maorfr/orca/releases/download/0.1.9/orca.tar.gz | sudo tar xvz -C /usr/local/bin
 
 ```
+
+### Use it in your CI\CD processes
+```
+docker pull maorfr/orca
+```
+Docker hub repository: https://hub.docker.com/r/maorfr/orca
+
 ### Build from source
 
 Orca uses glide as a dependency management tool, since some of the referenced packages are not available using [dep](https://github.com/golang/dep).
@@ -202,7 +209,7 @@ orca get env
 ### Kubernetes
 
 Orca tries to get credentials in the following order:
-if `KUBECONFIG` environment variable is set - orca will use the current context from that config file. Otherwise it will use `~/.kube/config` with an [out-of-cluster client configuration](https://github.com/kubernetes/client-go/tree/master/examples/out-of-cluster-client-configuration)
+If `KUBECONFIG` environment variable is set - orca will use the current context from that config file. Otherwise it will use `~/.kube/config`.
 
 ## All commands
 
