@@ -15,3 +15,5 @@
 vendor/
 
 examples/
+
+bin/
