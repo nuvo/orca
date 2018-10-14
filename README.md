@@ -7,7 +7,7 @@ Orca is a simplifier. It focuses on the world around Kubernetes and CI\CD, but i
 ### Prerequisits
 
 1. git
-2. [glide](https://github.com/Masterminds/glide)
+2. [dep](https://github.com/golang/dep)
 3. [helm](https://helm.sh/) (required for runtime)
 
 ### Install
@@ -24,11 +24,11 @@ Docker hub repository: https://hub.docker.com/r/maorfr/orca
 
 ### Build from source
 
-Orca uses glide as a dependency management tool, since some of the referenced packages are not available using [dep](https://github.com/golang/dep).
+Orca uses dep as a dependency management tool.
 
 ```
-go get -u github.com/Masterminds/glide
-glide install --strip-vendor
+go get -u github.com/golang/dep/cmd/dep
+dep ensure
 go build -o orca cmd/orca.go
 ```
 
