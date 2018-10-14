@@ -1,9 +1,13 @@
 FROM golang:1.10.3-alpine as builder
 WORKDIR /go/src/github.com/maorfr/orca/
 COPY . .
+
+ARG DEP_VERSION=v0.5.0
+
 RUN apk --no-cache add git \
-    && go get -u github.com/Masterminds/glide \
-    && glide install --strip-vendor \
+    && wget -q -O $GOPATH/bin/dep https://github.com/golang/dep/releases/download/${DEP_VERSION}/dep-linux-amd64 \
+    && chmod +x $GOPATH/bin/dep \
+    && dep ensure \
     && for f in $(find test -type f -name "*.go"); do go test -v $f; done \
     && CGO_ENABLED=0 GOOS=linux go build -o orca cmd/orca.go
 
