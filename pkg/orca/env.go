@@ -44,13 +44,10 @@ func NewGetEnvCmd(out io.Writer) *cobra.Command {
 			if e.name == "" {
 				return errors.New("name can not be empty")
 			}
-			if e.tls && e.helmTLSStore == "" {
-				return errors.New("tls is set to true and helm-tls-store is not defined")
-			}
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			releases := utils.GetInstalledReleases(e.kubeContext, e.name, e.helmTLSStore, e.tls, e.onlyManaged, true)
+			releases := utils.GetInstalledReleases(e.kubeContext, e.name, true)
 
 			switch e.output {
 			case "yaml":
@@ -67,10 +64,15 @@ func NewGetEnvCmd(out io.Writer) *cobra.Command {
 
 	f.StringVarP(&e.name, "name", "n", os.Getenv("ORCA_NAME"), "name of environment (namespace) to get. Overrides $ORCA_NAME")
 	f.StringVar(&e.kubeContext, "kube-context", os.Getenv("ORCA_KUBE_CONTEXT"), "name of the kubeconfig context to use. Overrides $ORCA_KUBE_CONTEXT")
+	f.StringVarP(&e.output, "output", "o", os.Getenv("ORCA_OUTPUT"), "output format (yaml, md). Overrides $ORCA_OUTPUT")
+
 	f.BoolVar(&e.tls, "tls", utils.GetBoolEnvVar("ORCA_TLS", false), "enable TLS for request. Overrides $ORCA_TLS")
 	f.StringVar(&e.helmTLSStore, "helm-tls-store", os.Getenv("HELM_TLS_STORE"), "path to TLS certs and keys. Overrides $HELM_TLS_STORE")
 	f.BoolVar(&e.onlyManaged, "only-managed", utils.GetBoolEnvVar("ORCA_ONLY_MANAGED", true), "list only releases managed by orca. Overrides $ORCA_ONLY_MANAGED")
-	f.StringVarP(&e.output, "output", "o", os.Getenv("ORCA_OUTPUT"), "output format (yaml, md). Overrides $ORCA_OUTPUT")
+
+	f.MarkDeprecated("tls", "this command is no longer executed using helm")
+	f.MarkDeprecated("helm-tls-store", "this command is no longer executed using helm")
+	f.MarkDeprecated("only-managed", "environment is considered managed in any case")
 	return cmd
 }
 
@@ -125,15 +127,14 @@ func NewDeployEnvCmd(out io.Writer) *cobra.Command {
 			}
 
 			lockEnvironment(e.name, e.kubeContext, print)
-			onlyManaged := true
 			includeFailed := false
-			installedReleases := utils.GetInstalledReleases(e.kubeContext, e.name, e.helmTLSStore, e.tls, onlyManaged, includeFailed)
+			installedReleases := utils.GetInstalledReleases(e.kubeContext, e.name, includeFailed)
 			releasesToInstall := utils.GetReleasesDelta(desiredReleases, installedReleases)
 
 			utils.DeployChartsFromRepository(releasesToInstall, e.kubeContext, e.name, e.repo, e.helmTLSStore, e.tls, e.packedValues, e.set, e.inject)
 
 			if !e.deployOnlyOverrideIfEnvExists {
-				installedReleases = utils.GetInstalledReleases(e.kubeContext, e.name, e.helmTLSStore, e.tls, onlyManaged, includeFailed)
+				installedReleases = utils.GetInstalledReleases(e.kubeContext, e.name, includeFailed)
 				releasesToDelete := utils.GetReleasesDelta(installedReleases, desiredReleases)
 				utils.DeleteReleases(releasesToDelete, e.kubeContext, e.helmTLSStore, e.tls)
 			}
@@ -183,10 +184,9 @@ func NewDeleteEnvCmd(out io.Writer) *cobra.Command {
 				return
 			}
 			print := false
-			onlyManaged := true
 			includeFailed := true
 			markEnvironmentForDeletion(e.name, e.kubeContext, e.force, print)
-			releases := utils.GetInstalledReleases(e.kubeContext, e.name, e.helmTLSStore, e.tls, onlyManaged, includeFailed)
+			releases := utils.GetInstalledReleases(e.kubeContext, e.name, includeFailed)
 			utils.DeleteReleases(releases, e.kubeContext, e.helmTLSStore, e.tls)
 			utils.DeleteNamespace(e.name, e.kubeContext, print)
 			log.Printf("deleted environment \"%s\"", e.name)

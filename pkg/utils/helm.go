@@ -10,39 +10,35 @@ import (
 )
 
 // GetInstalledReleases gets the installed Helm releases in a given namespace
-func GetInstalledReleases(kubeContext, namespace, helmTLSStore string, tls, onlyManaged, includeFailed bool) []ReleaseSpec {
+func GetInstalledReleases(kubeContext, namespace string, includeFailed bool) []ReleaseSpec {
 
-	const ReleaseNameCol = 0
-	const statusCol = 7
-	const VersionCol = 8
+	statuses := []string{"DEPLOYED"}
+	if includeFailed {
+		statuses = append(statuses, "FAILED")
+	}
+
+	tillerNamespace := "kube-system"
+	tillerResourceLabel := "OWNER=TILLER"
+	storage := getTillerStorage(kubeContext, tillerNamespace)
 
 	var releaseSpecs []ReleaseSpec
-	list := List(kubeContext, namespace, helmTLSStore, tls)
+	list, err := listReleases(kubeContext, namespace, storage, tillerNamespace, tillerResourceLabel)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	didHeadersRowPass := false
-	for _, line := range strings.Split(list, "\n") {
-		if strings.HasPrefix(line, "NAME") {
-			didHeadersRowPass = true
+	for _, releaseData := range list {
+
+		if !Contains(statuses, releaseData.status) {
 			continue
 		}
-		if didHeadersRowPass && strings.Trim(line, " ") != "" {
-			if onlyManaged && !strings.HasPrefix(line, namespace) {
-				continue
-			}
 
-			words := strings.Fields(line)
+		var releaseSpec ReleaseSpec
+		releaseSpec.ReleaseName = releaseData.name
+		releaseSpec.ChartName = releaseData.chart
+		releaseSpec.ChartVersion = releaseData.version
 
-			if words[statusCol] == "FAILED" && !includeFailed {
-				continue
-			}
-
-			var releaseSpec ReleaseSpec
-			releaseSpec.ReleaseName = words[ReleaseNameCol]
-			releaseSpec.ChartVersion = strings.TrimLeft(words[VersionCol], releaseSpec.ReleaseName+"-")
-			releaseSpec.ChartName = strings.TrimRight(words[VersionCol], "-"+releaseSpec.ChartVersion)
-
-			releaseSpecs = append(releaseSpecs, releaseSpec)
-		}
+		releaseSpecs = append(releaseSpecs, releaseSpec)
 	}
 
 	return releaseSpecs
