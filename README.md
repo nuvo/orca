@@ -256,12 +256,9 @@ Usage:
   orca get env [flags]
 
 Flags:
-      --helm-tls-store string   path to TLS certs and keys. Overrides $HELM_TLS_STORE
-      --kube-context string     name of the kubeconfig context to use. Overrides $ORCA_KUBE_CONTEXT
-  -n, --name string             name of environment (namespace) to get. Overrides $ORCA_NAME
-      --only-managed            list only releases managed by orca. Overrides $ORCA_ONLY_MANAGED (default true)
-  -o, --output string           output format (yaml, md). Overrides $ORCA_OUTPUT
-      --tls                     enable TLS for request. Overrides $ORCA_TLS
+      --kube-context string   name of the kubeconfig context to use. Overrides $ORCA_KUBE_CONTEXT
+  -n, --name string           name of environment (namespace) to get. Overrides $ORCA_NAME
+  -o, --output string         output format (yaml, md). Overrides $ORCA_OUTPUT
 ```
 
 ### Deploy env
