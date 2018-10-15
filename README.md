@@ -61,6 +61,8 @@ orca get env --name $SRC_RELEASE_NS --kube-context $SRC_KUBE_CONTEXT > charts.ya
 orca deploy env --name $COMMIT_HASH -c charts.yaml --kube-context $DST_KUBE_CONTEXT --override $CHART_NAME=$CHART_TEST_VERSION
 ```
 
+Deploy to the dynamic feature environments for features spanning multiple repositories using the `-x` flag
+
 * If you want to achieve different CI processes depending on changed paths -
 
 ```
@@ -234,6 +236,8 @@ Flags:
       --version string          version of chart to deploy. Overrides $ORCA_VERSION
 ```
 
+`helm-tls-store` - path to directory containing `<kube-context>.cert.pem` and `<kube-context>.key.pem` files
+
 ### Push chart
 ```
 Push Helm chart to chart repository (requires helm push plugin: https://github.com/chartmuseum/helm-push)
@@ -285,6 +289,8 @@ Flags:
   -f, --values strings                       values file to use (packaged within the chart)
 ```
 
+`helm-tls-store` - path to directory containing `<kube-context>.cert.pem` and `<kube-context>.key.pem` files
+
 ### Delete env
 ```
 Delete an environment (Kubernetes namespace) along with all Helm releases in it
@@ -299,6 +305,8 @@ Flags:
   -n, --name string             name of environment (namespace) to delete. Overrides $ORCA_NAME
       --tls                     enable TLS for request. Overrides $ORCA_TLS
 ```
+
+`helm-tls-store` - path to directory containing `<kube-context>.cert.pem` and `<kube-context>.key.pem` files
 
 ### Create resource
 ```
