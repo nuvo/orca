@@ -9,41 +9,6 @@ import (
 	"time"
 )
 
-// GetInstalledReleases gets the installed Helm releases in a given namespace
-func GetInstalledReleases(kubeContext, namespace string, includeFailed bool) []ReleaseSpec {
-
-	statuses := []string{"DEPLOYED"}
-	if includeFailed {
-		statuses = append(statuses, "FAILED")
-	}
-
-	tillerNamespace := "kube-system"
-	tillerResourceLabel := "OWNER=TILLER"
-	storage := getTillerStorage(kubeContext, tillerNamespace)
-
-	var releaseSpecs []ReleaseSpec
-	list, err := listReleases(kubeContext, namespace, storage, tillerNamespace, tillerResourceLabel)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	for _, releaseData := range list {
-
-		if !Contains(statuses, releaseData.status) {
-			continue
-		}
-
-		var releaseSpec ReleaseSpec
-		releaseSpec.ReleaseName = releaseData.name
-		releaseSpec.ChartName = releaseData.chart
-		releaseSpec.ChartVersion = releaseData.version
-
-		releaseSpecs = append(releaseSpecs, releaseSpec)
-	}
-
-	return releaseSpecs
-}
-
 // DeployChartsFromRepository deploys a list of Helm charts from a repository in parallel
 func DeployChartsFromRepository(releasesToInstall []ReleaseSpec, kubeContext, namespace, repo, helmTLSStore string, tls bool, packedValues, set []string, inject bool) {
 

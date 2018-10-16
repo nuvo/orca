@@ -31,6 +31,64 @@ type releaseData struct {
 	time      time.Time
 }
 
+// GetInstalledReleases gets the installed Helm releases in a given namespace
+func GetInstalledReleases(kubeContext, namespace string, includeFailed bool) []ReleaseSpec {
+
+	tillerNamespace := "kube-system"
+	tillerResourceLabel := "OWNER=TILLER"
+	storage := getTillerStorage(kubeContext, tillerNamespace)
+
+	var releaseSpecs []ReleaseSpec
+	list, err := listReleases(kubeContext, namespace, storage, tillerNamespace, tillerResourceLabel)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for _, releaseData := range list {
+
+		if releaseData.status != "DEPLOYED" {
+			continue
+		}
+
+		var releaseSpec ReleaseSpec
+		releaseSpec.ReleaseName = releaseData.name
+		releaseSpec.ChartName = releaseData.chart
+		releaseSpec.ChartVersion = releaseData.version
+
+		releaseSpecs = append(releaseSpecs, releaseSpec)
+	}
+
+	if !includeFailed {
+		return releaseSpecs
+	}
+
+	for _, releaseData := range list {
+		if releaseData.status != "FAILED" {
+			continue
+		}
+
+		exists := false
+		for _, rs := range releaseSpecs {
+			if releaseData.name == rs.ReleaseName {
+				exists = true
+				break
+			}
+		}
+		if exists {
+			continue
+		}
+
+		var releaseSpec ReleaseSpec
+		releaseSpec.ReleaseName = releaseData.name
+		releaseSpec.ChartName = releaseData.chart
+		releaseSpec.ChartVersion = releaseData.version
+
+		releaseSpecs = append(releaseSpecs, releaseSpec)
+	}
+
+	return releaseSpecs
+}
+
 func getTillerStorage(kubeContext, tillerNamespace string) string {
 	clientset := getClientSet(kubeContext)
 	coreV1 := clientset.CoreV1()

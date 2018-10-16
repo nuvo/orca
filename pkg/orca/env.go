@@ -47,7 +47,7 @@ func NewGetEnvCmd(out io.Writer) *cobra.Command {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			releases := utils.GetInstalledReleases(e.kubeContext, e.name, true)
+			releases := utils.GetInstalledReleases(e.kubeContext, e.name, false)
 
 			switch e.output {
 			case "yaml":
