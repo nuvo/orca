@@ -23,7 +23,6 @@ func DeployChartsFromRepository(releasesToInstall []ReleaseSpec, kubeContext, na
 
 	for len(releasesToInstall) > 0 {
 
-		mutex.Lock()
 		for _, c := range releasesToInstall {
 
 			bwg.Add(1)
@@ -56,10 +55,8 @@ func DeployChartsFromRepository(releasesToInstall []ReleaseSpec, kubeContext, na
 				mutex.Lock()
 				releasesToInstall = RemoveChartFromDependencies(releasesToInstall, c.ChartName)
 				mutex.Unlock()
-
 			}(c)
 		}
-		mutex.Unlock()
 		time.Sleep(5 * time.Second)
 	}
 	bwg.Wait()
