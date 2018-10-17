@@ -121,17 +121,36 @@ func CheckCircularDependencies(releases []ReleaseSpec) bool {
 	return false
 }
 
-func OverrideReleases(releases []ReleaseSpec, overrides []string) []ReleaseSpec {
+func OverrideReleases(releases []ReleaseSpec, overrides []string, env string) []ReleaseSpec {
+	if len(overrides) == 0 {
+		return releases
+	}
+
 	var outReleases []ReleaseSpec
+	var overrideFound = make([]bool, len(overrides))
 
 	for _, r := range releases {
-		for _, override := range overrides {
-			oChartName, oChartVersion := SplitInTwo(override, "=")
+		for i := 0; i < len(overrides); i++ {
+			oChartName, oChartVersion := SplitInTwo(overrides[i], "=")
 
 			if r.ChartName == oChartName && r.ChartVersion != oChartVersion {
+				overrideFound[i] = true
 				r.ChartName = oChartName
 				r.ChartVersion = oChartVersion
 			}
+		}
+		outReleases = append(outReleases, r)
+	}
+
+	for i := 0; i < len(overrides); i++ {
+		if overrideFound[i] {
+			continue
+		}
+		oChartName, oChartVersion := SplitInTwo(overrides[i], "=")
+		r := ReleaseSpec{
+			ReleaseName:  env + "-" + oChartName,
+			ChartName:    oChartName,
+			ChartVersion: oChartVersion,
 		}
 		outReleases = append(outReleases, r)
 	}

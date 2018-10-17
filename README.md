@@ -38,6 +38,8 @@ push chart              Push Helm chart to chart repository
 get env                 Get list of Helm releases in an environment (Kubernetes namespace)
 deploy env              Deploy a list of Helm charts to an environment (Kubernetes namespace)
 delete env              Delete an environment (Kubernetes namespace) along with all Helm releases in it
+lock env                Lock an environment (Kubernetes namespace)
+unlock env              Unlock an environment (Kubernetes namespace)
 
 create resource         Create or update a resource via REST API
 get resource            Get a resource via REST API
@@ -303,6 +305,30 @@ Flags:
 ```
 
 `helm-tls-store` - path to directory containing `<kube-context>.cert.pem` and `<kube-context>.key.pem` files
+
+### Lock env
+```
+Lock an environment (Kubernetes namespace)
+
+Usage:
+  orca lock env [flags]
+
+Flags:
+      --kube-context string   name of the kubeconfig context to use. Overrides $ORCA_KUBE_CONTEXT
+  -n, --name string           name of environment (namespace) to delete. Overrides $ORCA_NAME
+```
+
+### Unlock env
+```
+Unlock an environment (Kubernetes namespace)
+
+Usage:
+  orca unlock env [flags]
+
+Flags:
+      --kube-context string   name of the kubeconfig context to use. Overrides $ORCA_KUBE_CONTEXT
+  -n, --name string           name of environment (namespace) to delete. Overrides $ORCA_NAME
+```
 
 ### Create resource
 ```

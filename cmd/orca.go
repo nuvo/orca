@@ -37,6 +37,8 @@ Instead of writing scripts on top of scripts, Orca holds all the logic.
 	cmd.AddCommand(NewPushCmd(out))
 	cmd.AddCommand(NewCreateCmd(out))
 	cmd.AddCommand(NewVersionCmd(out))
+	cmd.AddCommand(NewLockCmd(out))
+	cmd.AddCommand(NewUnlockCmd(out))
 
 	return cmd
 }
@@ -92,6 +94,32 @@ func NewGetCmd(out io.Writer) *cobra.Command {
 
 	cmd.AddCommand(orca.NewGetEnvCmd(out))
 	cmd.AddCommand(orca.NewGetResourceCmd(out))
+
+	return cmd
+}
+
+// NewLockCmd represents the lock command
+func NewLockCmd(out io.Writer) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "lock",
+		Short: "Lock functions",
+		Long:  ``,
+	}
+
+	cmd.AddCommand(orca.NewLockEnvCmd(out))
+
+	return cmd
+}
+
+// NewUnlockCmd represents the unlock command
+func NewUnlockCmd(out io.Writer) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "unlock",
+		Short: "Unlock functions",
+		Long:  ``,
+	}
+
+	cmd.AddCommand(orca.NewUnlockEnvCmd(out))
 
 	return cmd
 }

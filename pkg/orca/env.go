@@ -108,25 +108,26 @@ func NewDeployEnvCmd(out io.Writer) *cobra.Command {
 		},
 		Run: func(cmd *cobra.Command, args []string) {
 			print := false
+
+			utils.AddRepository(e.repo, print)
+			utils.UpdateRepositories(print)
+
 			nsPreExists := true
 			if !utils.NamespaceExists(e.name, e.kubeContext) {
 				nsPreExists = false
 				utils.CreateNamespace(e.name, e.kubeContext, print)
 				log.Printf("created environment \"%s\"", e.name)
 			}
-
-			utils.AddRepository(e.repo, print)
-			utils.UpdateRepositories(print)
+			lockEnvironment(e.name, e.kubeContext, print)
 
 			var desiredReleases []utils.ReleaseSpec
 			if nsPreExists && e.deployOnlyOverrideIfEnvExists {
 				desiredReleases = utils.InitReleases(e.name, e.override)
 			} else {
 				desiredReleases = utils.InitReleasesFromChartsFile(e.chartsFile, e.name)
-				desiredReleases = utils.OverrideReleases(desiredReleases, e.override)
+				desiredReleases = utils.OverrideReleases(desiredReleases, e.override, e.name)
 			}
 
-			lockEnvironment(e.name, e.kubeContext, print)
 			includeFailed := false
 			installedReleases := utils.GetInstalledReleases(e.kubeContext, e.name, includeFailed)
 			releasesToInstall := utils.GetReleasesDelta(desiredReleases, installedReleases)
@@ -200,6 +201,72 @@ func NewDeleteEnvCmd(out io.Writer) *cobra.Command {
 	f.BoolVar(&e.tls, "tls", utils.GetBoolEnvVar("ORCA_TLS", false), "enable TLS for request. Overrides $ORCA_TLS")
 	f.StringVar(&e.helmTLSStore, "helm-tls-store", os.Getenv("HELM_TLS_STORE"), "path to TLS certs and keys. Overrides $HELM_TLS_STORE")
 	f.BoolVar(&e.force, "force", utils.GetBoolEnvVar("ORCA_FORCE", false), "force environment deletion. Overrides $ORCA_FORCE")
+
+	return cmd
+}
+
+// NewLockEnvCmd represents the lock env command
+func NewLockEnvCmd(out io.Writer) *cobra.Command {
+	e := &envCmd{out: out}
+
+	cmd := &cobra.Command{
+		Use:   "env",
+		Short: "Lock an environment (Kubernetes namespace)",
+		Long:  ``,
+		Args: func(cmd *cobra.Command, args []string) error {
+			if e.name == "" {
+				return errors.New("name can not be empty")
+			}
+			return nil
+		},
+		Run: func(cmd *cobra.Command, args []string) {
+			if !utils.NamespaceExists(e.name, e.kubeContext) {
+				log.Printf("environment \"%s\" not found", e.name)
+				return
+			}
+			print := false
+			lockEnvironment(e.name, e.kubeContext, print)
+			log.Printf("locked environment \"%s\"", e.name)
+		},
+	}
+
+	f := cmd.Flags()
+
+	f.StringVarP(&e.name, "name", "n", os.Getenv("ORCA_NAME"), "name of environment (namespace) to delete. Overrides $ORCA_NAME")
+	f.StringVar(&e.kubeContext, "kube-context", os.Getenv("ORCA_KUBE_CONTEXT"), "name of the kubeconfig context to use. Overrides $ORCA_KUBE_CONTEXT")
+
+	return cmd
+}
+
+// NewUnlockEnvCmd represents the unlock env command
+func NewUnlockEnvCmd(out io.Writer) *cobra.Command {
+	e := &envCmd{out: out}
+
+	cmd := &cobra.Command{
+		Use:   "env",
+		Short: "Unlock an environment (Kubernetes namespace)",
+		Long:  ``,
+		Args: func(cmd *cobra.Command, args []string) error {
+			if e.name == "" {
+				return errors.New("name can not be empty")
+			}
+			return nil
+		},
+		Run: func(cmd *cobra.Command, args []string) {
+			if !utils.NamespaceExists(e.name, e.kubeContext) {
+				log.Printf("environment \"%s\" not found", e.name)
+				return
+			}
+			print := false
+			unlockEnvironment(e.name, e.kubeContext, print)
+			log.Printf("unlocked environment \"%s\"", e.name)
+		},
+	}
+
+	f := cmd.Flags()
+
+	f.StringVarP(&e.name, "name", "n", os.Getenv("ORCA_NAME"), "name of environment (namespace) to delete. Overrides $ORCA_NAME")
+	f.StringVar(&e.kubeContext, "kube-context", os.Getenv("ORCA_KUBE_CONTEXT"), "name of the kubeconfig context to use. Overrides $ORCA_KUBE_CONTEXT")
 
 	return cmd
 }

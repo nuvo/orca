@@ -21,6 +21,7 @@ func Exec(cmd string) string {
 
 	output, err := exec.Command(binary, args[1:]...).CombinedOutput()
 	if err != nil {
+		log.Println("Error: command execution failed:", cmd)
 		log.Fatal(string(output))
 	}
 	return string(output)
