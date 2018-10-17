@@ -3,6 +3,7 @@ package utils
 import (
 	"fmt"
 	"log"
+	"math"
 	"os"
 	"strings"
 	"sync"
@@ -10,19 +11,24 @@ import (
 )
 
 // DeployChartsFromRepository deploys a list of Helm charts from a repository in parallel
-func DeployChartsFromRepository(releasesToInstall []ReleaseSpec, kubeContext, namespace, repo, helmTLSStore string, tls bool, packedValues, set []string, inject bool) {
+func DeployChartsFromRepository(releasesToInstall []ReleaseSpec, kubeContext, namespace, repo, helmTLSStore string, tls bool, packedValues, set []string, inject bool, parallel int) {
 
+	totalReleases := len(releasesToInstall)
+	if parallel == 0 {
+		parallel = totalReleases
+	}
+	bwgSize := int(math.Min(float64(parallel), float64(totalReleases))) // Very stingy :)
+	bwg := NewBoundedWaitGroup(bwgSize)
 	var mutex = &sync.Mutex{}
-	var wg sync.WaitGroup
 
 	for len(releasesToInstall) > 0 {
 
 		mutex.Lock()
 		for _, c := range releasesToInstall {
 
-			wg.Add(1)
+			bwg.Add(1)
 			go func(c ReleaseSpec) {
-				defer wg.Done()
+				defer bwg.Done()
 
 				// If there are (still) any dependencies - leave this chart for a later iteration
 				if len(c.Dependencies) != 0 {
@@ -56,7 +62,7 @@ func DeployChartsFromRepository(releasesToInstall []ReleaseSpec, kubeContext, na
 		mutex.Unlock()
 		time.Sleep(5 * time.Second)
 	}
-	wg.Wait()
+	bwg.Wait()
 }
 
 // DeployChartFromRepository deploys a Helm chart from a chart repository
@@ -216,19 +222,24 @@ func UpgradeRelease(name, releaseName, kubeContext, namespace, values, set strin
 }
 
 // DeleteReleases deletes a list of releases in parallel
-func DeleteReleases(releasesToDelete []ReleaseSpec, kubeContext, helmTLSStore string, tls bool) {
-	var wg sync.WaitGroup
+func DeleteReleases(releasesToDelete []ReleaseSpec, kubeContext, helmTLSStore string, tls bool, parallel int) {
+	totalReleases := len(releasesToDelete)
+	if parallel == 0 {
+		parallel = totalReleases
+	}
+	bwgSize := int(math.Min(float64(parallel), float64(totalReleases))) // Very stingy :)
+	bwg := NewBoundedWaitGroup(bwgSize)
 
 	for _, c := range releasesToDelete {
-		wg.Add(1)
+		bwg.Add(1)
 		go func(c ReleaseSpec) {
-			defer wg.Done()
+			defer bwg.Done()
 			log.Println("deleting", c.ReleaseName)
 			DeleteRelease(c.ReleaseName, kubeContext, tls, helmTLSStore, false)
 			log.Println("deleted", c.ReleaseName)
 		}(c)
 	}
-	wg.Wait()
+	bwg.Wait()
 }
 
 // DeleteRelease deletes a release from Kubernetes

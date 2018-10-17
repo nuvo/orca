@@ -281,6 +281,7 @@ Flags:
       --kube-context string                  name of the kubeconfig context to use. Overrides $ORCA_KUBE_CONTEXT
   -n, --name string                          name of environment (namespace) to deploy to. Overrides $ORCA_NAME
       --override strings                     chart to override with different version (can specify multiple): chart=version
+  -p, --parallel int                         number of releases to act on in parallel. set this flag to 0 for full parallelism. Overrides $ORCA_PARALLEL (default 1)
       --repo string                          chart repository (name=url). Overrides $ORCA_REPO
   -s, --set strings                          set additional parameters
       --tls                                  enable TLS for request. Overrides $ORCA_TLS
@@ -301,6 +302,7 @@ Flags:
       --helm-tls-store string   path to TLS certs and keys. Overrides $HELM_TLS_STORE
       --kube-context string     name of the kubeconfig context to use. Overrides $ORCA_KUBE_CONTEXT
   -n, --name string             name of environment (namespace) to delete. Overrides $ORCA_NAME
+  -p, --parallel int            number of releases to act on in parallel. set this flag to 0 for full parallelism. Overrides $ORCA_PARALLEL (default 1)
       --tls                     enable TLS for request. Overrides $ORCA_TLS
 ```
 
