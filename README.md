@@ -11,10 +11,8 @@ Orca is a simplifier. It focuses on the world around Kubernetes and CI\CD, but i
 3. [helm](https://helm.sh/) (required for runtime)
 
 ### Install
-```
-wget -qO- https://github.com/maorfr/orca/releases/download/<TAG>/orca.tar.gz | sudo tar xvz -C /usr/local/bin
 
-```
+Download the latest release from the [Releases page](https://github.com/maorfr/orca/releases)
 
 ### Use it in your CI\CD processes
 ```
@@ -27,9 +25,7 @@ Docker hub repository: https://hub.docker.com/r/maorfr/orca
 Orca uses dep as a dependency management tool.
 
 ```
-go get -u github.com/golang/dep/cmd/dep
-dep ensure
-go build -o orca cmd/orca.go
+make
 ```
 
 ## Commands

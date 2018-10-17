@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io"
 	"log"
 	"os"
@@ -35,6 +36,7 @@ Instead of writing scripts on top of scripts, Orca holds all the logic.
 	cmd.AddCommand(NewGetCmd(out))
 	cmd.AddCommand(NewPushCmd(out))
 	cmd.AddCommand(NewCreateCmd(out))
+	cmd.AddCommand(NewVersionCmd(out))
 
 	return cmd
 }
@@ -116,6 +118,22 @@ func NewCreateCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd.AddCommand(orca.NewCreateResourceCmd(out))
+
+	return cmd
+}
+
+var GitTag, GitCommit string
+
+// NewVersionCmd prints version information
+func NewVersionCmd(out io.Writer) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "version",
+		Short: "Print version information",
+		Long:  ``,
+		Run: func(cmd *cobra.Command, args []string) {
+			fmt.Printf("Version %s (git-%s)\n", GitTag, GitCommit)
+		},
+	}
 
 	return cmd
 }

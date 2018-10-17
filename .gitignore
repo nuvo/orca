@@ -15,5 +15,5 @@
 vendor/
 
 examples/
-
 bin/
+dist/

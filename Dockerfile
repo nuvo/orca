@@ -1,15 +1,8 @@
 FROM golang:1.10.3-alpine as builder
 WORKDIR /go/src/github.com/maorfr/orca/
 COPY . .
-
-ARG DEP_VERSION=v0.5.0
-
-RUN apk --no-cache add git \
-    && wget -q -O $GOPATH/bin/dep https://github.com/golang/dep/releases/download/${DEP_VERSION}/dep-linux-amd64 \
-    && chmod +x $GOPATH/bin/dep \
-    && dep ensure \
-    && for f in $(find test -type f -name "*.go"); do go test -v $f; done \
-    && CGO_ENABLED=0 GOOS=linux go build -o orca cmd/orca.go
+RUN apk --no-cache add git make \
+    && make
 
 FROM alpine:3.8
 ARG HELM_VERSION=v2.11.0
@@ -24,7 +17,7 @@ ARG LINKERD_OS=linux
 RUN wget -q https://github.com/linkerd/linkerd2/releases/download/${LINKERD_VERSION}/linkerd2-cli-${LINKERD_VERSION}-${LINKERD_OS} -O linkerd \
     && chmod +x linkerd \
     && mv linkerd /usr/local/bin/linkerd
-COPY --from=builder /go/src/github.com/maorfr/orca/orca /usr/local/bin/orca
+COPY --from=builder /go/src/github.com/maorfr/orca/bin/orca /usr/local/bin/orca
 RUN addgroup -g 1001 -S orca \
     && adduser -u 1001 -D -S -G orca orca
 USER orca

@@ -137,17 +137,6 @@
   version = "0.5"
 
 [[projects]]
-  digest = "1:7bb408815e7ab0df8ba4a12301673cad6d2c6869691fc1af909c3e16fd918a94"
-  name = "github.com/maorfr/orca"
-  packages = [
-    "pkg/orca",
-    "pkg/utils",
-  ]
-  pruneopts = "UT"
-  revision = "cf8a2da5c3eda636c585dffda333298668587a8a"
-  version = "0.1.9"
-
-[[projects]]
   digest = "1:78bbb1ba5b7c3f2ed0ea1eab57bdd3859aec7e177811563edc41198a760b06af"
   name = "github.com/mitchellh/go-homedir"
   packages = ["."]
@@ -552,12 +541,22 @@
   revision = "1f13a808da65775f22cbf47862c4e5898d8f4ca1"
   version = "kubernetes-1.11.2"
 
+[[projects]]
+  digest = "1:4c74e095b939554d54bdf7a3160c56e7caa564ae09c482ca2c492437d94e9dd4"
+  name = "k8s.io/helm"
+  packages = [
+    "pkg/proto/hapi/chart",
+    "pkg/proto/hapi/release",
+  ]
+  pruneopts = "UT"
+  revision = "2e55dbe1fdb5fdb96b75ff144a339489417b146b"
+  version = "v2.11.0"
+
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
-    "github.com/maorfr/orca/pkg/orca",
-    "github.com/maorfr/orca/pkg/utils",
+    "github.com/golang/protobuf/proto",
     "github.com/spf13/cobra",
     "gopkg.in/src-d/go-git.v4",
     "gopkg.in/src-d/go-git.v4/plumbing",
@@ -568,6 +567,7 @@
     "k8s.io/client-go/kubernetes",
     "k8s.io/client-go/rest",
     "k8s.io/client-go/tools/clientcmd",
+    "k8s.io/helm/pkg/proto/hapi/release",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1
