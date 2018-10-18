@@ -22,6 +22,7 @@ type chartCmd struct {
 	helmTLSStore string
 	repo         string
 	inject       bool
+	timeout      int
 
 	out io.Writer
 }
@@ -50,7 +51,7 @@ func NewDeployChartCmd(out io.Writer) *cobra.Command {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			utils.DeployChartFromRepository(c.releaseName, c.name, c.version, c.kubeContext, c.namespace, c.repo, c.helmTLSStore, c.tls, c.packedValues, c.set, true, c.inject)
+			utils.DeployChartFromRepository(c.releaseName, c.name, c.version, c.kubeContext, c.namespace, c.repo, c.helmTLSStore, c.tls, c.packedValues, c.set, true, c.inject, c.timeout)
 		},
 	}
 
@@ -67,6 +68,7 @@ func NewDeployChartCmd(out io.Writer) *cobra.Command {
 	f.BoolVar(&c.tls, "tls", utils.GetBoolEnvVar("ORCA_TLS", false), "enable TLS for request. Overrides $ORCA_TLS")
 	f.StringVar(&c.helmTLSStore, "helm-tls-store", os.Getenv("HELM_TLS_STORE"), "path to TLS certs and keys. Overrides $HELM_TLS_STORE")
 	f.BoolVar(&c.inject, "inject", utils.GetBoolEnvVar("ORCA_INJECT", false), "enable injection during helm upgrade. Overrides $ORCA_INJECT (requires helm inject plugin: https://github.com/maorfr/helm-inject)")
+	f.IntVar(&c.timeout, "timeout", utils.GetIntEnvVar("ORCA_TIMEOUT", 300), "time in seconds to wait for any individual Kubernetes operation (like Jobs for hooks). Overrides $ORCA_TIMEOUT")
 
 	return cmd
 }

@@ -11,7 +11,7 @@ import (
 )
 
 // DeployChartsFromRepository deploys a list of Helm charts from a repository in parallel
-func DeployChartsFromRepository(releasesToInstall []ReleaseSpec, kubeContext, namespace, repo, helmTLSStore string, tls bool, packedValues, set []string, inject bool, parallel int) {
+func DeployChartsFromRepository(releasesToInstall []ReleaseSpec, kubeContext, namespace, repo, helmTLSStore string, tls bool, packedValues, set []string, inject bool, parallel, timeout int) {
 
 	totalReleases := len(releasesToInstall)
 	if parallel == 0 {
@@ -48,7 +48,7 @@ func DeployChartsFromRepository(releasesToInstall []ReleaseSpec, kubeContext, na
 
 				// deploy chart
 				log.Println("deploying chart", c.ChartName, "version", c.ChartVersion)
-				DeployChartFromRepository(c.ReleaseName, c.ChartName, c.ChartVersion, kubeContext, namespace, repo, helmTLSStore, tls, packedValues, set, false, inject)
+				DeployChartFromRepository(c.ReleaseName, c.ChartName, c.ChartVersion, kubeContext, namespace, repo, helmTLSStore, tls, packedValues, set, false, inject, timeout)
 				log.Println("deployed chart", c.ChartName, "version", c.ChartVersion)
 
 				// Deployment is done, remove chart from dependencies
@@ -63,7 +63,7 @@ func DeployChartsFromRepository(releasesToInstall []ReleaseSpec, kubeContext, na
 }
 
 // DeployChartFromRepository deploys a Helm chart from a chart repository
-func DeployChartFromRepository(releaseName, name, version, kubeContext, namespace, repo, helmTLSStore string, tls bool, packedValues, set []string, isIsolated, inject bool) {
+func DeployChartFromRepository(releaseName, name, version, kubeContext, namespace, repo, helmTLSStore string, tls bool, packedValues, set []string, isIsolated, inject bool, timeout int) {
 	tempDir := MkRandomDir()
 
 	if releaseName == "" {
@@ -79,7 +79,7 @@ func DeployChartFromRepository(releaseName, name, version, kubeContext, namespac
 	valuesChain := CreateValuesChain(name, tempDir, packedValues)
 	setChain := CreateSetChain(name, set)
 
-	UpgradeRelease(name, releaseName, kubeContext, namespace, valuesChain, setChain, tls, helmTLSStore, tempDir, isIsolated, inject)
+	UpgradeRelease(name, releaseName, kubeContext, namespace, valuesChain, setChain, tls, helmTLSStore, tempDir, isIsolated, inject, timeout)
 
 	os.RemoveAll(tempDir)
 }
@@ -203,14 +203,14 @@ func CreateSetChain(name string, inputSet []string) string {
 }
 
 // UpgradeRelease performs helm upgrade -i
-func UpgradeRelease(name, releaseName, kubeContext, namespace, values, set string, tls bool, helmTLSStore, dir string, print, inject bool) {
+func UpgradeRelease(name, releaseName, kubeContext, namespace, values, set string, tls bool, helmTLSStore, dir string, print, inject bool, timeout int) {
 	var injectStr string
 	kubeContextFlag := "kube-context"
 	if inject {
 		injectStr = "inject "
 		kubeContextFlag = "kubecontext"
 	}
-	cmd := fmt.Sprintf("helm %supgrade%s -i %s --%s %s --namespace %s%s%s %s/%s", injectStr, getTLS(tls, kubeContext, helmTLSStore), releaseName, kubeContextFlag, kubeContext, namespace, values, set, dir, name)
+	cmd := fmt.Sprintf("helm %supgrade%s -i %s --%s %s --namespace %s%s%s %s/%s --timeout %d", injectStr, getTLS(tls, kubeContext, helmTLSStore), releaseName, kubeContextFlag, kubeContext, namespace, values, set, dir, name, timeout)
 	output := Exec(cmd)
 	if print {
 		fmt.Println(cmd)
@@ -219,7 +219,8 @@ func UpgradeRelease(name, releaseName, kubeContext, namespace, values, set strin
 }
 
 // DeleteReleases deletes a list of releases in parallel
-func DeleteReleases(releasesToDelete []ReleaseSpec, kubeContext, helmTLSStore string, tls bool, parallel int) {
+func DeleteReleases(releasesToDelete []ReleaseSpec, kubeContext, helmTLSStore string, tls bool, parallel, timeout int) {
+	print := false
 	totalReleases := len(releasesToDelete)
 	if parallel == 0 {
 		parallel = totalReleases
@@ -232,7 +233,7 @@ func DeleteReleases(releasesToDelete []ReleaseSpec, kubeContext, helmTLSStore st
 		go func(c ReleaseSpec) {
 			defer bwg.Done()
 			log.Println("deleting", c.ReleaseName)
-			DeleteRelease(c.ReleaseName, kubeContext, tls, helmTLSStore, false)
+			DeleteRelease(c.ReleaseName, kubeContext, tls, helmTLSStore, timeout, print)
 			log.Println("deleted", c.ReleaseName)
 		}(c)
 	}
@@ -240,8 +241,8 @@ func DeleteReleases(releasesToDelete []ReleaseSpec, kubeContext, helmTLSStore st
 }
 
 // DeleteRelease deletes a release from Kubernetes
-func DeleteRelease(releaseName, kubeContext string, tls bool, helmTLSStore string, print bool) {
-	cmd := fmt.Sprintf("helm delete%s --purge %s --kube-context %s", getTLS(tls, kubeContext, helmTLSStore), releaseName, kubeContext)
+func DeleteRelease(releaseName, kubeContext string, tls bool, helmTLSStore string, timeout int, print bool) {
+	cmd := fmt.Sprintf("helm delete%s --purge %s --kube-context %s --timeout %d", getTLS(tls, kubeContext, helmTLSStore), releaseName, kubeContext, timeout)
 	output := Exec(cmd)
 	if print {
 		fmt.Println(cmd)

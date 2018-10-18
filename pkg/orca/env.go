@@ -37,6 +37,7 @@ type envCmd struct {
 	force                         bool
 	deployOnlyOverrideIfEnvExists bool
 	parallel                      int
+	timeout                       int
 
 	out io.Writer
 }
@@ -141,12 +142,12 @@ func NewDeployEnvCmd(out io.Writer) *cobra.Command {
 			installedReleases := utils.GetInstalledReleases(e.kubeContext, e.name, includeFailed)
 			releasesToInstall := utils.GetReleasesDelta(desiredReleases, installedReleases)
 
-			utils.DeployChartsFromRepository(releasesToInstall, e.kubeContext, e.name, e.repo, e.helmTLSStore, e.tls, e.packedValues, e.set, e.inject, e.parallel)
+			utils.DeployChartsFromRepository(releasesToInstall, e.kubeContext, e.name, e.repo, e.helmTLSStore, e.tls, e.packedValues, e.set, e.inject, e.parallel, e.timeout)
 
 			if !e.deployOnlyOverrideIfEnvExists {
 				installedReleases = utils.GetInstalledReleases(e.kubeContext, e.name, includeFailed)
 				releasesToDelete := utils.GetReleasesDelta(installedReleases, desiredReleases)
-				utils.DeleteReleases(releasesToDelete, e.kubeContext, e.helmTLSStore, e.tls, e.parallel)
+				utils.DeleteReleases(releasesToDelete, e.kubeContext, e.helmTLSStore, e.tls, e.parallel, e.timeout)
 			}
 			unlockEnvironment(e.name, e.kubeContext, print)
 		},
@@ -166,6 +167,7 @@ func NewDeployEnvCmd(out io.Writer) *cobra.Command {
 	f.BoolVar(&e.inject, "inject", utils.GetBoolEnvVar("ORCA_INJECT", false), "enable injection during helm upgrade. Overrides $ORCA_INJECT (requires helm inject plugin: https://github.com/maorfr/helm-inject)")
 	f.BoolVarP(&e.deployOnlyOverrideIfEnvExists, "deploy-only-override-if-env-exists", "x", false, "if environment exists - deploy only override(s) (support for features spanning multiple services). Overrides $ORCA_DEPLOY_ONLY_OVERRIDE_IF_ENV_EXISTS")
 	f.IntVarP(&e.parallel, "parallel", "p", utils.GetIntEnvVar("ORCA_PARALLEL", 1), "number of releases to act on in parallel. set this flag to 0 for full parallelism. Overrides $ORCA_PARALLEL")
+	f.IntVar(&e.timeout, "timeout", utils.GetIntEnvVar("ORCA_TIMEOUT", 300), "time in seconds to wait for any individual Kubernetes operation (like Jobs for hooks). Overrides $ORCA_TIMEOUT")
 
 	f.BoolVar(&e.createNS, "create-ns", utils.GetBoolEnvVar("ORCA_CREATE_NS", false), "should create new namespace. Overrides $ORCA_CREATE_NS")
 	f.MarkDeprecated("create-ns", "namespace will be created if it does not exist")
@@ -200,7 +202,7 @@ func NewDeleteEnvCmd(out io.Writer) *cobra.Command {
 
 			includeFailed := true
 			releases := utils.GetInstalledReleases(e.kubeContext, e.name, includeFailed)
-			utils.DeleteReleases(releases, e.kubeContext, e.helmTLSStore, e.tls, e.parallel)
+			utils.DeleteReleases(releases, e.kubeContext, e.helmTLSStore, e.tls, e.parallel, e.timeout)
 
 			if nsExists {
 				utils.DeleteNamespace(e.name, e.kubeContext, print)
@@ -217,6 +219,7 @@ func NewDeleteEnvCmd(out io.Writer) *cobra.Command {
 	f.StringVar(&e.helmTLSStore, "helm-tls-store", os.Getenv("HELM_TLS_STORE"), "path to TLS certs and keys. Overrides $HELM_TLS_STORE")
 	f.BoolVar(&e.force, "force", utils.GetBoolEnvVar("ORCA_FORCE", false), "force environment deletion. Overrides $ORCA_FORCE")
 	f.IntVarP(&e.parallel, "parallel", "p", utils.GetIntEnvVar("ORCA_PARALLEL", 1), "number of releases to act on in parallel. set this flag to 0 for full parallelism. Overrides $ORCA_PARALLEL")
+	f.IntVar(&e.timeout, "timeout", utils.GetIntEnvVar("ORCA_TIMEOUT", 300), "time in seconds to wait for any individual Kubernetes operation (like Jobs for hooks). Overrides $ORCA_TIMEOUT")
 
 	return cmd
 }
