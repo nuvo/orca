@@ -31,7 +31,7 @@ There are a few use cases you will probably find useful right off the bat.
 
 #### Get the "stable" environment and deploy the same configuration to a new environment
 
-This will deploy the "stable" configuration (production?) to a destination namespace
+This will deploy the "stable" configuration (production?) to a destination namespace.
 
 ```
 orca get env --name $SRC_NS --kube-context $SRC_KUBE_CONTEXT > charts.yaml
@@ -39,8 +39,11 @@ orca deploy env --name $DST_NS -c charts.yaml --kube-context $DST_KUBE_CONTEXT
 ```
 
 Additional flags:
+
 Use the `-p` (parallel) flag to specify parallelism of chart deployments.
+
 Use the `-f` flag to specify different values files to use during deployment.
+
 Use the `-s` flag to set additional parameteres.
 
 #### Get the "stable" environment and deploy the same configuration to a new environment, with override(s)
@@ -50,7 +53,8 @@ This will deploy the "stable" configuration to a destination namespace, except f
 
 ```
 orca get env --name $SRC_NS --kube-context $SRC_KUBE_CONTEXT > charts.yaml
-orca deploy env --name $DST_NS -c charts.yaml --kube-context $DST_KUBE_CONTEXT --override $CHART_NAME=$CHART_VERSION
+orca deploy env --name $DST_NS -c charts.yaml --kube-context $DST_KUBE_CONTEXT \
+    --override $CHART_NAME=$CHART_VERSION
 ```
 
 #### Get the "stable" environment and deploy the same configuration to a new environment, with override(s) and existence check
@@ -61,7 +65,9 @@ The following lines commands will be a part of all CI\CD processes in all servic
 
 ```
 orca get env --name $SRC_NS --kube-context $SRC_KUBE_CONTEXT > charts.yaml
-orca deploy env --name $DST_NS -c charts.yaml --kube-context $DST_KUBE_CONTEXT --override $CHART_NAME=$CHART_VERSION -x
+orca deploy env --name $DST_NS -c charts.yaml --kube-context $DST_KUBE_CONTEXT \
+    --override $CHART_NAME=$CHART_VERSION \
+    -x
 ```
 
 When the first service's process starts, it creates the environment and deploys the configuration from the "stable" environment (exactly the same as the previous example). When the Nth service's process starts, the environment already exists, and only the specified override(s) are deployed.
@@ -117,7 +123,7 @@ orca get env
 
 ### Commands
 
-Since Orca is a tool designed for CI\CD, it has additional commands to help with common actions:
+Since Orca is a tool designed for CI\CD, it has additional commands and options to help with common actions:
 ```
 deploy chart            Deploy a Helm chart from chart repository
 push chart              Push Helm chart to chart repository
@@ -132,15 +138,8 @@ delete resource         Delete a resource via REST API
 determine buildtype     Determine build type based on path filters
 ```
 
-For a more detailed description of all commands, see the [Commands](https://github.com/maorfr/orca/docs/commands) section
+For a more detailed description of all commands, see the [Commands](https://github.com/maorfr/orca/tree/master/docs/commands) section
 
 ## Examples
 
-Be sure to check out the [Examples](https://github.com/maorfr/orca/docs/examples) section!
-
-## Credentials
-
-### Kubernetes
-
-Orca tries to get credentials in the following order:
-If `KUBECONFIG` environment variable is set - orca will use the current context from that config file. Otherwise it will use `~/.kube/config`.
+Be sure to check out the [Examples](https://github.com/maorfr/orca/tree/master/docs/examples) section!
