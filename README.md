@@ -61,7 +61,7 @@ orca deploy env --name $DST_NS -c charts.yaml --kube-context $DST_KUBE_CONTEXT \
 
 Useful for creating test environments for multiple services. Handy for testing a single feature spanning across multiple services.
 This will deploy the same configuration to a destination namespace, except for the specified override(s), which will be deployed with version CHART_VERSION. If the environment already exists, only the specified override(s) will be deployed (using the `-x` flag - deploy only override if environment exists).
-The following lines commands will be a part of all CI\CD processes in all services:
+The following commands will be a part of all CI\CD processes in all services:
 
 ```
 orca get env --name $SRC_NS --kube-context $SRC_KUBE_CONTEXT > charts.yaml
