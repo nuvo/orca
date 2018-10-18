@@ -12,6 +12,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const (
+	annotationPrefix string = "orca.nuvocares.com"
+	stateAnnotation  string = annotationPrefix + "/state"
+	busyState        string = "busy"
+	freeState        string = "free"
+	deleteState      string = "delete"
+)
+
 type envCmd struct {
 	chartsFile                    string
 	name                          string
@@ -182,16 +190,21 @@ func NewDeleteEnvCmd(out io.Writer) *cobra.Command {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			if !utils.NamespaceExists(e.name, e.kubeContext) {
-				log.Printf("environment \"%s\" not found", e.name)
-				return
-			}
 			print := false
+			nsExists := utils.NamespaceExists(e.name, e.kubeContext)
+			if nsExists {
+				markEnvironmentForDeletion(e.name, e.kubeContext, e.force, print)
+			} else {
+				log.Printf("environment \"%s\" not found", e.name)
+			}
+
 			includeFailed := true
-			markEnvironmentForDeletion(e.name, e.kubeContext, e.force, print)
 			releases := utils.GetInstalledReleases(e.kubeContext, e.name, includeFailed)
 			utils.DeleteReleases(releases, e.kubeContext, e.helmTLSStore, e.tls, e.parallel)
-			utils.DeleteNamespace(e.name, e.kubeContext, print)
+
+			if nsExists {
+				utils.DeleteNamespace(e.name, e.kubeContext, print)
+			}
 			log.Printf("deleted environment \"%s\"", e.name)
 		},
 	}
@@ -273,14 +286,6 @@ func NewUnlockEnvCmd(out io.Writer) *cobra.Command {
 
 	return cmd
 }
-
-const (
-	annotationPrefix string = "orca.nuvocares.com"
-	stateAnnotation  string = annotationPrefix + "/state"
-	busyState        string = "busy"
-	freeState        string = "free"
-	deleteState      string = "delete"
-)
 
 // lockEnvironment annotates a namespace with "busy"
 func lockEnvironment(name, kubeContext string, print bool) {
