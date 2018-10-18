@@ -17,8 +17,8 @@ Download the latest release from the [Releases page](https://github.com/maorfr/o
 ### From source
 
 ```
-git clone https://github.com/maorfr/orca.git
-cd orca
+mkdir -p $GOPATH/src/github.com/maorfr && cd $_
+git clone https://github.com/maorfr/orca.git && cd orca
 make
 ```
 
