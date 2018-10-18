@@ -229,6 +229,7 @@ Flags:
       --release-name string     release name. Overrides $ORCA_RELEASE_NAME
       --repo string             chart repository (name=url). Overrides $ORCA_REPO
   -s, --set strings             set additional parameters
+      --timeout int             time in seconds to wait for any individual Kubernetes operation (like Jobs for hooks). Overrides $ORCA_TIMEOUT (default 300)
       --tls                     enable TLS for request. Overrides $ORCA_TLS
   -f, --values strings          values file to use (packaged within the chart)
       --version string          version of chart to deploy. Overrides $ORCA_VERSION
@@ -284,6 +285,7 @@ Flags:
   -p, --parallel int                         number of releases to act on in parallel. set this flag to 0 for full parallelism. Overrides $ORCA_PARALLEL (default 1)
       --repo string                          chart repository (name=url). Overrides $ORCA_REPO
   -s, --set strings                          set additional parameters
+      --timeout int                          time in seconds to wait for any individual Kubernetes operation (like Jobs for hooks). Overrides $ORCA_TIMEOUT (default 300)
       --tls                                  enable TLS for request. Overrides $ORCA_TLS
   -f, --values strings                       values file to use (packaged within the chart)
 ```
@@ -303,6 +305,7 @@ Flags:
       --kube-context string     name of the kubeconfig context to use. Overrides $ORCA_KUBE_CONTEXT
   -n, --name string             name of environment (namespace) to delete. Overrides $ORCA_NAME
   -p, --parallel int            number of releases to act on in parallel. set this flag to 0 for full parallelism. Overrides $ORCA_PARALLEL (default 1)
+      --timeout int             time in seconds to wait for any individual Kubernetes operation (like Jobs for hooks). Overrides $ORCA_TIMEOUT (default 300)
       --tls                     enable TLS for request. Overrides $ORCA_TLS
 ```
 
