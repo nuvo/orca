@@ -57,7 +57,7 @@ orca get env --name $SRC_NS --kube-context $SRC_KUBE_CONTEXT > charts.yaml
 orca deploy env --name $DST_NS -c charts.yaml \
     --kube-context $DST_KUBE_CONTEXT \
     --repo myrepo=$REPO_URL \
-    `--override $CHART_NAME=$CHART_VERSION`
+    --override $CHART_NAME=$CHART_VERSION
 ```
 
 #### Get the "stable" environment and deploy the same configuration to a new environment, with override(s) and existence check
@@ -72,7 +72,7 @@ orca deploy env --name $DST_NS -c charts.yaml \
     --kube-context $DST_KUBE_CONTEXT \
     --repo myrepo=$REPO_URL \
     --override $CHART_NAME=$CHART_VERSION \
-    `-x`
+    -x
 ```
 
 When the first service's process starts, it creates the environment and deploys the configuration from the "stable" environment (exactly the same as the previous example). When the Nth service's process starts, the environment already exists, and only the specified override(s) are deployed.
