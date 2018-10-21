@@ -11,6 +11,7 @@ Is is important to note that Orca is not intended to replace Helm, but rather to
 1. git
 2. [dep](https://github.com/golang/dep)
 3. [helm](https://helm.sh/) (required for runtime)
+4. [ChartMuseum](https://github.com/helm/charts/tree/master/stable/chartmuseum) or any other chart repository implementation (required for `deploy` commands)
 
 Download the latest release from the [Releases page](https://github.com/maorfr/orca/releases) or use it in your CI\CD process with a [Docker image](https://hub.docker.com/r/maorfr/orca)
 
@@ -35,7 +36,9 @@ This will deploy the "stable" configuration (production?) to a destination names
 
 ```
 orca get env --name $SRC_NS --kube-context $SRC_KUBE_CONTEXT > charts.yaml
-orca deploy env --name $DST_NS -c charts.yaml --kube-context $DST_KUBE_CONTEXT
+orca deploy env --name $DST_NS -c charts.yaml \
+    --kube-context $DST_KUBE_CONTEXT \
+    --repo myrepo=$REPO_URL
 ```
 
 Additional flags:
@@ -53,7 +56,9 @@ This will deploy the "stable" configuration to a destination namespace, except f
 
 ```
 orca get env --name $SRC_NS --kube-context $SRC_KUBE_CONTEXT > charts.yaml
-orca deploy env --name $DST_NS -c charts.yaml --kube-context $DST_KUBE_CONTEXT \
+orca deploy env --name $DST_NS -c charts.yaml \
+    --kube-context $DST_KUBE_CONTEXT \
+    --repo myrepo=$REPO_URL \
     --override $CHART_NAME=$CHART_VERSION
 ```
 
@@ -65,7 +70,9 @@ The following commands will be a part of all CI\CD processes in all services:
 
 ```
 orca get env --name $SRC_NS --kube-context $SRC_KUBE_CONTEXT > charts.yaml
-orca deploy env --name $DST_NS -c charts.yaml --kube-context $DST_KUBE_CONTEXT \
+orca deploy env --name $DST_NS -c charts.yaml \
+    --kube-context $DST_KUBE_CONTEXT \
+    --repo myrepo=$REPO_URL \
     --override $CHART_NAME=$CHART_VERSION \
     -x
 ```
@@ -87,7 +94,9 @@ Assuming you are required to create a new environment of your product, create a 
 Your CI\CD process may be as slim as:
 
 ```
-orca deploy env --name $NS -c charts.yaml --kube-context $KUBE_CONTEXT
+orca deploy env --name $NS -c charts.yaml \
+    --kube-context $KUBE_CONTEXT \
+    --repo myrepo=$REPO_URL
 ```
 
 ### Keep track of an environment's state
@@ -128,7 +137,7 @@ Since Orca is a tool designed for CI\CD, it has additional commands and options 
 deploy chart            Deploy a Helm chart from chart repository
 push chart              Push Helm chart to chart repository
 get env                 Get list of Helm releases in an environment (Kubernetes namespace)
-deploy env              Deploy a list of Helm charts to an environment (Kubernetes namespace)
+deploy env              Deploy a list of Helm charts to an environment (Kubernetes namespace) from chart repository
 delete env              Delete an environment (Kubernetes namespace) along with all Helm releases in it
 lock env                Lock an environment (Kubernetes namespace)
 unlock env              Unlock an environment (Kubernetes namespace)
