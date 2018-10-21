@@ -10,7 +10,7 @@ Is is important to note that Orca is not intended to replace Helm, but rather to
 
 1. git
 2. [dep](https://github.com/golang/dep)
-3. [helm](https://helm.sh/) (required for runtime)
+3. [Helm](https://helm.sh/) (required for `env` and `chart` related commands)
 4. [ChartMuseum](https://github.com/helm/charts/tree/master/stable/chartmuseum) or any other chart repository implementation (required for `deploy` commands)
 
 Download the latest release from the [Releases page](https://github.com/maorfr/orca/releases) or use it in your CI\CD process with a [Docker image](https://hub.docker.com/r/maorfr/orca)
