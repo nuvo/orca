@@ -1,9 +1,11 @@
+<img src="/docs/img/logo.png" width="500px" alt="orca logo">
+
+# Orca
+
 [![Release](https://github-basic-badges.herokuapp.com/release/maorfr/orca.svg)](https://github.com/maorfr/orca/releases)
 [![Docker Pulls](https://img.shields.io/docker/pulls/maorfr/orca.svg)](https://hub.docker.com/r/maorfr/orca/)
 [![Go Report Card](https://goreportcard.com/badge/github.com/maorfr/orca)](https://goreportcard.com/report/github.com/maorfr/orca)
 [![license](https://img.shields.io/github/license/maorfr/orca.svg)](https://github.com/maorfr/orca/blob/master/LICENSE)
-
-# Orca
 
 Orca is an advanced CI\CD tool which focuses on the world around Kubernetes, Helm and CI\CD, and it is also handy in daily work.
 Orca is a simplifier - It takes complex tasks and makes them easy to accomplish.
@@ -151,8 +153,8 @@ delete resource         Delete a resource via REST API
 determine buildtype     Determine build type based on path filters
 ```
 
-For a more detailed description of all commands, see the [Commands](https://github.com/maorfr/orca/tree/master/docs/commands) section
+For a more detailed description of all commands, see the [Commands](/docs/commands) section
 
 ## Examples
 
-Be sure to check out the [Examples](https://github.com/maorfr/orca/tree/master/docs/examples) section!
+Be sure to check out the [Examples](/docs/examples) section!
