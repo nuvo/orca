@@ -142,6 +142,7 @@ push chart              Push Helm chart to chart repository
 get env                 Get list of Helm releases in an environment (Kubernetes namespace)
 deploy env              Deploy a list of Helm charts to an environment (Kubernetes namespace) from chart repository
 delete env              Delete an environment (Kubernetes namespace) along with all Helm releases in it
+diff env                Show differences in Helm releases between environments (Kubernetes namespace)
 lock env                Lock an environment (Kubernetes namespace)
 unlock env              Unlock an environment (Kubernetes namespace)
 create resource         Create or update a resource via REST API

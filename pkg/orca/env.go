@@ -307,7 +307,7 @@ func NewDiffEnvCmd(out io.Writer) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "env",
-		Short: "Show differences between environments (Kubernetes namespace)",
+		Short: "Show differences in Helm releases between environments (Kubernetes namespace)",
 		Long:  ``,
 		Args: func(cmd *cobra.Command, args []string) error {
 			if e.nameLeft == "" {

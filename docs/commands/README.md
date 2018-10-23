@@ -98,6 +98,21 @@ Flags:
 
 `helm-tls-store` - path to directory containing `<kube-context>.cert.pem` and `<kube-context>.key.pem` files
 
+### Diff env
+```
+Show differences in Helm releases between environments (Kubernetes namespace)
+
+Usage:
+  orca diff env [flags]
+
+Flags:
+  -h, --help                        help for env
+      --kube-context-left string    name of the left kubeconfig context to use. Overrides $ORCA_KUBE_CONTEXT_LEFT
+      --kube-context-right string   name of the right kubeconfig context to use. Overrides $ORCA_KUBE_CONTEXT_RIGHT
+      --name-left string            name of left environment to compare. Overrides $ORCA_NAME_LEFT
+      --name-right string           name of right environment to compare. Overrides $ORCA_NAME_RIGHT
+```
+
 ### Lock env
 ```
 Lock an environment (Kubernetes namespace)
