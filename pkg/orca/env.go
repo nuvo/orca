@@ -64,6 +64,8 @@ func NewGetEnvCmd(out io.Writer) *cobra.Command {
 				utils.PrintReleasesYaml(releases)
 			case "md":
 				utils.PrintReleasesMarkdown(releases)
+			case "table":
+				utils.PrintReleasesTable(releases)
 			case "":
 				utils.PrintReleasesYaml(releases)
 			}
@@ -74,7 +76,7 @@ func NewGetEnvCmd(out io.Writer) *cobra.Command {
 
 	f.StringVarP(&e.name, "name", "n", os.Getenv("ORCA_NAME"), "name of environment (namespace) to get. Overrides $ORCA_NAME")
 	f.StringVar(&e.kubeContext, "kube-context", os.Getenv("ORCA_KUBE_CONTEXT"), "name of the kubeconfig context to use. Overrides $ORCA_KUBE_CONTEXT")
-	f.StringVarP(&e.output, "output", "o", os.Getenv("ORCA_OUTPUT"), "output format (yaml, md). Overrides $ORCA_OUTPUT")
+	f.StringVarP(&e.output, "output", "o", os.Getenv("ORCA_OUTPUT"), "output format (yaml, md, table). Overrides $ORCA_OUTPUT")
 
 	f.BoolVar(&e.tls, "tls", utils.GetBoolEnvVar("ORCA_TLS", false), "enable TLS for request. Overrides $ORCA_TLS")
 	f.StringVar(&e.helmTLSStore, "helm-tls-store", os.Getenv("HELM_TLS_STORE"), "path to TLS certs and keys. Overrides $HELM_TLS_STORE")
@@ -286,6 +288,59 @@ func NewUnlockEnvCmd(out io.Writer) *cobra.Command {
 
 	f.StringVarP(&e.name, "name", "n", os.Getenv("ORCA_NAME"), "name of environment (namespace) to delete. Overrides $ORCA_NAME")
 	f.StringVar(&e.kubeContext, "kube-context", os.Getenv("ORCA_KUBE_CONTEXT"), "name of the kubeconfig context to use. Overrides $ORCA_KUBE_CONTEXT")
+
+	return cmd
+}
+
+type diffEnvCmd struct {
+	nameLeft         string
+	nameRight        string
+	kubeContextLeft  string
+	kubeContextRight string
+
+	out io.Writer
+}
+
+// NewDiffEnvCmd represents the diff env command
+func NewDiffEnvCmd(out io.Writer) *cobra.Command {
+	e := &diffEnvCmd{out: out}
+
+	cmd := &cobra.Command{
+		Use:   "env",
+		Short: "Show differences between environments (Kubernetes namespace)",
+		Long:  ``,
+		Args: func(cmd *cobra.Command, args []string) error {
+			if e.nameLeft == "" {
+				return errors.New("name-left can not be empty")
+			}
+			if e.nameRight == "" {
+				return errors.New("name-right can not be empty")
+			}
+			return nil
+		},
+		Run: func(cmd *cobra.Command, args []string) {
+			includeFailed := false
+			releasesLeft := utils.GetInstalledReleases(e.kubeContextLeft, e.nameLeft, includeFailed)
+			releasesRight := utils.GetInstalledReleases(e.kubeContextRight, e.nameRight, includeFailed)
+
+			diffOptions := utils.DiffOptions{
+				KubeContextLeft:   e.kubeContextLeft,
+				KubeContextRight:  e.kubeContextRight,
+				EnvNameLeft:       e.nameLeft,
+				EnvNameRight:      e.nameRight,
+				ReleasesSpecLeft:  releasesLeft,
+				ReleasesSpecRight: releasesRight,
+			}
+			utils.PrintDiffTable(diffOptions)
+		},
+	}
+
+	f := cmd.Flags()
+
+	f.StringVar(&e.nameLeft, "name-left", os.Getenv("ORCA_NAME_LEFT"), "name of left environment to compare. Overrides $ORCA_NAME_LEFT")
+	f.StringVar(&e.nameRight, "name-right", os.Getenv("ORCA_NAME_RIGHT"), "name of right environment to compare. Overrides $ORCA_NAME_RIGHT")
+	f.StringVar(&e.kubeContextLeft, "kube-context-left", os.Getenv("ORCA_KUBE_CONTEXT_LEFT"), "name of the left kubeconfig context to use. Overrides $ORCA_KUBE_CONTEXT_LEFT")
+	f.StringVar(&e.kubeContextRight, "kube-context-right", os.Getenv("ORCA_KUBE_CONTEXT_RIGHT"), "name of the right kubeconfig context to use. Overrides $ORCA_KUBE_CONTEXT_RIGHT")
 
 	return cmd
 }

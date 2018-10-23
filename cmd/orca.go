@@ -39,6 +39,7 @@ Instead of writing scripts on top of scripts, Orca holds all the logic.
 	cmd.AddCommand(NewVersionCmd(out))
 	cmd.AddCommand(NewLockCmd(out))
 	cmd.AddCommand(NewUnlockCmd(out))
+	cmd.AddCommand(NewDiffCmd(out))
 
 	return cmd
 }
@@ -146,6 +147,19 @@ func NewCreateCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd.AddCommand(orca.NewCreateResourceCmd(out))
+
+	return cmd
+}
+
+// NewDiffCmd represents the create command
+func NewDiffCmd(out io.Writer) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "diff",
+		Short: "Differentiation functions",
+		Long:  ``,
+	}
+
+	cmd.AddCommand(orca.NewDiffEnvCmd(out))
 
 	return cmd
 }

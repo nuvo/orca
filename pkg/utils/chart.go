@@ -4,7 +4,10 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"sort"
+	"strings"
 
+	"github.com/gosuri/uitable"
 	yaml "gopkg.in/yaml.v2"
 )
 
@@ -243,9 +246,10 @@ func (a ReleaseSpec) Equals(b ReleaseSpec) bool {
 }
 
 func PrintReleasesYaml(releases []ReleaseSpec) {
-	if len(releases) != 0 {
-		fmt.Println("charts:")
+	if len(releases) == 0 {
+		return
 	}
+	fmt.Println("charts:")
 	for _, r := range releases {
 		fmt.Println("- name:", r.ChartName)
 		fmt.Println("  version:", r.ChartVersion)
@@ -253,11 +257,134 @@ func PrintReleasesYaml(releases []ReleaseSpec) {
 }
 
 func PrintReleasesMarkdown(releases []ReleaseSpec) {
-	if len(releases) != 0 {
-		fmt.Println("| Name | Version |")
-		fmt.Println("|------|---------|")
+	if len(releases) == 0 {
+		return
 	}
+	fmt.Println("| Name | Version |")
+	fmt.Println("|------|---------|")
 	for _, r := range releases {
 		fmt.Println(fmt.Sprintf("| %s | %s |", r.ChartName, r.ChartVersion))
 	}
+}
+
+func PrintReleasesTable(releases []ReleaseSpec) {
+	if len(releases) == 0 {
+		return
+	}
+	tbl := uitable.New()
+	tbl.MaxColWidth = 60
+	tbl.AddRow("NAME", "VERSION")
+
+	for _, r := range releases {
+		tbl.AddRow(r.ChartName, r.ChartVersion)
+	}
+	fmt.Println(tbl.String())
+}
+
+type DiffOptions struct {
+	KubeContextLeft   string
+	EnvNameLeft       string
+	KubeContextRight  string
+	EnvNameRight      string
+	ReleasesSpecLeft  []ReleaseSpec
+	ReleasesSpecRight []ReleaseSpec
+}
+
+type diff struct {
+	chartName    string
+	versionLeft  string
+	versionRight string
+}
+
+func PrintDiffTable(o DiffOptions) {
+	if len(o.ReleasesSpecLeft) == 0 && len(o.ReleasesSpecRight) == 0 {
+		return
+	}
+	tbl := uitable.New()
+	tbl.MaxColWidth = 60
+	leftColHeader := initHeader(o.KubeContextLeft, o.EnvNameLeft)
+	rightColHeader := initHeader(o.KubeContextRight, o.EnvNameRight)
+	tbl.AddRow("chart", leftColHeader, rightColHeader)
+
+	diffs := getDiffs(o.ReleasesSpecLeft, o.ReleasesSpecRight)
+
+	if len(diffs) == 0 {
+		return
+	}
+
+	for _, d := range diffs {
+		tbl.AddRow(d.chartName, d.versionLeft, d.versionRight)
+	}
+	fmt.Println(tbl.String())
+}
+
+func initHeader(kubeContext, envName string) string {
+	if kubeContext != "" {
+		kubeContext += "/"
+	}
+	return fmt.Sprintf("%s%s", kubeContext, envName)
+}
+
+func getDiffs(releasesLeft, releasesRight []ReleaseSpec) []diff {
+	leftAndRight := mergeReleasesToCompare(releasesLeft, releasesRight)
+	diffs := removeEquals(leftAndRight)
+
+	return diffs
+}
+
+func mergeReleasesToCompare(releasesLeft, releasesRight []ReleaseSpec) []diff {
+	// Initialize all left elements
+	var left []diff
+	for _, r := range releasesLeft {
+		d := diff{
+			chartName:   r.ChartName,
+			versionLeft: r.ChartVersion,
+		}
+		left = append(left, d)
+	}
+	// Add right elements to existing elements from left
+	var leftAndRight []diff
+	for _, r := range releasesRight {
+		found := false
+		for i := 0; i < len(left); i++ {
+			l := left[i]
+			if l.chartName == r.ChartName {
+				found = true
+				l.versionRight = r.ChartVersion
+				leftAndRight = append(leftAndRight, l)
+				left = append(left[:i], left[i+1:]...)
+				break
+			}
+		}
+		// Add right elements which do not exist in left
+		if !found {
+			d := diff{
+				chartName:    r.ChartName,
+				versionRight: r.ChartVersion,
+			}
+			leftAndRight = append(leftAndRight, d)
+		}
+	}
+	// Add left elements which do not exist in right
+	for _, r := range left {
+		leftAndRight = append(leftAndRight, r)
+	}
+
+	return leftAndRight
+}
+
+func removeEquals(leftAndRight []diff) []diff {
+	var diffs []diff
+	for _, lar := range leftAndRight {
+		if lar.versionLeft == lar.versionRight {
+			continue
+		}
+		diffs = append(diffs, lar)
+	}
+
+	sort.Slice(diffs[:], func(i, j int) bool {
+		return strings.Compare(diffs[i].chartName, diffs[j].chartName) <= 0
+	})
+
+	return diffs
 }
