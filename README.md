@@ -1,4 +1,4 @@
-[![GitHub tag](https://img.shields.io/github/tag/maorfr/orca.svg?maxAge=86400)](https://github.com/atlassian/gostatsd)
+[![Release](https://github-basic-badges.herokuapp.com/release/maorfr/orca.svg)](https://github.com/maorfr/orca/releases)
 [![Docker Pulls](https://img.shields.io/docker/pulls/maorfr/orca.svg)](https://hub.docker.com/r/maorfr/orca/)
 [![Go Report Card](https://goreportcard.com/badge/github.com/maorfr/orca)](https://goreportcard.com/report/github.com/maorfr/orca)
 [![license](https://img.shields.io/github/license/maorfr/orca.svg)](https://github.com/maorfr/orca/blob/master/LICENSE)
