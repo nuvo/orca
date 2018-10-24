@@ -216,7 +216,11 @@ func UpdateChartVersion(path, append string) string {
 		log.Fatalln(err)
 	}
 
-	newVersion := fmt.Sprintf("%s-%s", v["version"], append)
+	version := v["version"].(string)
+	if append == "" {
+		return version
+	}
+	newVersion := fmt.Sprintf("%s-%s", version, append)
 	v["version"] = newVersion
 
 	data, err = yaml.Marshal(v)
