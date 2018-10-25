@@ -114,6 +114,16 @@ orca get env --name $SRC_NS --kube-context $SRC_KUBE_CONTEXT -o md
 
 This will print the list of currently installed charts in Mardown format.
 
+### Prepare for disaster recovery
+
+You can use Orca to prepare for a rainy day. Trigger an event of your choice whenever an environment is updated and use Orca to get the current state into a file (ideally keep it under source control):
+
+```
+orca get env --name $NS --kube-context $KUBE_CONTEXT -o yaml > charts.yaml
+```
+
+In case of emergency, you can deploy the same configuration using the `deploy env` command as explained above.
+
 ## Environment variables support
 
 Orca commands support the usage of environment variables instead of most of the flags. For example:
