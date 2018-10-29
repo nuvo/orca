@@ -211,9 +211,11 @@ func UpgradeRelease(name, releaseName, kubeContext, namespace, values, set strin
 		kubeContextFlag = "kubecontext"
 	}
 	cmd := fmt.Sprintf("helm %supgrade%s -i %s --%s %s --namespace %s%s%s %s/%s --timeout %d", injectStr, getTLS(tls, kubeContext, helmTLSStore), releaseName, kubeContextFlag, kubeContext, namespace, values, set, dir, name, timeout)
-	output := Exec(cmd)
 	if print {
 		fmt.Println(cmd)
+	}
+	output := Exec(cmd)
+	if print {
 		fmt.Print(output)
 	}
 }
