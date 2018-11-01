@@ -11,6 +11,13 @@ Orca is an advanced CI\CD tool which focuses on the world around Kubernetes, Hel
 Orca is a simplifier - It takes complex tasks and makes them easy to accomplish.
 Is is important to note that Orca is not intended to replace Helm, but rather to empower it and enable advanced usage with simplicity.
 
+Used by some great companies:
+
+* [Bancor](https://about.bancor.network)
+* [NuvoCares](https://www.nuvocares.com)
+
+Also using Orca? Let us know by opening an issue or a PR to this section!
+
 ## Install
 
 ### From a release
