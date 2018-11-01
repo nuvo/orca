@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	annotationPrefix string = "orca.nuvocares.com"
+	annotationPrefix string = "orca.io"
 	stateAnnotation  string = annotationPrefix + "/state"
 	busyState        string = "busy"
 	freeState        string = "free"
