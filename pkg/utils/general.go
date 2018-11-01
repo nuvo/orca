@@ -5,6 +5,7 @@ import (
 	"math/rand"
 	"os"
 	exec "os/exec"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -12,6 +13,8 @@ import (
 
 // Exec takes a command as a string and executes it
 func Exec(cmd string) string {
+	space := regexp.MustCompile(`\s+`)
+	cmd = space.ReplaceAllString(cmd, " ")
 	args := strings.Split(cmd, " ")
 	binary := args[0]
 	_, err := exec.LookPath(binary)
