@@ -107,6 +107,9 @@ func NewDeployEnvCmd(out io.Writer) *cobra.Command {
 			if e.tls && e.helmTLSStore == "" {
 				return errors.New("tls is set to true and helm-tls-store is not defined")
 			}
+			if e.tls && e.kubeContext == "" {
+				return errors.New("kube-context has to be non-empty when tls is set to true")
+			}
 			if e.chartsFile == "" && len(e.override) == 0 {
 				return errors.New("either charts-file or override has to be defined")
 			}
@@ -190,6 +193,9 @@ func NewDeleteEnvCmd(out io.Writer) *cobra.Command {
 			}
 			if e.tls && e.helmTLSStore == "" {
 				return errors.New("tls is set to true and helm-tls-store is not defined")
+			}
+			if e.tls && e.kubeContext == "" {
+				return errors.New("kube-context has to be non-empty when tls is set to true")
 			}
 			return nil
 		},

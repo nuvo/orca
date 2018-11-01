@@ -39,6 +39,9 @@ func NewDeployChartCmd(out io.Writer) *cobra.Command {
 			if c.tls && c.helmTLSStore == "" {
 				return errors.New("tls is set to true and helm-tls-store is not defined")
 			}
+			if c.tls && c.kubeContext == "" {
+				return errors.New("kube-context has to be non-empty when tls is set to true")
+			}
 			if c.name == "" {
 				return errors.New("name can not be empty")
 			}
