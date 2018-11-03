@@ -54,7 +54,21 @@ func NewDeployChartCmd(out io.Writer) *cobra.Command {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			utils.DeployChartFromRepository(c.releaseName, c.name, c.version, c.kubeContext, c.namespace, c.repo, c.helmTLSStore, c.tls, c.packedValues, c.set, true, c.inject, c.timeout)
+			utils.DeployChartFromRepository(utils.DeployChartFromRepositoryOptions{
+				ReleaseName:  c.releaseName,
+				Name:         c.name,
+				Version:      c.version,
+				KubeContext:  c.kubeContext,
+				Namespace:    c.namespace,
+				Repo:         c.repo,
+				TLS:          c.tls,
+				HelmTLSStore: c.helmTLSStore,
+				PackedValues: c.packedValues,
+				SetValues:    c.set,
+				IsIsolated:   true,
+				Inject:       c.inject,
+				Timeout:      c.timeout,
+			})
 		},
 	}
 
@@ -100,7 +114,13 @@ func NewPushChartCmd(out io.Writer) *cobra.Command {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			utils.PushChartToRepository(c.path, c.append, c.repo, c.lint, false)
+			utils.PushChartToRepository(utils.PushChartToRepositoryOptions{
+				Path:   c.path,
+				Append: c.append,
+				Repo:   c.repo,
+				Lint:   c.lint,
+				Print:  false,
+			})
 		},
 	}
 

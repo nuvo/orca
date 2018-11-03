@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"fmt"
 	"log"
 	"math/rand"
 	"os"
@@ -9,6 +10,17 @@ import (
 	"strings"
 	"time"
 )
+
+// PrintExec takes a command and executes it, with or without printing
+func PrintExec(cmd []string, print bool) {
+	if print {
+		fmt.Println(cmd)
+	}
+	output := Exec(cmd)
+	if print {
+		fmt.Print(output)
+	}
+}
 
 // Exec takes a command as a string and executes it
 func Exec(cmd []string) string {

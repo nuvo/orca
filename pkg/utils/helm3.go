@@ -20,26 +20,21 @@ import (
 	rspb "k8s.io/helm/pkg/proto/hapi/release"
 )
 
-type releaseData struct {
-	name      string
-	revision  int32
-	updated   string
-	status    string
-	chart     string
-	version   string
-	namespace string
-	time      time.Time
+type GetInstalledReleasesOptions struct {
+	KubeContext   string
+	Namespace     string
+	IncludeFailed bool
 }
 
 // GetInstalledReleases gets the installed Helm releases in a given namespace
-func GetInstalledReleases(kubeContext, namespace string, includeFailed bool) []ReleaseSpec {
+func GetInstalledReleases(o GetInstalledReleasesOptions) []ReleaseSpec {
 
 	tillerNamespace := "kube-system"
 	tillerResourceLabel := "OWNER=TILLER"
-	storage := getTillerStorage(kubeContext, tillerNamespace)
+	storage := getTillerStorage(o.KubeContext, tillerNamespace)
 
 	var releaseSpecs []ReleaseSpec
-	list, err := listReleases(kubeContext, namespace, storage, tillerNamespace, tillerResourceLabel)
+	list, err := listReleases(o.KubeContext, o.Namespace, storage, tillerNamespace, tillerResourceLabel)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -58,7 +53,7 @@ func GetInstalledReleases(kubeContext, namespace string, includeFailed bool) []R
 		releaseSpecs = append(releaseSpecs, releaseSpec)
 	}
 
-	if !includeFailed {
+	if !o.IncludeFailed {
 		return releaseSpecs
 	}
 
@@ -112,6 +107,17 @@ func getTillerStorage(kubeContext, tillerNamespace string) string {
 	}
 
 	return storage
+}
+
+type releaseData struct {
+	name      string
+	revision  int32
+	updated   string
+	status    string
+	chart     string
+	version   string
+	namespace string
+	time      time.Time
 }
 
 func listReleases(kubeContext, namespace, storage, tillerNamespace, label string) ([]releaseData, error) {

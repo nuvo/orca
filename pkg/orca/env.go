@@ -57,7 +57,11 @@ func NewGetEnvCmd(out io.Writer) *cobra.Command {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			releases := utils.GetInstalledReleases(e.kubeContext, e.name, false)
+			releases := utils.GetInstalledReleases(utils.GetInstalledReleasesOptions{
+				KubeContext:   e.kubeContext,
+				Namespace:     e.name,
+				IncludeFailed: false,
+			})
 
 			switch e.output {
 			case "yaml":
@@ -124,7 +128,10 @@ func NewDeployEnvCmd(out io.Writer) *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			print := false
 
-			utils.AddRepository(e.repo, print)
+			utils.AddRepository(utils.AddRepositoryOptions{
+				Repo:  e.repo,
+				Print: print,
+			})
 			utils.UpdateRepositories(print)
 
 			nsPreExists := true
@@ -143,16 +150,42 @@ func NewDeployEnvCmd(out io.Writer) *cobra.Command {
 				desiredReleases = utils.OverrideReleases(desiredReleases, e.override, e.name)
 			}
 
-			includeFailed := false
-			installedReleases := utils.GetInstalledReleases(e.kubeContext, e.name, includeFailed)
+			installedReleases := utils.GetInstalledReleases(utils.GetInstalledReleasesOptions{
+				KubeContext:   e.kubeContext,
+				Namespace:     e.name,
+				IncludeFailed: false,
+			})
 			releasesToInstall := utils.GetReleasesDelta(desiredReleases, installedReleases)
 
-			utils.DeployChartsFromRepository(releasesToInstall, e.kubeContext, e.name, e.repo, e.helmTLSStore, e.tls, e.packedValues, e.set, e.inject, e.parallel, e.timeout)
+			utils.DeployChartsFromRepository(utils.DeployChartsFromRepositoryOptions{
+				ReleasesToInstall: releasesToInstall,
+				KubeContext:       e.kubeContext,
+				Namespace:         e.name,
+				Repo:              e.repo,
+				TLS:               e.tls,
+				HelmTLSStore:      e.helmTLSStore,
+				PackedValues:      e.packedValues,
+				SetValues:         e.set,
+				Inject:            e.inject,
+				Parallel:          e.parallel,
+				Timeout:           e.timeout,
+			})
 
 			if !e.deployOnlyOverrideIfEnvExists {
-				installedReleases = utils.GetInstalledReleases(e.kubeContext, e.name, includeFailed)
+				installedReleases := utils.GetInstalledReleases(utils.GetInstalledReleasesOptions{
+					KubeContext:   e.kubeContext,
+					Namespace:     e.name,
+					IncludeFailed: false,
+				})
 				releasesToDelete := utils.GetReleasesDelta(installedReleases, desiredReleases)
-				utils.DeleteReleases(releasesToDelete, e.kubeContext, e.helmTLSStore, e.tls, e.parallel, e.timeout)
+				utils.DeleteReleases(utils.DeleteReleasesOptions{
+					ReleasesToDelete: releasesToDelete,
+					KubeContext:      e.kubeContext,
+					TLS:              e.tls,
+					HelmTLSStore:     e.helmTLSStore,
+					Parallel:         e.parallel,
+					Timeout:          e.timeout,
+				})
 			}
 			unlockEnvironment(e.name, e.kubeContext, print)
 		},
@@ -208,9 +241,19 @@ func NewDeleteEnvCmd(out io.Writer) *cobra.Command {
 				log.Printf("environment \"%s\" not found", e.name)
 			}
 
-			includeFailed := true
-			releases := utils.GetInstalledReleases(e.kubeContext, e.name, includeFailed)
-			utils.DeleteReleases(releases, e.kubeContext, e.helmTLSStore, e.tls, e.parallel, e.timeout)
+			releases := utils.GetInstalledReleases(utils.GetInstalledReleasesOptions{
+				KubeContext:   e.kubeContext,
+				Namespace:     e.name,
+				IncludeFailed: true,
+			})
+			utils.DeleteReleases(utils.DeleteReleasesOptions{
+				ReleasesToDelete: releases,
+				KubeContext:      e.kubeContext,
+				TLS:              e.tls,
+				HelmTLSStore:     e.helmTLSStore,
+				Parallel:         e.parallel,
+				Timeout:          e.timeout,
+			})
 
 			if nsExists {
 				utils.DeleteNamespace(e.name, e.kubeContext, print)
@@ -325,9 +368,16 @@ func NewDiffEnvCmd(out io.Writer) *cobra.Command {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			includeFailed := false
-			releasesLeft := utils.GetInstalledReleases(e.kubeContextLeft, e.nameLeft, includeFailed)
-			releasesRight := utils.GetInstalledReleases(e.kubeContextRight, e.nameRight, includeFailed)
+			releasesLeft := utils.GetInstalledReleases(utils.GetInstalledReleasesOptions{
+				KubeContext:   e.kubeContextLeft,
+				Namespace:     e.nameLeft,
+				IncludeFailed: false,
+			})
+			releasesRight := utils.GetInstalledReleases(utils.GetInstalledReleasesOptions{
+				KubeContext:   e.kubeContextRight,
+				Namespace:     e.nameRight,
+				IncludeFailed: false,
+			})
 
 			diffOptions := utils.DiffOptions{
 				KubeContextLeft:   e.kubeContextLeft,
