@@ -5,7 +5,6 @@ import (
 	"log"
 	"math"
 	"os"
-	"strings"
 	"sync"
 	"time"
 )
@@ -84,20 +83,14 @@ func DeployChartFromRepository(releaseName, name, version, kubeContext, namespac
 	os.RemoveAll(tempDir)
 }
 
-// List get a list of installed releases in a given namespace
-func List(kubeContext, namespace, helmTLSStore string, tls bool) string {
-	cmd := fmt.Sprintf("helm ls%s --kube-context %s --namespace %s", getTLS(tls, kubeContext, helmTLSStore), kubeContext, namespace)
-	list := Exec(cmd)
-
-	return list
-}
-
 // Lint takes a path to a chart and runs a series of tests to verify that the chart is well-formed
 func Lint(path string, print bool) {
-	cmd := fmt.Sprintf("helm lint %s", path)
-	output := Exec(cmd)
+	cmd := []string{"helm", "lint", path}
 	if print {
 		fmt.Println(cmd)
+	}
+	output := Exec(cmd)
+	if print {
 		fmt.Print(output)
 	}
 }
@@ -106,20 +99,27 @@ func Lint(path string, print bool) {
 func AddRepository(repo string, print bool) {
 	repoName, repoURL := SplitInTwo(repo, "=")
 
-	cmd := fmt.Sprintf("helm repo add %s %s", repoName, repoURL)
-	output := Exec(cmd)
+	cmd := []string{
+		"helm", "repo",
+		"add", repoName, repoURL,
+	}
 	if print {
 		fmt.Println(cmd)
+	}
+	output := Exec(cmd)
+	if print {
 		fmt.Print(output)
 	}
 }
 
 // UpdateRepositories updates helm repositories
 func UpdateRepositories(print bool) {
-	cmd := fmt.Sprintf("helm repo update")
-	output := Exec(cmd)
+	cmd := []string{"helm", "repo", "update"}
 	if print {
 		fmt.Println(cmd)
+	}
+	output := Exec(cmd)
+	if print {
 		fmt.Print(output)
 	}
 }
@@ -128,10 +128,18 @@ func UpdateRepositories(print bool) {
 func FetchChart(repo, name, version, dir string, print bool) {
 	repoName, _ := SplitInTwo(repo, "=")
 
-	cmd := fmt.Sprintf("helm fetch %s/%s --version %s --untar -d %s", repoName, name, version, dir)
-	output := Exec(cmd)
+	cmd := []string{
+		"helm", "fetch",
+		fmt.Sprintf("%s/%s", repoName, name),
+		"--version", version,
+		"--untar",
+		"-d", dir,
+	}
 	if print {
 		fmt.Println(cmd)
+	}
+	output := Exec(cmd)
+	if print {
 		fmt.Print(output)
 	}
 }
@@ -152,65 +160,84 @@ func PushChartToRepository(path, append, repo string, lint, print bool) {
 func PushChart(repo, path string, print bool) {
 	repoName, _ := SplitInTwo(repo, "=")
 
-	cmd := fmt.Sprintf("helm push %s %s", path, repoName)
-	output := Exec(cmd)
+	cmd := []string{"helm", "push", path, repoName}
 	if print {
 		fmt.Println(cmd)
+	}
+	output := Exec(cmd)
+	if print {
 		fmt.Print(output)
 	}
 }
 
 // UpdateChartDependencies performs helm dependency update
 func UpdateChartDependencies(path string, print bool) {
-	cmd := fmt.Sprintf("helm dependency update %s", path)
-	output := Exec(cmd)
+	cmd := []string{"helm", "dependency", "update", path}
 	if print {
 		fmt.Println(cmd)
+	}
+	output := Exec(cmd)
+	if print {
 		fmt.Print(output)
 	}
 }
 
 // CreateValuesChain will create a chain of values files to use
-func CreateValuesChain(name, dir string, packedValues []string) string {
-	values := " "
+func CreateValuesChain(name, dir string, packedValues []string) []string {
+	var values []string
 	format := "%s/%s/%s"
 	fileToTest := fmt.Sprintf(format, dir, name, "values.yaml")
 	if _, err := os.Stat(fileToTest); err == nil {
-		values = values + fmt.Sprintf("-f %s", fileToTest)
+		values = append(values, "-f", fileToTest)
 	}
 
 	for _, v := range packedValues {
 		fileToTest = fmt.Sprintf(format, dir, name, v)
-		if _, err := os.Stat(fileToTest); err == nil {
-			if !strings.Contains(values, " "+fileToTest) {
-				values = values + fmt.Sprintf(" -f %s", fileToTest)
-			}
+		_, err := os.Stat(fileToTest)
+		if err != nil {
+			continue
 		}
+		if Contains(values, fileToTest) {
+			continue
+		}
+		values = append(values, "-f", fileToTest)
 	}
 
 	return values
 }
 
 // CreateSetChain will create a chain of sets to use
-func CreateSetChain(name string, inputSet []string) string {
-	set := fmt.Sprintf(" --set fullnameOverride=%s", name)
+func CreateSetChain(name string, inputSet []string) []string {
+	set := []string{"--set", fmt.Sprintf("fullnameOverride=%s", name)}
 
 	for _, s := range inputSet {
-		set = set + fmt.Sprintf(" --set %s", s)
+		set = append(set, "--set", s)
 	}
 
 	return set
 }
 
 // UpgradeRelease performs helm upgrade -i
-func UpgradeRelease(name, releaseName, kubeContext, namespace, values, set string, tls bool, helmTLSStore, dir string, print, inject bool, timeout int) {
-	var injectStr string
-	kubeContextFlag := "kube-context"
+func UpgradeRelease(name, releaseName, kubeContext, namespace string, values, set []string, tls bool, helmTLSStore, dir string, print, inject bool, timeout int) {
+	cmd := []string{"helm"}
+	kubeContextFlag := "--kube-context"
 	if inject {
-		injectStr = "inject "
-		kubeContextFlag = "kubecontext"
+		kubeContextFlag = "--kubecontext"
+		cmd = append(cmd, "inject")
 	}
-	cmd := fmt.Sprintf("helm %supgrade%s -i %s --%s %s --namespace %s%s%s %s/%s --timeout %d", injectStr, getTLS(tls, kubeContext, helmTLSStore), releaseName, kubeContextFlag, kubeContext, namespace, values, set, dir, name, timeout)
+	cmd = append(cmd, "upgrade", "-i", releaseName, fmt.Sprintf("%s/%s", dir, name))
+	if kubeContext != "" {
+		cmd = append(cmd, kubeContextFlag, kubeContext)
+	}
+	if namespace != "" {
+		cmd = append(cmd, "--namespace", namespace)
+	}
+	cmd = append(cmd, values...)
+	cmd = append(cmd, set...)
+	cmd = append(cmd, "--timeout", fmt.Sprintf("%d", timeout))
+	cmd = append(cmd, getTLS(tls, kubeContext, helmTLSStore)...)
+
+	// cmd := fmt.Sprintf("helm %supgrade%s -i %s --%s %s --namespace %s%s%s %s/%s --timeout %d", injectStr, getTLS(tls, kubeContext, helmTLSStore), releaseName, kubeContextFlag, kubeContext, namespace, values, set, dir, name, timeout)
 	if print {
 		fmt.Println(cmd)
 	}
@@ -244,18 +271,31 @@ func DeleteReleases(releasesToDelete []ReleaseSpec, kubeContext, helmTLSStore st
 
 // DeleteRelease deletes a release from Kubernetes
 func DeleteRelease(releaseName, kubeContext string, tls bool, helmTLSStore string, timeout int, print bool) {
-	cmd := fmt.Sprintf("helm delete%s --purge %s --kube-context %s --timeout %d", getTLS(tls, kubeContext, helmTLSStore), releaseName, kubeContext, timeout)
-	output := Exec(cmd)
+	cmd := []string{
+		"helm", "delete", releaseName, "--purge",
+		"--timeout", fmt.Sprintf("%d", timeout),
+	}
+	if kubeContext != "" {
+		cmd = append(cmd, "--kube-context", kubeContext)
+	}
+	cmd = append(cmd, getTLS(tls, kubeContext, helmTLSStore)...)
 	if print {
 		fmt.Println(cmd)
+	}
+	output := Exec(cmd)
+	if print {
 		fmt.Print(output)
 	}
 }
 
-func getTLS(tls bool, kubeContext, helmTLSStore string) string {
-	tlsStr := ""
+func getTLS(tls bool, kubeContext, helmTLSStore string) []string {
+	var tlsStr []string
 	if tls == true {
-		tlsStr = fmt.Sprintf(" --tls --tls-cert %s/%s.cert.pem --tls-key %s/%s.key.pem", helmTLSStore, kubeContext, helmTLSStore, kubeContext)
+		tlsStr = []string{
+			"--tls",
+			"--tls-cert", fmt.Sprintf("%s/%s.cert.pem", helmTLSStore, kubeContext),
+			"--tls-key", fmt.Sprintf("%s/%s.key.pem", helmTLSStore, kubeContext),
+		}
 	}
 	return tlsStr
 }

@@ -5,24 +5,20 @@ import (
 	"math/rand"
 	"os"
 	exec "os/exec"
-	"regexp"
 	"strconv"
 	"strings"
 	"time"
 )
 
 // Exec takes a command as a string and executes it
-func Exec(cmd string) string {
-	space := regexp.MustCompile(`\s+`)
-	cmd = space.ReplaceAllString(cmd, " ")
-	args := strings.Split(cmd, " ")
-	binary := args[0]
+func Exec(cmd []string) string {
+	binary := cmd[0]
 	_, err := exec.LookPath(binary)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	output, err := exec.Command(binary, args[1:]...).CombinedOutput()
+	output, err := exec.Command(binary, cmd[1:]...).CombinedOutput()
 	if err != nil {
 		log.Println("Error: command execution failed:", cmd)
 		log.Fatal(string(output))
