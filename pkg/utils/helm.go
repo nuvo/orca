@@ -63,6 +63,7 @@ func DeployChartsFromRepository(o DeployChartsFromRepositoryOptions) {
 				mutex.Unlock()
 
 				// deploy chart
+				log.Println("deploying chart", c.ChartName, "version", c.ChartVersion)
 				DeployChartFromRepository(DeployChartFromRepositoryOptions{
 					ReleaseName:  c.ReleaseName,
 					Name:         c.ChartName,
