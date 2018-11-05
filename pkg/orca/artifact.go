@@ -25,7 +25,7 @@ func NewDeployArtifactCmd(out io.Writer) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "artifact",
-		Short: "Deploy artifact to Artifactory",
+		Short: "Deploy an artifact to Artifactory",
 		Long:  ``,
 		Args: func(cmd *cobra.Command, args []string) error {
 			if a.url == "" {

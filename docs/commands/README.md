@@ -3,7 +3,7 @@
 
 ### Deploy artifact
 ```
-Deploy artifact to Artifactory
+Deploy an artifact to Artifactory
 
 Usage:
   orca deploy artifact [flags]
