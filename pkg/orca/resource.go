@@ -40,7 +40,13 @@ func NewCreateResourceCmd(out io.Writer) *cobra.Command {
 			if r.update {
 				method = "PATCH"
 			}
-			utils.PerformRequest(method, r.url, r.headers, 201)
+			utils.PerformRequest(utils.PerformRequestOptions{
+				Method:             method,
+				URL:                r.url,
+				Headers:            r.headers,
+				ExpectedStatusCode: 201,
+				Data:               nil,
+			})
 		},
 	}
 
@@ -65,7 +71,13 @@ func NewGetResourceCmd(out io.Writer) *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 
 			var data []map[string]interface{}
-			bytes := utils.PerformRequest("GET", r.url, r.headers, 200)
+			bytes := utils.PerformRequest(utils.PerformRequestOptions{
+				Method:             "GET",
+				URL:                r.url,
+				Headers:            r.headers,
+				ExpectedStatusCode: 200,
+				Data:               nil,
+			})
 			if err := json.Unmarshal(bytes, &data); err != nil {
 				log.Fatal(err)
 			}
@@ -123,7 +135,13 @@ func NewDeleteResourceCmd(out io.Writer) *cobra.Command {
 		Short: "Delete a resource via REST API",
 		Long:  ``,
 		Run: func(cmd *cobra.Command, args []string) {
-			utils.PerformRequest("DELETE", r.url, r.headers, 204)
+			utils.PerformRequest(utils.PerformRequestOptions{
+				Method:             "DELETE",
+				URL:                r.url,
+				Headers:            r.headers,
+				ExpectedStatusCode: 204,
+				Data:               nil,
+			})
 		},
 	}
 

@@ -1,18 +1,27 @@
 package utils
 
 import (
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
 )
 
+type PerformRequestOptions struct {
+	Method             string
+	URL                string
+	Headers            []string
+	ExpectedStatusCode int
+	Data               io.Reader
+}
+
 // PerformRequest performs an HTTP request to a given url with an expected status code (to support testing) and returns the body
-func PerformRequest(method, url string, headers []string, expectedStatusCode int) []byte {
-	req, err := http.NewRequest(method, url, nil)
+func PerformRequest(o PerformRequestOptions) []byte {
+	req, err := http.NewRequest(o.Method, o.URL, o.Data)
 	if err != nil {
 		log.Fatal("NewRequest: ", err)
 	}
-	for _, header := range headers {
+	for _, header := range o.Headers {
 		header, value := SplitInTwo(header, ":")
 		req.Header.Add(header, value)
 	}
@@ -24,7 +33,7 @@ func PerformRequest(method, url string, headers []string, expectedStatusCode int
 	defer res.Body.Close()
 
 	body, err := ioutil.ReadAll(res.Body)
-	if res.StatusCode != expectedStatusCode {
+	if res.StatusCode != o.ExpectedStatusCode {
 		log.Fatal(string(body))
 	}
 
