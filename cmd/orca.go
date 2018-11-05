@@ -68,6 +68,7 @@ func NewDeployCmd(out io.Writer) *cobra.Command {
 
 	cmd.AddCommand(orca.NewDeployChartCmd(out))
 	cmd.AddCommand(orca.NewDeployEnvCmd(out))
+	cmd.AddCommand(orca.NewDeployArtifactCmd(out))
 
 	return cmd
 }
