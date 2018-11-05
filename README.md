@@ -156,6 +156,7 @@ orca get env
 
 Since Orca is a tool designed for CI\CD, it has additional commands and options to help with common actions:
 ```
+deploy artifact         Deploy artifact to Artifactory
 deploy chart            Deploy a Helm chart from chart repository
 push chart              Push Helm chart to chart repository
 get env                 Get list of Helm releases in an environment (Kubernetes namespace)

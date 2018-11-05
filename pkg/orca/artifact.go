@@ -61,7 +61,7 @@ func NewDeployArtifactCmd(out io.Writer) *cobra.Command {
 
 	f.StringVar(&a.url, "url", os.Getenv("ORCA_URL"), "url to deploy to. Overrides $ORCA_URL")
 	f.StringVar(&a.token, "token", os.Getenv("ORCA_TOKEN"), "token to use for deployment. Overrides $ORCA_TOKEN")
-	f.StringVar(&a.artifact, "artifact", os.Getenv("ORCA_FILE"), "artifact to deploy. Overrides $ORCA_ARTIFACT")
+	f.StringVar(&a.artifact, "artifact", os.Getenv("ORCA_FILE"), "path to artifact to deploy. Overrides $ORCA_ARTIFACT")
 
 	return cmd
 }

@@ -1,5 +1,19 @@
 ## All commands
 
+
+### Deploy artifact
+```
+Deploy artifact to Artifactory
+
+Usage:
+  orca deploy artifact [flags]
+
+Flags:
+      --artifact string   path to artifact to deploy. Overrides $ORCA_ARTIFACT
+      --token string      token to use for deployment. Overrides $ORCA_TOKEN
+      --url string        url to deploy to. Overrides $ORCA_URL
+```
+
 ### Deploy chart
 ```
 Deploy a Helm chart from chart repository
