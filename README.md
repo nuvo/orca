@@ -20,12 +20,14 @@ Also using Orca? Let us know by opening an issue or a PR to this section!
 
 ## Install
 
-### From a release
+### Prerequisites
 
 1. git
 2. [dep](https://github.com/golang/dep)
 3. [Helm](https://helm.sh/) (required for `env` and `chart` subcommands)
 4. [ChartMuseum](https://github.com/helm/charts/tree/master/stable/chartmuseum) or any other chart repository implementation (required for `deploy` commands)
+
+### From a release
 
 Download the latest release from the [Releases page](https://github.com/maorfr/orca/releases) or use it in your CI\CD process with a [Docker image](https://hub.docker.com/r/maorfr/orca)
 

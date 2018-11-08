@@ -12,9 +12,9 @@ import (
 )
 
 type artifactCmd struct {
-	url      string
-	token    string
-	artifact string
+	url   string
+	token string
+	file  string
 
 	out io.Writer
 }
@@ -34,16 +34,16 @@ func NewDeployArtifactCmd(out io.Writer) *cobra.Command {
 			if a.token == "" {
 				return errors.New("token to use for deployment has to be defined")
 			}
-			if a.artifact == "" {
+			if a.file == "" {
 				return errors.New("artifact to deploy has to be defined")
 			}
-			if _, err := os.Stat(a.artifact); err != nil {
+			if _, err := os.Stat(a.file); err != nil {
 				return errors.New("artifact to deploy does not exist")
 			}
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			data, err := os.Open(a.artifact)
+			data, err := os.Open(a.file)
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -61,7 +61,7 @@ func NewDeployArtifactCmd(out io.Writer) *cobra.Command {
 
 	f.StringVar(&a.url, "url", os.Getenv("ORCA_URL"), "url to deploy to. Overrides $ORCA_URL")
 	f.StringVar(&a.token, "token", os.Getenv("ORCA_TOKEN"), "token to use for deployment. Overrides $ORCA_TOKEN")
-	f.StringVar(&a.artifact, "artifact", os.Getenv("ORCA_FILE"), "path to artifact to deploy. Overrides $ORCA_ARTIFACT")
+	f.StringVar(&a.file, "file", os.Getenv("ORCA_FILE"), "path to artifact to deploy. Overrides $ORCA_FILE")
 
 	return cmd
 }

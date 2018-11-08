@@ -9,7 +9,7 @@ Usage:
   orca deploy artifact [flags]
 
 Flags:
-      --artifact string   path to artifact to deploy. Overrides $ORCA_ARTIFACT
+      --file string       path to file to deploy. Overrides $ORCA_FILE
       --token string      token to use for deployment. Overrides $ORCA_TOKEN
       --url string        url to deploy to. Overrides $ORCA_URL
 ```
