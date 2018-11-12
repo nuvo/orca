@@ -14,7 +14,7 @@ Is is important to note that Orca is not intended to replace Helm, but rather to
 Continuously used by some great companies:
 
 * [Bancor](https://about.bancor.network)
-* [Nuvo](https://www.nuvocares.com)
+* [Nuvo](https://www.nuvocares.com) - That's us!
 
 Also using Orca? Let us know by opening an issue or a PR to this section!
 
