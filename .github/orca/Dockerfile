@@ -1,4 +1,4 @@
-FROM maorfr/orca
+FROM nuvo/orca
 
 COPY entrypoint.sh /
 

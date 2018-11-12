@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/maorfr/orca/pkg/utils"
+	"github.com/nuvo/orca/pkg/utils"
 )
 
 func TestGetBuildTypeByPathFilters_NoChangedPaths(t *testing.T) {

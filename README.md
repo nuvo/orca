@@ -2,10 +2,10 @@
 
 # Orca
 
-[![Release](https://github-basic-badges.herokuapp.com/release/maorfr/orca.svg)](https://github.com/maorfr/orca/releases)
-[![Docker Pulls](https://img.shields.io/docker/pulls/maorfr/orca.svg)](https://hub.docker.com/r/maorfr/orca/)
-[![Go Report Card](https://goreportcard.com/badge/github.com/maorfr/orca)](https://goreportcard.com/report/github.com/maorfr/orca)
-[![license](https://img.shields.io/github/license/maorfr/orca.svg)](https://github.com/maorfr/orca/blob/master/LICENSE)
+[![Release](https://github-basic-badges.herokuapp.com/release/nuvo/orca.svg)](https://github.com/nuvo/orca/releases)
+[![Docker Pulls](https://img.shields.io/docker/pulls/nuvo/orca.svg)](https://hub.docker.com/r/nuvo/orca/)
+[![Go Report Card](https://goreportcard.com/badge/github.com/nuvo/orca)](https://goreportcard.com/report/github.com/nuvo/orca)
+[![license](https://img.shields.io/github/license/nuvo/orca.svg)](https://github.com/nuvo/orca/blob/master/LICENSE)
 
 Orca is an advanced CI\CD tool which focuses on the world around Kubernetes, Helm and CI\CD, and it is also handy in daily work.
 Orca is a simplifier - It takes complex tasks and makes them easy to accomplish.
@@ -29,13 +29,13 @@ Also using Orca? Let us know by opening an issue or a PR to this section!
 
 ### From a release
 
-Download the latest release from the [Releases page](https://github.com/maorfr/orca/releases) or use it in your CI\CD process with a [Docker image](https://hub.docker.com/r/maorfr/orca)
+Download the latest release from the [Releases page](https://github.com/nuvo/orca/releases) or use it in your CI\CD process with a [Docker image](https://hub.docker.com/r/nuvo/orca)
 
 ### From source
 
 ```
-mkdir -p $GOPATH/src/github.com/maorfr && cd $_
-git clone https://github.com/maorfr/orca.git && cd orca
+mkdir -p $GOPATH/src/github.com/nuvo && cd $_
+git clone https://github.com/nuvo/orca.git && cd orca
 make
 ```
 

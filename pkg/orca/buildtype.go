@@ -5,7 +5,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/maorfr/orca/pkg/utils"
+	"github.com/nuvo/orca/pkg/utils"
 
 	"github.com/spf13/cobra"
 )

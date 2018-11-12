@@ -6,7 +6,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/maorfr/orca/pkg/orca"
+	"github.com/nuvo/orca/pkg/orca"
 
 	"github.com/spf13/cobra"
 )

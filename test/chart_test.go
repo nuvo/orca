@@ -3,7 +3,7 @@ package test
 import (
 	"testing"
 
-	"github.com/maorfr/orca/pkg/utils"
+	"github.com/nuvo/orca/pkg/utils"
 )
 
 func TestGetReleasesDelta(t *testing.T) {
