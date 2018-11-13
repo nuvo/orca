@@ -7,6 +7,7 @@ services:
 - docker
 
 after_success:
+- if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then exit 0; fi
 - make build
 - docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
 - export REPO=$DOCKER_USER/orca
