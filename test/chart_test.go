@@ -152,6 +152,8 @@ func TestUpdateChartVersion(t *testing.T) {
 	if newVersion != "0.1.1-1234" {
 		t.Errorf("Expected: 0.1.1-1234, Actual: " + newVersion)
 	}
+
+	utils.ResetChartVersion("data/", "0.1.1")
 }
 func TestEquals_True(t *testing.T) {
 	rel := utils.ReleaseSpec{ChartName: "mariadb", ChartVersion: "0.5.4", ReleaseName: "test-mariadb"}

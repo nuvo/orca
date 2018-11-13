@@ -229,6 +229,25 @@ func UpdateChartVersion(path, append string) string {
 	return newVersion
 }
 
+func ResetChartVersion(path, version string) {
+	filePath := path + "Chart.yaml"
+	data, err := ioutil.ReadFile(filePath)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	var v map[string]interface{}
+	err = yaml.Unmarshal(data, &v)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	v["version"] = version
+
+	data, err = yaml.Marshal(v)
+	ioutil.WriteFile(filePath, data, 0755)
+}
+
 func (r ReleaseSpec) Print() {
 	fmt.Println("release name: " + r.ReleaseName)
 	fmt.Println("chart name: " + r.ChartName)
