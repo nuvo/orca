@@ -8,13 +8,12 @@ builds:
   - linux
   goarch:
   - amd64
-  - arm64
   env:
   - CGO_ENABLED=0
   ldflags:
-  - -X main.GitTag={{.Tag}} -X main.GitCommit={{.ShortCommit}}
+  - -s -w -X main.GitTag={{.Tag}} -X main.GitCommit={{.ShortCommit}}
 archive:
-  name_template: "{{ .ProjectName }}-{{ .Version }}-{{ .Os }}-{{ .Arch }}"
+  name_template: "{{ .ProjectName }}-{{ .Version }}-{{ .Os }}"
   format: tar.gz
   wrap_in_directory: true
   format_overrides:
