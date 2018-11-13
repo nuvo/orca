@@ -1,14 +1,12 @@
 # .goreleaser.yml
-# Build customization
 builds:
-  - main: cmd/main.go
-binary: orca
-goos:
+- main: cmd/main.go
+  binary: orca
+  goos:
   - windows
   - darwin
   - linux
-goarch:
+  goarch:
   - amd64
-# Archive customization
 archive:
   format: tar.gz
