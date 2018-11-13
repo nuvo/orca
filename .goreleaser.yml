@@ -1,6 +1,6 @@
 # .goreleaser.yml
 builds:
-- main: cmd/main.go
+- main: cmd/orca.go
   binary: orca
   goos:
   - windows
