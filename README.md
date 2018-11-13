@@ -1,11 +1,13 @@
 <img src="/docs/img/logo.png" width="500px" alt="orca logo">
 
-# Orca
 
-[![Release](https://github-basic-badges.herokuapp.com/release/nuvo/orca.svg)](https://github.com/nuvo/orca/releases)
+[![Release](https://img.shields.io/github/release/nuvo/orca.svg)](https://github.com/nuvo/orca/releases)
+[![Travis branch](https://img.shields.io/travis/nuvo/orca/master.svg)](https://travis-ci.org/nuvo/ocra)
 [![Docker Pulls](https://img.shields.io/docker/pulls/nuvo/orca.svg)](https://hub.docker.com/r/nuvo/orca/)
 [![Go Report Card](https://goreportcard.com/badge/github.com/nuvo/orca)](https://goreportcard.com/report/github.com/nuvo/orca)
 [![license](https://img.shields.io/github/license/nuvo/orca.svg)](https://github.com/nuvo/orca/blob/master/LICENSE)
+
+# Orca
 
 Orca is an advanced CI\CD tool which focuses on the world around Kubernetes, Helm and CI\CD, and it is also handy in daily work.
 Orca is a simplifier - It takes complex tasks and makes them easy to accomplish.
