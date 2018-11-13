@@ -11,7 +11,7 @@ ARG LINKERD_OS=linux
 RUN wget -q https://github.com/linkerd/linkerd2/releases/download/${LINKERD_VERSION}/linkerd2-cli-${LINKERD_VERSION}-${LINKERD_OS} -O linkerd \
     && chmod +x linkerd \
     && mv linkerd /usr/local/bin/linkerd
-COPY bin/orca /usr/local/bin/orca
+COPY orca /usr/local/bin/orca
 RUN addgroup -g 1001 -S orca \
     && adduser -u 1001 -D -S -G orca orca
 USER orca

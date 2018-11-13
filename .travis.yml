@@ -8,11 +8,4 @@ services:
 
 after_success:
 - if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then exit 0; fi
-- make build
-- docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
-- export REPO=$DOCKER_USER/orca
-- export TAG=`if [ "$TRAVIS_BRANCH" == "master" ]; then echo "latest"; else echo $TRAVIS_TAG ; fi`
-- echo $REPO:$TAG
-- docker build -f Dockerfile -t $REPO:$TAG .
-- docker push $REPO
 - test -n "$TRAVIS_TAG" && curl -sL https://git.io/goreleaser | bash

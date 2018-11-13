@@ -21,3 +21,9 @@ archive:
     format: zip
   replacements:
     darwin: macos
+dockers:
+  binary: orca
+  dockerfile: Dockerfile
+  image_templates:
+  - "nuvo/{{.ProjectName}}:latest"
+  - "nuvo/{{.ProjectName}}:{{ .Tag }}"
