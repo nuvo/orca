@@ -22,7 +22,7 @@ archive:
   replacements:
     darwin: macos
 dockers:
-  binary: orca
+- binary: orca
   dockerfile: Dockerfile
   image_templates:
   - "nuvo/{{.ProjectName}}:latest"
