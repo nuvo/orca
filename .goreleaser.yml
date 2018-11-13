@@ -1,0 +1,12 @@
+# .goreleaser.yml
+builds:
+  - main: cmd/main.go
+binary: orca
+goos:
+  - windows
+  - darwin
+  - linux
+goarch:
+  - amd64
+archive:
+  format: tar.gz
