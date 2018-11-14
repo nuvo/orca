@@ -10,3 +10,11 @@ after_success:
 - if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then exit 0; fi
 - test -n "$TRAVIS_TAG" && docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
 - test -n "$TRAVIS_TAG" && curl -sL https://git.io/goreleaser | bash
+
+deploy:
+- provider: script
+  skip_cleanup: true
+  script: docker login -u $DOCKER_USER -p $DOCKER_PASSWORD && curl -sL https://git.io/goreleaser | bash
+  on:
+    tags: true
+    condition: $TRAVIS_OS_NAME = linux

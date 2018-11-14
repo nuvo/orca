@@ -25,5 +25,5 @@ dockers:
 - binary: orca
   dockerfile: Dockerfile
   image_templates:
-  - "nuvo/{{.ProjectName}}:latest"
   - "nuvo/{{.ProjectName}}:{{ .Tag }}"
+  - "nuvo/{{.ProjectName}}:latest"
