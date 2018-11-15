@@ -20,6 +20,7 @@ import (
 	rspb "k8s.io/helm/pkg/proto/hapi/release"
 )
 
+// GetInstalledReleasesOptions are options passed to GetInstalledReleases
 type GetInstalledReleasesOptions struct {
 	KubeContext   string
 	Namespace     string

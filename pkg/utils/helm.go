@@ -9,6 +9,7 @@ import (
 	"time"
 )
 
+// DeployChartsFromRepositoryOptions are options passed to DeployChartsFromRepository
 type DeployChartsFromRepositoryOptions struct {
 	ReleasesToInstall []ReleaseSpec
 	KubeContext       string
@@ -92,6 +93,7 @@ func DeployChartsFromRepository(o DeployChartsFromRepositoryOptions) {
 	bwg.Wait()
 }
 
+// DeployChartFromRepositoryOptions are options passed to DeployChartFromRepository
 type DeployChartFromRepositoryOptions struct {
 	ReleaseName  string
 	Name         string
@@ -155,6 +157,7 @@ func DeployChartFromRepository(o DeployChartFromRepositoryOptions) {
 	os.RemoveAll(tempDir)
 }
 
+// LintOptions are options passed to Lint
 type LintOptions struct {
 	Path  string
 	Print bool
@@ -166,6 +169,7 @@ func Lint(o LintOptions) {
 	PrintExec(cmd, o.Print)
 }
 
+// AddRepositoryOptions are options passed to AddRepository
 type AddRepositoryOptions struct {
 	Repo  string
 	Print bool
@@ -188,6 +192,7 @@ func UpdateRepositories(print bool) {
 	PrintExec(cmd, print)
 }
 
+// FetchChartOptions are options passed to FetchChart
 type FetchChartOptions struct {
 	Repo    string
 	Name    string
@@ -210,6 +215,7 @@ func FetchChart(o FetchChartOptions) {
 	PrintExec(cmd, o.Print)
 }
 
+// PushChartToRepositoryOptions are options passed to PushChartToRepository
 type PushChartToRepositoryOptions struct {
 	Path   string
 	Append string
@@ -243,6 +249,7 @@ func PushChartToRepository(o PushChartToRepositoryOptions) {
 	fmt.Println(newVersion)
 }
 
+// PushChartOptions are options passed to PushChart
 type PushChartOptions struct {
 	Repo  string
 	Path  string
@@ -257,6 +264,7 @@ func PushChart(o PushChartOptions) {
 	PrintExec(cmd, o.Print)
 }
 
+// UpdateChartDependenciesOptions are options passed to UpdateChartDependencies
 type UpdateChartDependenciesOptions struct {
 	Path  string
 	Print bool
@@ -299,6 +307,7 @@ func CreateSetChain(name string, inputSet []string) []string {
 	return set
 }
 
+// UpgradeReleaseOptions are options passed to UpgradeRelease
 type UpgradeReleaseOptions struct {
 	Name         string
 	ReleaseName  string
@@ -336,6 +345,7 @@ func UpgradeRelease(o UpgradeReleaseOptions) {
 	PrintExec(cmd, o.Print)
 }
 
+// DeleteReleasesOptions are options passed to DeleteReleases
 type DeleteReleasesOptions struct {
 	ReleasesToDelete []ReleaseSpec
 	KubeContext      string
@@ -377,6 +387,7 @@ func DeleteReleases(o DeleteReleasesOptions) {
 	bwg.Wait()
 }
 
+// DeleteReleaseOptions are options passed to DeleteRelease
 type DeleteReleaseOptions struct {
 	ReleaseName  string
 	KubeContext  string

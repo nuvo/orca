@@ -165,7 +165,12 @@ func NewDiffCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-var GitTag, GitCommit string
+var (
+	// GitTag stands for a git tag
+	GitTag string
+	// GitCommit stands for a git commit hash
+	GitCommit string
+)
 
 // NewVersionCmd prints version information
 func NewVersionCmd(out io.Writer) *cobra.Command {

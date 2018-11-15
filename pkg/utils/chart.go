@@ -11,6 +11,7 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
+// ReleaseSpec holds data relevant to deploying a release
 type ReleaseSpec struct {
 	ReleaseName  string
 	ChartName    string
@@ -18,6 +19,7 @@ type ReleaseSpec struct {
 	Dependencies []string
 }
 
+// GetReleasesDelta returns the delta between two slices of ReleaseSpec
 func GetReleasesDelta(fromReleases, toReleases []ReleaseSpec) []ReleaseSpec {
 	var releasesDelta []ReleaseSpec
 	var releasesExists []ReleaseSpec
@@ -43,6 +45,7 @@ func GetReleasesDelta(fromReleases, toReleases []ReleaseSpec) []ReleaseSpec {
 	return releasesDelta
 }
 
+// InitReleasesFromChartsFile initializes a slice of ReleaseSpec from a yaml formatted charts file
 func InitReleasesFromChartsFile(file, env string) []ReleaseSpec {
 	var charts []ReleaseSpec
 
@@ -73,6 +76,7 @@ func InitReleasesFromChartsFile(file, env string) []ReleaseSpec {
 	return charts
 }
 
+// InitReleases initializes a slice of ReleaseSpec from a string slice
 func InitReleases(env string, releases []string) []ReleaseSpec {
 	var outReleases []ReleaseSpec
 
@@ -93,6 +97,7 @@ func initReleaseSpec(env, name, version string) ReleaseSpec {
 	}
 }
 
+// CheckCircularDependencies verifies that there are no circular dependencies between ReleaseSpecs
 func CheckCircularDependencies(releases []ReleaseSpec) bool {
 
 	startLen := len(releases)
@@ -124,6 +129,7 @@ func CheckCircularDependencies(releases []ReleaseSpec) bool {
 	return false
 }
 
+// OverrideReleases overrides versions of specified overrides
 func OverrideReleases(releases []ReleaseSpec, overrides []string, env string) []ReleaseSpec {
 	if len(overrides) == 0 {
 		return releases
@@ -161,6 +167,7 @@ func OverrideReleases(releases []ReleaseSpec, overrides []string, env string) []
 	return outReleases
 }
 
+// RemoveChartFromDependencies removes a release from other releases ReleaseSpec depends_on field
 func RemoveChartFromDependencies(charts []ReleaseSpec, name string) []ReleaseSpec {
 
 	var outCharts []ReleaseSpec
@@ -188,6 +195,7 @@ func RemoveChartFromDependencies(charts []ReleaseSpec, name string) []ReleaseSpe
 	return outCharts
 }
 
+// GetChartIndex returns the index of a desired release by its name
 func GetChartIndex(charts []ReleaseSpec, name string) int {
 	index := -1
 	for i, elem := range charts {
@@ -198,11 +206,13 @@ func GetChartIndex(charts []ReleaseSpec, name string) int {
 	return index
 }
 
+// RemoveChartFromCharts removes a ReleaseSpec from a slice of ReleaseSpec
 func RemoveChartFromCharts(charts []ReleaseSpec, index int) []ReleaseSpec {
 	charts[index] = charts[len(charts)-1]
 	return charts[:len(charts)-1]
 }
 
+// UpdateChartVersion updates a chart version with desired append value
 func UpdateChartVersion(path, append string) string {
 	filePath := path + "Chart.yaml"
 	data, err := ioutil.ReadFile(filePath)
@@ -224,11 +234,15 @@ func UpdateChartVersion(path, append string) string {
 	v["version"] = newVersion
 
 	data, err = yaml.Marshal(v)
+	if err != nil {
+		log.Fatalln(err)
+	}
 	ioutil.WriteFile(filePath, data, 0755)
 
 	return newVersion
 }
 
+// ResetChartVersion resets a chart version to a desired value
 func ResetChartVersion(path, version string) {
 	filePath := path + "Chart.yaml"
 	data, err := ioutil.ReadFile(filePath)
@@ -245,9 +259,13 @@ func ResetChartVersion(path, version string) {
 	v["version"] = version
 
 	data, err = yaml.Marshal(v)
+	if err != nil {
+		log.Fatalln(err)
+	}
 	ioutil.WriteFile(filePath, data, 0755)
 }
 
+// Print prints a ReleaseSpec
 func (r ReleaseSpec) Print() {
 	fmt.Println("release name: " + r.ReleaseName)
 	fmt.Println("chart name: " + r.ChartName)
@@ -257,6 +275,7 @@ func (r ReleaseSpec) Print() {
 	}
 }
 
+// Equals compares two ReleaseSpecs
 func (a ReleaseSpec) Equals(b ReleaseSpec) bool {
 	equals := false
 	if a.ReleaseName == b.ReleaseName &&
@@ -268,6 +287,7 @@ func (a ReleaseSpec) Equals(b ReleaseSpec) bool {
 	return equals
 }
 
+// PrintReleasesYaml prints releases in yaml format
 func PrintReleasesYaml(releases []ReleaseSpec) {
 	if len(releases) == 0 {
 		return
@@ -279,6 +299,7 @@ func PrintReleasesYaml(releases []ReleaseSpec) {
 	}
 }
 
+// PrintReleasesMarkdown prints releases in markdown format
 func PrintReleasesMarkdown(releases []ReleaseSpec) {
 	if len(releases) == 0 {
 		return
@@ -290,6 +311,7 @@ func PrintReleasesMarkdown(releases []ReleaseSpec) {
 	}
 }
 
+// PrintReleasesTable prints releases in table format
 func PrintReleasesTable(releases []ReleaseSpec) {
 	if len(releases) == 0 {
 		return
@@ -304,6 +326,7 @@ func PrintReleasesTable(releases []ReleaseSpec) {
 	fmt.Println(tbl.String())
 }
 
+// DiffOptions are options passed to PrintDiffTable
 type DiffOptions struct {
 	KubeContextLeft   string
 	EnvNameLeft       string
@@ -319,6 +342,7 @@ type diff struct {
 	versionRight string
 }
 
+// PrintDiffTable prints a table of differences between two environments
 func PrintDiffTable(o DiffOptions) {
 	if len(o.ReleasesSpecLeft) == 0 && len(o.ReleasesSpecRight) == 0 {
 		return

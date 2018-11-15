@@ -31,12 +31,7 @@ func CreateNamespace(name, kubeContext string, print bool) {
 // GetNamespace gets a namespace
 func GetNamespace(name, kubeContext string) *v1.Namespace {
 	clientset := getClientSet(kubeContext)
-
-	nsSpec := &v1.Namespace{ObjectMeta: metav1.ObjectMeta{
-		Name: name,
-	}}
 	getOptions := metav1.GetOptions{}
-
 	nsSpec, err := clientset.Core().Namespaces().Get(name, getOptions)
 	if err != nil {
 		log.Fatal(err.Error())

@@ -7,6 +7,7 @@ import (
 	"net/http"
 )
 
+// PerformRequestOptions are options passed to PerformRequest
 type PerformRequestOptions struct {
 	Method             string
 	URL                string
@@ -33,6 +34,9 @@ func PerformRequest(o PerformRequestOptions) []byte {
 	defer res.Body.Close()
 
 	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		log.Fatalln("ReadAll: ", err)
+	}
 	if res.StatusCode != o.ExpectedStatusCode {
 		log.Fatal(string(body))
 	}
