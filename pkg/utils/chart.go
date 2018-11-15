@@ -276,11 +276,11 @@ func (r ReleaseSpec) Print() {
 }
 
 // Equals compares two ReleaseSpecs
-func (a ReleaseSpec) Equals(b ReleaseSpec) bool {
+func (r ReleaseSpec) Equals(b ReleaseSpec) bool {
 	equals := false
-	if a.ReleaseName == b.ReleaseName &&
-		a.ChartName == b.ChartName &&
-		a.ChartVersion == b.ChartVersion {
+	if r.ReleaseName == b.ReleaseName &&
+		r.ChartName == b.ChartName &&
+		r.ChartVersion == b.ChartVersion {
 		equals = true
 	}
 

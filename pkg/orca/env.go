@@ -108,17 +108,21 @@ func NewDeployEnvCmd(out io.Writer) *cobra.Command {
 			if e.repo == "" {
 				return errors.New("repo can not be empty")
 			}
-			if e.tls && e.helmTLSStore == "" {
-				return errors.New("tls is set to true and helm-tls-store is not defined")
+			if e.tls {
+				if e.helmTLSStore == "" {
+					return errors.New("tls is set to true and helm-tls-store is not defined")
+				}
+				if e.kubeContext == "" {
+					return errors.New("kube-context has to be non-empty when tls is set to true")
+				}
 			}
-			if e.tls && e.kubeContext == "" {
-				return errors.New("kube-context has to be non-empty when tls is set to true")
-			}
-			if e.chartsFile == "" && len(e.override) == 0 {
-				return errors.New("either charts-file or override has to be defined")
-			}
-			if len(e.override) == 0 && e.deployOnlyOverrideIfEnvExists {
-				return errors.New("override has to be defined when using deploy-only-override-if-env-exists")
+			if len(e.override) == 0 {
+				if e.chartsFile == "" {
+					return errors.New("either charts-file or override has to be defined")
+				}
+				if e.deployOnlyOverrideIfEnvExists {
+					return errors.New("override has to be defined when using deploy-only-override-if-env-exists")
+				}
 			}
 			if circular := utils.CheckCircularDependencies(utils.InitReleasesFromChartsFile(e.chartsFile, e.name)); circular {
 				return errors.New("Circular dependency found")
