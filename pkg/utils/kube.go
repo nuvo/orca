@@ -101,7 +101,7 @@ func NamespaceExists(name, kubeContext string) (bool, error) {
 		if ns.Name == name {
 			nsStatus := ns.Status.Phase
 			if nsStatus != "Active" {
-				return false, fmt.Errorf("Environment status is ", nsStatus)
+				return false, fmt.Errorf("Environment status is %s", nsStatus)
 			}
 			return true, nil
 		}
