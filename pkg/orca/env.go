@@ -157,7 +157,9 @@ func NewDeployEnvCmd(out io.Writer) *cobra.Command {
 				}
 				log.Printf("created environment \"%s\"", e.name)
 			}
-			lockEnvironment(e.name, e.kubeContext, true)
+			if err := lockEnvironment(e.name, e.kubeContext, true); err != nil {
+				log.Fatal(err)
+			}
 
 			var desiredReleases []utils.ReleaseSpec
 			if nsPreExists && e.deployOnlyOverrideIfEnvExists {
@@ -269,7 +271,9 @@ func NewDeleteEnvCmd(out io.Writer) *cobra.Command {
 				log.Fatal(err)
 			}
 			if nsExists {
-				markEnvironmentForDeletion(e.name, e.kubeContext, e.force, true)
+				if err := markEnvironmentForDeletion(e.name, e.kubeContext, e.force, true); err != nil {
+					log.Fatal(err)
+				}
 			} else {
 				log.Printf("environment \"%s\" not found", e.name)
 			}
@@ -468,6 +472,7 @@ func lockEnvironment(name, kubeContext string, print bool) error {
 		return err
 	}
 	state := ns.Annotations[stateAnnotation]
+	fmt.Println(state)
 	if state != "" {
 		if state != freeState && state != busyState {
 			return fmt.Errorf("Environment state is %s", state)
