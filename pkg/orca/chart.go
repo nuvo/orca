@@ -3,6 +3,7 @@ package orca
 import (
 	"errors"
 	"io"
+	"log"
 	"os"
 
 	"github.com/nuvo/orca/pkg/utils"
@@ -54,7 +55,7 @@ func NewDeployChartCmd(out io.Writer) *cobra.Command {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			utils.DeployChartFromRepository(utils.DeployChartFromRepositoryOptions{
+			if err := utils.DeployChartFromRepository(utils.DeployChartFromRepositoryOptions{
 				ReleaseName:  c.releaseName,
 				Name:         c.name,
 				Version:      c.version,
@@ -68,7 +69,9 @@ func NewDeployChartCmd(out io.Writer) *cobra.Command {
 				IsIsolated:   true,
 				Inject:       c.inject,
 				Timeout:      c.timeout,
-			})
+			}); err != nil {
+				log.Fatal(err)
+			}
 		},
 	}
 
@@ -114,13 +117,15 @@ func NewPushChartCmd(out io.Writer) *cobra.Command {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			utils.PushChartToRepository(utils.PushChartToRepositoryOptions{
+			if err := utils.PushChartToRepository(utils.PushChartToRepositoryOptions{
 				Path:   c.path,
 				Append: c.append,
 				Repo:   c.repo,
 				Lint:   c.lint,
 				Print:  false,
-			})
+			}); err != nil {
+				log.Fatal(err)
+			}
 		},
 	}
 

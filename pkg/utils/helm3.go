@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"compress/gzip"
 	"encoding/base64"
+	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
 	"sort"
@@ -28,16 +28,19 @@ type GetInstalledReleasesOptions struct {
 }
 
 // GetInstalledReleases gets the installed Helm releases in a given namespace
-func GetInstalledReleases(o GetInstalledReleasesOptions) []ReleaseSpec {
+func GetInstalledReleases(o GetInstalledReleasesOptions) ([]ReleaseSpec, error) {
 
 	tillerNamespace := "kube-system"
 	tillerResourceLabel := "OWNER=TILLER"
-	storage := getTillerStorage(o.KubeContext, tillerNamespace)
+	storage, err := getTillerStorage(o.KubeContext, tillerNamespace)
+	if err != nil {
+		return nil, err
+	}
 
 	var releaseSpecs []ReleaseSpec
 	list, err := listReleases(o.KubeContext, o.Namespace, storage, tillerNamespace, tillerResourceLabel)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	for _, releaseData := range list {
@@ -55,7 +58,7 @@ func GetInstalledReleases(o GetInstalledReleasesOptions) []ReleaseSpec {
 	}
 
 	if !o.IncludeFailed {
-		return releaseSpecs
+		return releaseSpecs, nil
 	}
 
 	for _, releaseData := range list {
@@ -82,22 +85,25 @@ func GetInstalledReleases(o GetInstalledReleasesOptions) []ReleaseSpec {
 		releaseSpecs = append(releaseSpecs, releaseSpec)
 	}
 
-	return releaseSpecs
+	return releaseSpecs, nil
 }
 
-func getTillerStorage(kubeContext, tillerNamespace string) string {
-	clientset := getClientSet(kubeContext)
+func getTillerStorage(kubeContext, tillerNamespace string) (string, error) {
+	clientset, err := getClientSet(kubeContext)
+	if err != nil {
+		return "", err
+	}
 	coreV1 := clientset.CoreV1()
 	listOptions := metav1.ListOptions{
 		LabelSelector: "name=tiller",
 	}
 	pods, err := coreV1.Pods(tillerNamespace).List(listOptions)
 	if err != nil {
-		log.Fatal(err)
+		return "", err
 	}
 
 	if len(pods.Items) == 0 {
-		log.Fatal("Found 0 tiller pods")
+		return "", fmt.Errorf("Found 0 tiller pods")
 	}
 
 	storage := "cfgmaps"
@@ -107,7 +113,7 @@ func getTillerStorage(kubeContext, tillerNamespace string) string {
 		}
 	}
 
-	return storage
+	return storage, nil
 }
 
 type releaseData struct {
@@ -122,7 +128,10 @@ type releaseData struct {
 }
 
 func listReleases(kubeContext, namespace, storage, tillerNamespace, label string) ([]releaseData, error) {
-	clientset := getClientSet(kubeContext)
+	clientset, err := getClientSet(kubeContext)
+	if err != nil {
+		return nil, err
+	}
 	var releasesData []releaseData
 	coreV1 := clientset.CoreV1()
 	switch storage {

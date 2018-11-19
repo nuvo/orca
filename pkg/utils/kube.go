@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -13,81 +14,99 @@ import (
 )
 
 // CreateNamespace creates a namespace
-func CreateNamespace(name, kubeContext string, print bool) {
-	clientset := getClientSet(kubeContext)
+func CreateNamespace(name, kubeContext string, print bool) error {
+	clientset, err := getClientSet(kubeContext)
+	if err != nil {
+		return err
+	}
 
 	nsSpec := &v1.Namespace{ObjectMeta: metav1.ObjectMeta{
 		Name: name,
 	}}
-	_, err := clientset.Core().Namespaces().Create(nsSpec)
+	_, err = clientset.Core().Namespaces().Create(nsSpec)
 	if err != nil {
-		log.Fatal(err.Error())
+		return err
 	}
 	if print {
 		log.Printf("created namespace \"%s\"", name)
 	}
+	return nil
 }
 
 // GetNamespace gets a namespace
-func GetNamespace(name, kubeContext string) *v1.Namespace {
-	clientset := getClientSet(kubeContext)
+func GetNamespace(name, kubeContext string) (*v1.Namespace, error) {
+	clientset, err := getClientSet(kubeContext)
+	if err != nil {
+		return nil, err
+	}
 	getOptions := metav1.GetOptions{}
 	nsSpec, err := clientset.Core().Namespaces().Get(name, getOptions)
 	if err != nil {
-		log.Fatal(err.Error())
+		return nil, err
 	}
-	return nsSpec
+	return nsSpec, nil
 }
 
 // UpdateNamespace updates a namespace
-func UpdateNamespace(name, kubeContext string, annotations map[string]string, print bool) {
-	clientset := getClientSet(kubeContext)
+func UpdateNamespace(name, kubeContext string, annotations map[string]string, print bool) error {
+	clientset, err := getClientSet(kubeContext)
+	if err != nil {
+		return err
+	}
 
 	nsSpec := &v1.Namespace{ObjectMeta: metav1.ObjectMeta{
 		Name:        name,
 		Annotations: annotations,
 	}}
-	_, err := clientset.Core().Namespaces().Update(nsSpec)
+	_, err = clientset.Core().Namespaces().Update(nsSpec)
 	if err != nil {
-		log.Fatal(err.Error())
+		return err
 	}
 	if print {
 		log.Printf("updated namespace \"%s\" with annotations (%s)", name, annotations)
 	}
+	return nil
 }
 
 // DeleteNamespace deletes a namespace
-func DeleteNamespace(name, kubeContext string, print bool) {
-	clientset := getClientSet(kubeContext)
-	deleteOptions := &metav1.DeleteOptions{}
-	err := clientset.Core().Namespaces().Delete(name, deleteOptions)
+func DeleteNamespace(name, kubeContext string, print bool) error {
+	clientset, err := getClientSet(kubeContext)
 	if err != nil {
-		log.Fatal(err.Error())
+		return err
+	}
+	deleteOptions := &metav1.DeleteOptions{}
+	err = clientset.Core().Namespaces().Delete(name, deleteOptions)
+	if err != nil {
+		return err
 	}
 	if print {
 		log.Printf("deleted namespace \"%s\"", name)
 	}
+	return nil
 }
 
 // NamespaceExists returns true if the namespace exists
-func NamespaceExists(name, kubeContext string) bool {
-	clientset := getClientSet(kubeContext)
+func NamespaceExists(name, kubeContext string) (bool, error) {
+	clientset, err := getClientSet(kubeContext)
+	if err != nil {
+		return false, err
+	}
 
 	listOptions := metav1.ListOptions{}
 	namespaces, err := clientset.Core().Namespaces().List(listOptions)
 	if err != nil {
-		log.Fatal(err.Error())
+		return false, err
 	}
 	for _, ns := range namespaces.Items {
 		if ns.Name == name {
 			nsStatus := ns.Status.Phase
 			if nsStatus != "Active" {
-				log.Fatal("Environment status is ", nsStatus)
+				return false, fmt.Errorf("Environment status is ", nsStatus)
 			}
-			return true
+			return true, nil
 		}
 	}
-	return false
+	return false, nil
 }
 
 func buildConfigFromFlags(context, kubeconfigPath string) (*rest.Config, error) {
@@ -98,7 +117,7 @@ func buildConfigFromFlags(context, kubeconfigPath string) (*rest.Config, error) 
 		}).ClientConfig()
 }
 
-func getClientSet(kubeContext string) *kubernetes.Clientset {
+func getClientSet(kubeContext string) (*kubernetes.Clientset, error) {
 	var kubeconfig string
 	if kubeConfigPath := os.Getenv("KUBECONFIG"); kubeConfigPath != "" {
 		kubeconfig = kubeConfigPath
@@ -108,13 +127,13 @@ func getClientSet(kubeContext string) *kubernetes.Clientset {
 
 	config, err := buildConfigFromFlags(kubeContext, kubeconfig)
 	if err != nil {
-		log.Fatal(err.Error())
+		return nil, err
 	}
 
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		log.Fatal(err.Error())
+		return nil, err
 	}
 
-	return clientset
+	return clientset, nil
 }

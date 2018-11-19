@@ -2,6 +2,7 @@ package orca
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"os"
@@ -18,6 +19,8 @@ const (
 	busyState        string = "busy"
 	freeState        string = "free"
 	deleteState      string = "delete"
+	failedState      string = "failed"
+	unknownState     string = "unknown"
 )
 
 type envCmd struct {
@@ -57,11 +60,14 @@ func NewGetEnvCmd(out io.Writer) *cobra.Command {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			releases := utils.GetInstalledReleases(utils.GetInstalledReleasesOptions{
+			releases, err := utils.GetInstalledReleases(utils.GetInstalledReleasesOptions{
 				KubeContext:   e.kubeContext,
 				Namespace:     e.name,
 				IncludeFailed: false,
 			})
+			if err != nil {
+				log.Fatal(err)
+			}
 
 			switch e.output {
 			case "yaml":
@@ -130,21 +136,28 @@ func NewDeployEnvCmd(out io.Writer) *cobra.Command {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			print := false
 
-			utils.AddRepository(utils.AddRepositoryOptions{
+			if err := utils.AddRepository(utils.AddRepositoryOptions{
 				Repo:  e.repo,
-				Print: print,
-			})
-			utils.UpdateRepositories(print)
+				Print: true,
+			}); err != nil {
+				log.Fatal(err)
+			}
+			if err := utils.UpdateRepositories(true); err != nil {
+				log.Fatal(err)
+			}
 
-			nsPreExists := true
-			if !utils.NamespaceExists(e.name, e.kubeContext) {
-				nsPreExists = false
-				utils.CreateNamespace(e.name, e.kubeContext, print)
+			nsPreExists, err := utils.NamespaceExists(e.name, e.kubeContext)
+			if err != nil {
+				log.Fatal(err)
+			}
+			if !nsPreExists {
+				if err := utils.CreateNamespace(e.name, e.kubeContext, false); err != nil {
+					log.Fatal(err)
+				}
 				log.Printf("created environment \"%s\"", e.name)
 			}
-			lockEnvironment(e.name, e.kubeContext, print)
+			lockEnvironment(e.name, e.kubeContext, true)
 
 			var desiredReleases []utils.ReleaseSpec
 			if nsPreExists && e.deployOnlyOverrideIfEnvExists {
@@ -154,14 +167,18 @@ func NewDeployEnvCmd(out io.Writer) *cobra.Command {
 				desiredReleases = utils.OverrideReleases(desiredReleases, e.override, e.name)
 			}
 
-			installedReleases := utils.GetInstalledReleases(utils.GetInstalledReleasesOptions{
+			installedReleases, err := utils.GetInstalledReleases(utils.GetInstalledReleasesOptions{
 				KubeContext:   e.kubeContext,
 				Namespace:     e.name,
 				IncludeFailed: false,
 			})
+			if err != nil {
+				unlockEnvironment(e.name, e.kubeContext, true)
+				log.Fatal(err)
+			}
 			releasesToInstall := utils.GetReleasesDelta(desiredReleases, installedReleases)
 
-			utils.DeployChartsFromRepository(utils.DeployChartsFromRepositoryOptions{
+			if err := utils.DeployChartsFromRepository(utils.DeployChartsFromRepositoryOptions{
 				ReleasesToInstall: releasesToInstall,
 				KubeContext:       e.kubeContext,
 				Namespace:         e.name,
@@ -173,25 +190,35 @@ func NewDeployEnvCmd(out io.Writer) *cobra.Command {
 				Inject:            e.inject,
 				Parallel:          e.parallel,
 				Timeout:           e.timeout,
-			})
+			}); err != nil {
+				markEnvironmentAsFailed(e.name, e.kubeContext, true)
+				log.Fatal(err)
+			}
 
 			if !e.deployOnlyOverrideIfEnvExists {
-				installedReleases := utils.GetInstalledReleases(utils.GetInstalledReleasesOptions{
+				installedReleases, err := utils.GetInstalledReleases(utils.GetInstalledReleasesOptions{
 					KubeContext:   e.kubeContext,
 					Namespace:     e.name,
 					IncludeFailed: false,
 				})
+				if err != nil {
+					markEnvironmentAsUnknown(e.name, e.kubeContext, true)
+					log.Fatal(err)
+				}
 				releasesToDelete := utils.GetReleasesDelta(installedReleases, desiredReleases)
-				utils.DeleteReleases(utils.DeleteReleasesOptions{
+				if err := utils.DeleteReleases(utils.DeleteReleasesOptions{
 					ReleasesToDelete: releasesToDelete,
 					KubeContext:      e.kubeContext,
 					TLS:              e.tls,
 					HelmTLSStore:     e.helmTLSStore,
 					Parallel:         e.parallel,
 					Timeout:          e.timeout,
-				})
+				}); err != nil {
+					markEnvironmentAsFailed(e.name, e.kubeContext, true)
+					log.Fatal(err)
+				}
 			}
-			unlockEnvironment(e.name, e.kubeContext, print)
+			unlockEnvironment(e.name, e.kubeContext, true)
 		},
 	}
 
@@ -237,30 +264,42 @@ func NewDeleteEnvCmd(out io.Writer) *cobra.Command {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			print := false
-			nsExists := utils.NamespaceExists(e.name, e.kubeContext)
+			nsExists, err := utils.NamespaceExists(e.name, e.kubeContext)
+			if err != nil {
+				log.Fatal(err)
+			}
 			if nsExists {
-				markEnvironmentForDeletion(e.name, e.kubeContext, e.force, print)
+				markEnvironmentForDeletion(e.name, e.kubeContext, e.force, true)
 			} else {
 				log.Printf("environment \"%s\" not found", e.name)
 			}
 
-			releases := utils.GetInstalledReleases(utils.GetInstalledReleasesOptions{
+			releases, err := utils.GetInstalledReleases(utils.GetInstalledReleasesOptions{
 				KubeContext:   e.kubeContext,
 				Namespace:     e.name,
 				IncludeFailed: true,
 			})
-			utils.DeleteReleases(utils.DeleteReleasesOptions{
+			if err != nil {
+				log.Fatal(err)
+			}
+			if err := utils.DeleteReleases(utils.DeleteReleasesOptions{
 				ReleasesToDelete: releases,
 				KubeContext:      e.kubeContext,
 				TLS:              e.tls,
 				HelmTLSStore:     e.helmTLSStore,
 				Parallel:         e.parallel,
 				Timeout:          e.timeout,
-			})
+			}); err != nil {
+				markEnvironmentAsFailed(e.name, e.kubeContext, true)
+				log.Fatal(err)
+			}
 
 			if nsExists {
-				utils.DeleteNamespace(e.name, e.kubeContext, print)
+				if utils.Contains([]string{"default", "kube-system", "kube-public"}, e.name) {
+					removeStateAnnotationsFromEnvironment(e.name, e.kubeContext, true)
+				} else {
+					utils.DeleteNamespace(e.name, e.kubeContext, false)
+				}
 			}
 			log.Printf("deleted environment \"%s\"", e.name)
 		},
@@ -294,12 +333,17 @@ func NewLockEnvCmd(out io.Writer) *cobra.Command {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			if !utils.NamespaceExists(e.name, e.kubeContext) {
+			nsExists, err := utils.NamespaceExists(e.name, e.kubeContext)
+			if err != nil {
+				log.Fatal(err)
+			}
+			if !nsExists {
 				log.Printf("environment \"%s\" not found", e.name)
 				return
 			}
-			print := false
-			lockEnvironment(e.name, e.kubeContext, print)
+			if err := lockEnvironment(e.name, e.kubeContext, false); err != nil {
+				log.Fatal(err)
+			}
 			log.Printf("locked environment \"%s\"", e.name)
 		},
 	}
@@ -327,12 +371,17 @@ func NewUnlockEnvCmd(out io.Writer) *cobra.Command {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			if !utils.NamespaceExists(e.name, e.kubeContext) {
+			nsExists, err := utils.NamespaceExists(e.name, e.kubeContext)
+			if err != nil {
+				log.Fatal(err)
+			}
+			if !nsExists {
 				log.Printf("environment \"%s\" not found", e.name)
 				return
 			}
-			print := false
-			unlockEnvironment(e.name, e.kubeContext, print)
+			if err := unlockEnvironment(e.name, e.kubeContext, false); err != nil {
+				log.Fatal(err)
+			}
 			log.Printf("unlocked environment \"%s\"", e.name)
 		},
 	}
@@ -372,16 +421,22 @@ func NewDiffEnvCmd(out io.Writer) *cobra.Command {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			releasesLeft := utils.GetInstalledReleases(utils.GetInstalledReleasesOptions{
+			releasesLeft, err := utils.GetInstalledReleases(utils.GetInstalledReleasesOptions{
 				KubeContext:   e.kubeContextLeft,
 				Namespace:     e.nameLeft,
 				IncludeFailed: false,
 			})
-			releasesRight := utils.GetInstalledReleases(utils.GetInstalledReleasesOptions{
+			if err != nil {
+				log.Fatal(err)
+			}
+			releasesRight, err := utils.GetInstalledReleases(utils.GetInstalledReleasesOptions{
 				KubeContext:   e.kubeContextRight,
 				Namespace:     e.nameRight,
 				IncludeFailed: false,
 			})
+			if err != nil {
+				log.Fatal(err)
+			}
 
 			diffOptions := utils.DiffOptions{
 				KubeContextLeft:   e.kubeContextLeft,
@@ -406,36 +461,92 @@ func NewDiffEnvCmd(out io.Writer) *cobra.Command {
 }
 
 // lockEnvironment annotates a namespace with "busy"
-func lockEnvironment(name, kubeContext string, print bool) {
+func lockEnvironment(name, kubeContext string, print bool) error {
 	sleepPeriod := 5 * time.Second
-	state := utils.GetNamespace(name, kubeContext).Annotations[stateAnnotation]
+	ns, err := utils.GetNamespace(name, kubeContext)
+	if err != nil {
+		return err
+	}
+	state := ns.Annotations[stateAnnotation]
 	if state != "" {
 		if state != freeState && state != busyState {
-			log.Fatal("Environment state is ", state)
+			return fmt.Errorf("Environment state is %s", state)
 		}
 		for state == busyState {
 			log.Printf("environment \"%s\" %s, backing off for %d seconds", name, busyState, int(sleepPeriod.Seconds()))
 			time.Sleep(sleepPeriod)
 			sleepPeriod += 5 * time.Second
-			state = utils.GetNamespace(name, kubeContext).Annotations[stateAnnotation]
+			ns, err := utils.GetNamespace(name, kubeContext)
+			if err != nil {
+				return err
+			}
+			state = ns.Annotations[stateAnnotation]
 		}
 	}
 	// There is a race condition here, may need to attend to it in the future
 	annotations := map[string]string{stateAnnotation: busyState}
-	utils.UpdateNamespace(name, kubeContext, annotations, print)
+	if err := utils.UpdateNamespace(name, kubeContext, annotations, print); err != nil {
+		return err
+	}
+	return nil
 }
 
 // unlockEnvironment annotates a namespace with "free"
-func unlockEnvironment(name, kubeContext string, print bool) {
+func unlockEnvironment(name, kubeContext string, print bool) error {
+	ns, err := utils.GetNamespace(name, kubeContext)
+	if err != nil {
+		return err
+	}
+	state := ns.Annotations[stateAnnotation]
+	if state != "" {
+		if state != freeState && state != busyState {
+			return fmt.Errorf("Environment state is %s", state)
+		}
+	}
 	annotations := map[string]string{stateAnnotation: freeState}
-	utils.UpdateNamespace(name, kubeContext, annotations, print)
+	if err := utils.UpdateNamespace(name, kubeContext, annotations, print); err != nil {
+		return err
+	}
+	return nil
 }
 
 // markEnvironmentForDeletion annotates a namespace with "delete"
-func markEnvironmentForDeletion(name, kubeContext string, force, print bool) {
+func markEnvironmentForDeletion(name, kubeContext string, force, print bool) error {
 	if !force {
-		lockEnvironment(name, kubeContext, print)
+		if err := lockEnvironment(name, kubeContext, print); err != nil {
+			return err
+		}
 	}
 	annotations := map[string]string{stateAnnotation: deleteState}
-	utils.UpdateNamespace(name, kubeContext, annotations, print)
+	if err := utils.UpdateNamespace(name, kubeContext, annotations, print); err != nil {
+		return err
+	}
+	return nil
+}
+
+// markEnvironmentAsFailed annotates a namespace with "failed"
+func markEnvironmentAsFailed(name, kubeContext string, print bool) error {
+	annotations := map[string]string{stateAnnotation: failedState}
+	if err := utils.UpdateNamespace(name, kubeContext, annotations, print); err != nil {
+		return err
+	}
+	return nil
+}
+
+// markEnvironmentAsUnknown annotates a namespace with "unknown"
+func markEnvironmentAsUnknown(name, kubeContext string, print bool) error {
+	annotations := map[string]string{stateAnnotation: unknownState}
+	if err := utils.UpdateNamespace(name, kubeContext, annotations, print); err != nil {
+		return err
+	}
+	return nil
+}
+
+// unlockEnvironment annotates a namespace with "unknown"
+func removeStateAnnotationsFromEnvironment(name, kubeContext string, print bool) error {
+	annotations := map[string]string{}
+	if err := utils.UpdateNamespace(name, kubeContext, annotations, print); err != nil {
+		return err
+	}
+	return nil
 }

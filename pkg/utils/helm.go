@@ -25,7 +25,7 @@ type DeployChartsFromRepositoryOptions struct {
 }
 
 // DeployChartsFromRepository deploys a list of Helm charts from a repository in parallel
-func DeployChartsFromRepository(o DeployChartsFromRepositoryOptions) {
+func DeployChartsFromRepository(o DeployChartsFromRepositoryOptions) error {
 
 	releasesToInstall := o.ReleasesToInstall
 	parallel := o.Parallel
@@ -36,18 +36,28 @@ func DeployChartsFromRepository(o DeployChartsFromRepositoryOptions) {
 	}
 	bwgSize := int(math.Min(float64(parallel), float64(totalReleases))) // Very stingy :)
 	bwg := NewBoundedWaitGroup(bwgSize)
+	errc := make(chan error, 1)
 	var mutex = &sync.Mutex{}
 
-	for len(releasesToInstall) > 0 {
+	for len(releasesToInstall) > 0 && len(errc) == 0 {
 
-		for _, c := range releasesToInstall {
+		for _, r := range releasesToInstall {
+
+			if len(errc) != 0 {
+				break
+			}
 
 			bwg.Add(1)
-			go func(c ReleaseSpec) {
+			go func(r ReleaseSpec) {
 				defer bwg.Done()
 
+				// If there has been an error in a concurrent deployment - don`t deploy anymore
+				if len(errc) != 0 {
+					return
+				}
+
 				// If there are (still) any dependencies - leave this chart for a later iteration
-				if len(c.Dependencies) != 0 {
+				if len(r.Dependencies) != 0 {
 					return
 				}
 
@@ -55,7 +65,7 @@ func DeployChartsFromRepository(o DeployChartsFromRepositoryOptions) {
 				// may have changed by now since we are using go routines
 				// If chart was not found - another routine is taking care of it
 				mutex.Lock()
-				index := GetChartIndex(releasesToInstall, c.ChartName)
+				index := GetChartIndex(releasesToInstall, r.ChartName)
 				if index == -1 {
 					mutex.Unlock()
 					return
@@ -64,11 +74,11 @@ func DeployChartsFromRepository(o DeployChartsFromRepositoryOptions) {
 				mutex.Unlock()
 
 				// deploy chart
-				log.Println("deploying chart", c.ChartName, "version", c.ChartVersion)
-				DeployChartFromRepository(DeployChartFromRepositoryOptions{
-					ReleaseName:  c.ReleaseName,
-					Name:         c.ChartName,
-					Version:      c.ChartVersion,
+				log.Println("deploying chart", r.ChartName, "version", r.ChartVersion)
+				if err := DeployChartFromRepository(DeployChartFromRepositoryOptions{
+					ReleaseName:  r.ReleaseName,
+					Name:         r.ChartName,
+					Version:      r.ChartVersion,
 					KubeContext:  o.KubeContext,
 					Namespace:    o.Namespace,
 					Repo:         o.Repo,
@@ -79,18 +89,96 @@ func DeployChartsFromRepository(o DeployChartsFromRepositoryOptions) {
 					IsIsolated:   false,
 					Inject:       o.Inject,
 					Timeout:      o.Timeout,
-				})
-				log.Println("deployed chart", c.ChartName, "version", c.ChartVersion)
+				}); err != nil {
+					log.Println("failed deploying chart", r.ChartName, "version", r.ChartVersion)
+					errc <- err
+					return
+				}
+				log.Println("deployed chart", r.ChartName, "version", r.ChartVersion)
 
 				// Deployment is done, remove chart from dependencies
 				mutex.Lock()
-				releasesToInstall = RemoveChartFromDependencies(releasesToInstall, c.ChartName)
+				releasesToInstall = RemoveChartFromDependencies(releasesToInstall, r.ChartName)
 				mutex.Unlock()
-			}(c)
+			}(r)
+
 		}
 		time.Sleep(5 * time.Second)
 	}
 	bwg.Wait()
+
+	if len(errc) != 0 {
+		// This is not exactly the correct behavior
+		// There may be more than 1 error in the channel
+		// But first let's make it work
+		err := <-errc
+		close(errc)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// DeleteReleasesOptions are options passed to DeleteReleases
+type DeleteReleasesOptions struct {
+	ReleasesToDelete []ReleaseSpec
+	KubeContext      string
+	TLS              bool
+	HelmTLSStore     string
+	Parallel         int
+	Timeout          int
+}
+
+// DeleteReleases deletes a list of releases in parallel
+func DeleteReleases(o DeleteReleasesOptions) error {
+	releasesToDelete := o.ReleasesToDelete
+	parallel := o.Parallel
+
+	print := false
+	totalReleases := len(releasesToDelete)
+	if parallel == 0 {
+		parallel = totalReleases
+	}
+	bwgSize := int(math.Min(float64(parallel), float64(totalReleases))) // Very stingy :)
+	bwg := NewBoundedWaitGroup(bwgSize)
+	errc := make(chan error, 1)
+
+	for _, r := range releasesToDelete {
+		bwg.Add(1)
+		go func(r ReleaseSpec) {
+			defer bwg.Done()
+			log.Println("deleting", r.ReleaseName)
+			if err := DeleteRelease(DeleteReleaseOptions{
+				ReleaseName:  r.ReleaseName,
+				KubeContext:  o.KubeContext,
+				TLS:          o.TLS,
+				HelmTLSStore: o.HelmTLSStore,
+				Timeout:      o.Timeout,
+				Print:        print,
+			}); err != nil {
+				log.Println("failed deleting chart", r.ReleaseName)
+				errc <- err
+				return
+			}
+			log.Println("deleted", r.ReleaseName)
+		}(r)
+	}
+	bwg.Wait()
+
+	if len(errc) != 0 {
+		// This is not exactly the correct behavior
+		// There may be more than 1 error in the channel
+		// But first let's make it work
+		err := <-errc
+		close(errc)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // DeployChartFromRepositoryOptions are options passed to DeployChartFromRepository
@@ -111,35 +199,44 @@ type DeployChartFromRepositoryOptions struct {
 }
 
 // DeployChartFromRepository deploys a Helm chart from a chart repository
-func DeployChartFromRepository(o DeployChartFromRepositoryOptions) {
+func DeployChartFromRepository(o DeployChartFromRepositoryOptions) error {
 	tempDir := MkRandomDir()
 
 	if o.ReleaseName == "" {
 		o.ReleaseName = o.Name
 	}
 	if o.IsIsolated {
-		AddRepository(AddRepositoryOptions{
+		if err := AddRepository(AddRepositoryOptions{
 			Repo:  o.Repo,
 			Print: o.IsIsolated,
-		})
-		UpdateRepositories(o.IsIsolated)
+		}); err != nil {
+			return err
+		}
+		if err := UpdateRepositories(o.IsIsolated); err != nil {
+			return err
+		}
 	}
-	FetchChart(FetchChartOptions{
+	if err := FetchChart(FetchChartOptions{
 		Repo:    o.Repo,
 		Name:    o.Name,
 		Version: o.Version,
 		Dir:     tempDir,
 		Print:   o.IsIsolated,
-	})
+	}); err != nil {
+		return err
+	}
+
 	path := fmt.Sprintf("%s/%s", tempDir, o.Name)
-	UpdateChartDependencies(UpdateChartDependenciesOptions{
+	if err := UpdateChartDependencies(UpdateChartDependenciesOptions{
 		Path:  path,
 		Print: o.IsIsolated,
-	})
-	valuesChain := CreateValuesChain(o.Name, tempDir, o.PackedValues)
-	setChain := CreateSetChain(o.Name, o.SetValues)
+	}); err != nil {
+		return err
+	}
+	valuesChain := createValuesChain(o.Name, tempDir, o.PackedValues)
+	setChain := createSetChain(o.Name, o.SetValues)
 
-	UpgradeRelease(UpgradeReleaseOptions{
+	if err := UpgradeRelease(UpgradeReleaseOptions{
 		Name:         o.Name,
 		ReleaseName:  o.ReleaseName,
 		KubeContext:  o.KubeContext,
@@ -152,67 +249,12 @@ func DeployChartFromRepository(o DeployChartFromRepositoryOptions) {
 		Print:        o.IsIsolated,
 		Inject:       o.Inject,
 		Timeout:      o.Timeout,
-	})
+	}); err != nil {
+		return err
+	}
 
 	os.RemoveAll(tempDir)
-}
-
-// LintOptions are options passed to Lint
-type LintOptions struct {
-	Path  string
-	Print bool
-}
-
-// Lint takes a path to a chart and runs a series of tests to verify that the chart is well-formed
-func Lint(o LintOptions) {
-	cmd := []string{"helm", "lint", o.Path}
-	PrintExec(cmd, o.Print)
-}
-
-// AddRepositoryOptions are options passed to AddRepository
-type AddRepositoryOptions struct {
-	Repo  string
-	Print bool
-}
-
-// AddRepository adds a chart repository to the repositories file
-func AddRepository(o AddRepositoryOptions) {
-	repoName, repoURL := SplitInTwo(o.Repo, "=")
-
-	cmd := []string{
-		"helm", "repo",
-		"add", repoName, repoURL,
-	}
-	PrintExec(cmd, o.Print)
-}
-
-// UpdateRepositories updates helm repositories
-func UpdateRepositories(print bool) {
-	cmd := []string{"helm", "repo", "update"}
-	PrintExec(cmd, print)
-}
-
-// FetchChartOptions are options passed to FetchChart
-type FetchChartOptions struct {
-	Repo    string
-	Name    string
-	Version string
-	Dir     string
-	Print   bool
-}
-
-// FetchChart fetches a chart from chart repository by name and version and untars it in the local directory
-func FetchChart(o FetchChartOptions) {
-	repoName, _ := SplitInTwo(o.Repo, "=")
-
-	cmd := []string{
-		"helm", "fetch",
-		fmt.Sprintf("%s/%s", repoName, o.Name),
-		"--version", o.Version,
-		"--untar",
-		"-d", o.Dir,
-	}
-	PrintExec(cmd, o.Print)
+	return nil
 }
 
 // PushChartToRepositoryOptions are options passed to PushChartToRepository
@@ -225,28 +267,107 @@ type PushChartToRepositoryOptions struct {
 }
 
 // PushChartToRepository packages and pushes a Helm chart to a chart repository
-func PushChartToRepository(o PushChartToRepositoryOptions) {
+func PushChartToRepository(o PushChartToRepositoryOptions) error {
 	newVersion := UpdateChartVersion(o.Path, o.Append)
 	if o.Lint {
-		Lint(LintOptions{
+		if err := Lint(LintOptions{
 			Path:  o.Path,
 			Print: o.Print,
-		})
+		}); err != nil {
+			return err
+		}
 	}
-	AddRepository(AddRepositoryOptions{
+	if err := AddRepository(AddRepositoryOptions{
 		Repo:  o.Repo,
 		Print: o.Print,
-	})
-	UpdateChartDependencies(UpdateChartDependenciesOptions{
+	}); err != nil {
+		return err
+	}
+	if err := UpdateChartDependencies(UpdateChartDependenciesOptions{
 		Path:  o.Path,
 		Print: o.Print,
-	})
-	PushChart(PushChartOptions{
+	}); err != nil {
+		return err
+	}
+	if err := PushChart(PushChartOptions{
 		Repo:  o.Repo,
 		Path:  o.Path,
 		Print: o.Print,
-	})
+	}); err != nil {
+		return err
+	}
 	fmt.Println(newVersion)
+	return nil
+}
+
+// LintOptions are options passed to Lint
+type LintOptions struct {
+	Path  string
+	Print bool
+}
+
+// Lint takes a path to a chart and runs a series of tests to verify that the chart is well-formed
+func Lint(o LintOptions) error {
+	cmd := []string{"helm", "lint", o.Path}
+	if err := PrintExec(cmd, o.Print); err != nil {
+		return err
+	}
+	return nil
+}
+
+// AddRepositoryOptions are options passed to AddRepository
+type AddRepositoryOptions struct {
+	Repo  string
+	Print bool
+}
+
+// AddRepository adds a chart repository to the repositories file
+func AddRepository(o AddRepositoryOptions) error {
+	repoName, repoURL := SplitInTwo(o.Repo, "=")
+
+	cmd := []string{
+		"helm", "repo",
+		"add", repoName, repoURL,
+	}
+	if err := PrintExec(cmd, o.Print); err != nil {
+		return err
+	}
+	return nil
+}
+
+// UpdateRepositories updates helm repositories
+func UpdateRepositories(print bool) error {
+	cmd := []string{"helm", "repo", "update"}
+	if err := PrintExec(cmd, print); err != nil {
+		return err
+	}
+	return nil
+}
+
+// FetchChartOptions are options passed to FetchChart
+type FetchChartOptions struct {
+	Repo    string
+	Name    string
+	Version string
+	Dir     string
+	Print   bool
+}
+
+// FetchChart fetches a chart from chart repository by name and version and untars it in the local directory
+func FetchChart(o FetchChartOptions) error {
+	repoName, _ := SplitInTwo(o.Repo, "=")
+
+	cmd := []string{
+		"helm", "fetch",
+		fmt.Sprintf("%s/%s", repoName, o.Name),
+		"--version", o.Version,
+		"--untar",
+		"-d", o.Dir,
+	}
+	if err := PrintExec(cmd, o.Print); err != nil {
+		return err
+	}
+	return nil
 }
 
 // PushChartOptions are options passed to PushChart
@@ -257,11 +378,14 @@ type PushChartOptions struct {
 }
 
 // PushChart pushes a helm chart to a chart repository
-func PushChart(o PushChartOptions) {
+func PushChart(o PushChartOptions) error {
 	repoName, _ := SplitInTwo(o.Repo, "=")
 
 	cmd := []string{"helm", "push", o.Path, repoName}
-	PrintExec(cmd, o.Print)
+	if err := PrintExec(cmd, o.Print); err != nil {
+		return err
+	}
+	return nil
 }
 
 // UpdateChartDependenciesOptions are options passed to UpdateChartDependencies
@@ -271,13 +395,83 @@ type UpdateChartDependenciesOptions struct {
 }
 
 // UpdateChartDependencies performs helm dependency update
-func UpdateChartDependencies(o UpdateChartDependenciesOptions) {
+func UpdateChartDependencies(o UpdateChartDependenciesOptions) error {
 	cmd := []string{"helm", "dependency", "update", o.Path}
-	PrintExec(cmd, o.Print)
+	if err := PrintExec(cmd, o.Print); err != nil {
+		return err
+	}
+	return nil
 }
 
-// CreateValuesChain will create a chain of values files to use
-func CreateValuesChain(name, dir string, packedValues []string) []string {
+// UpgradeReleaseOptions are options passed to UpgradeRelease
+type UpgradeReleaseOptions struct {
+	Name         string
+	ReleaseName  string
+	KubeContext  string
+	Namespace    string
+	Values       []string
+	Set          []string
+	TLS          bool
+	HelmTLSStore string
+	Dir          string
+	Print        bool
+	Inject       bool
+	Timeout      int
+}
+
+// UpgradeRelease performs helm upgrade -i
+func UpgradeRelease(o UpgradeReleaseOptions) error {
+	cmd := []string{"helm"}
+	kubeContextFlag := "--kube-context"
+	if o.Inject {
+		kubeContextFlag = "--kubecontext"
+		cmd = append(cmd, "inject")
+	}
+	cmd = append(cmd, "upgrade", "-i", o.ReleaseName, fmt.Sprintf("%s/%s", o.Dir, o.Name))
+	if o.KubeContext != "" {
+		cmd = append(cmd, kubeContextFlag, o.KubeContext)
+	}
+	if o.Namespace != "" {
+		cmd = append(cmd, "--namespace", o.Namespace)
+	}
+	cmd = append(cmd, o.Values...)
+	cmd = append(cmd, o.Set...)
+	cmd = append(cmd, "--timeout", fmt.Sprintf("%d", o.Timeout))
+	cmd = append(cmd, getTLS(o.TLS, o.KubeContext, o.HelmTLSStore)...)
+	if err := PrintExec(cmd, o.Print); err != nil {
+		return err
+	}
+	return nil
+}
+
+// DeleteReleaseOptions are options passed to DeleteRelease
+type DeleteReleaseOptions struct {
+	ReleaseName  string
+	KubeContext  string
+	TLS          bool
+	HelmTLSStore string
+	Timeout      int
+	Print        bool
+}
+
+// DeleteRelease deletes a release from Kubernetes
+func DeleteRelease(o DeleteReleaseOptions) error {
+	cmd := []string{
+		"helm", "delete", o.ReleaseName, "--purge",
+		"--timeout", fmt.Sprintf("%d", o.Timeout),
+	}
+	if o.KubeContext != "" {
+		cmd = append(cmd, "--kube-context", o.KubeContext)
+	}
+	cmd = append(cmd, getTLS(o.TLS, o.KubeContext, o.HelmTLSStore)...)
+	if err := PrintExec(cmd, o.Print); err != nil {
+		return err
+	}
+	return nil
+}
+
+// createValuesChain will create a chain of values files to use
+func createValuesChain(name, dir string, packedValues []string) []string {
 	var values []string
 	format := "%s/%s/%s"
 	fileToTest := fmt.Sprintf(format, dir, name, "values.yaml")
@@ -298,116 +492,13 @@ func CreateValuesChain(name, dir string, packedValues []string) []string {
 	return values
 }
 
-// CreateSetChain will create a chain of sets to use
-func CreateSetChain(name string, inputSet []string) []string {
+// createSetChain will create a chain of sets to use
+func createSetChain(name string, inputSet []string) []string {
 	set := []string{"--set", fmt.Sprintf("fullnameOverride=%s", name)}
 	for _, s := range inputSet {
 		set = append(set, "--set", s)
 	}
 	return set
-}
-
-// UpgradeReleaseOptions are options passed to UpgradeRelease
-type UpgradeReleaseOptions struct {
-	Name         string
-	ReleaseName  string
-	KubeContext  string
-	Namespace    string
-	Values       []string
-	Set          []string
-	TLS          bool
-	HelmTLSStore string
-	Dir          string
-	Print        bool
-	Inject       bool
-	Timeout      int
-}
-
-// UpgradeRelease performs helm upgrade -i
-func UpgradeRelease(o UpgradeReleaseOptions) {
-	cmd := []string{"helm"}
-	kubeContextFlag := "--kube-context"
-	if o.Inject {
-		kubeContextFlag = "--kubecontext"
-		cmd = append(cmd, "inject")
-	}
-	cmd = append(cmd, "upgrade", "-i", o.ReleaseName, fmt.Sprintf("%s/%s", o.Dir, o.Name))
-	if o.KubeContext != "" {
-		cmd = append(cmd, kubeContextFlag, o.KubeContext)
-	}
-	if o.Namespace != "" {
-		cmd = append(cmd, "--namespace", o.Namespace)
-	}
-	cmd = append(cmd, o.Values...)
-	cmd = append(cmd, o.Set...)
-	cmd = append(cmd, "--timeout", fmt.Sprintf("%d", o.Timeout))
-	cmd = append(cmd, getTLS(o.TLS, o.KubeContext, o.HelmTLSStore)...)
-	PrintExec(cmd, o.Print)
-}
-
-// DeleteReleasesOptions are options passed to DeleteReleases
-type DeleteReleasesOptions struct {
-	ReleasesToDelete []ReleaseSpec
-	KubeContext      string
-	TLS              bool
-	HelmTLSStore     string
-	Parallel         int
-	Timeout          int
-}
-
-// DeleteReleases deletes a list of releases in parallel
-func DeleteReleases(o DeleteReleasesOptions) {
-	releasesToDelete := o.ReleasesToDelete
-	parallel := o.Parallel
-
-	print := false
-	totalReleases := len(releasesToDelete)
-	if parallel == 0 {
-		parallel = totalReleases
-	}
-	bwgSize := int(math.Min(float64(parallel), float64(totalReleases))) // Very stingy :)
-	bwg := NewBoundedWaitGroup(bwgSize)
-
-	for _, c := range releasesToDelete {
-		bwg.Add(1)
-		go func(c ReleaseSpec) {
-			defer bwg.Done()
-			log.Println("deleting", c.ReleaseName)
-			DeleteRelease(DeleteReleaseOptions{
-				ReleaseName:  c.ReleaseName,
-				KubeContext:  o.KubeContext,
-				TLS:          o.TLS,
-				HelmTLSStore: o.HelmTLSStore,
-				Timeout:      o.Timeout,
-				Print:        print,
-			})
-			log.Println("deleted", c.ReleaseName)
-		}(c)
-	}
-	bwg.Wait()
-}
-
-// DeleteReleaseOptions are options passed to DeleteRelease
-type DeleteReleaseOptions struct {
-	ReleaseName  string
-	KubeContext  string
-	TLS          bool
-	HelmTLSStore string
-	Timeout      int
-	Print        bool
-}
-
-// DeleteRelease deletes a release from Kubernetes
-func DeleteRelease(o DeleteReleaseOptions) {
-	cmd := []string{
-		"helm", "delete", o.ReleaseName, "--purge",
-		"--timeout", fmt.Sprintf("%d", o.Timeout),
-	}
-	if o.KubeContext != "" {
-		cmd = append(cmd, "--kube-context", o.KubeContext)
-	}
-	cmd = append(cmd, getTLS(o.TLS, o.KubeContext, o.HelmTLSStore)...)
-	PrintExec(cmd, o.Print)
 }
 
 func getTLS(tls bool, kubeContext, helmTLSStore string) []string {

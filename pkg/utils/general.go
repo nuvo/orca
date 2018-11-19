@@ -12,30 +12,33 @@ import (
 )
 
 // PrintExec takes a command and executes it, with or without printing
-func PrintExec(cmd []string, print bool) {
+func PrintExec(cmd []string, print bool) error {
 	if print {
 		fmt.Println(cmd)
 	}
-	output := Exec(cmd)
+	output, err := Exec(cmd)
+	if err != nil {
+		return err
+	}
 	if print {
 		fmt.Print(output)
 	}
+	return nil
 }
 
 // Exec takes a command as a string and executes it
-func Exec(cmd []string) string {
+func Exec(cmd []string) (string, error) {
 	binary := cmd[0]
 	_, err := exec.LookPath(binary)
 	if err != nil {
-		log.Fatal(err)
+		return "", err
 	}
 
 	output, err := exec.Command(binary, cmd[1:]...).CombinedOutput()
 	if err != nil {
-		log.Println("Error: command execution failed:", cmd)
-		log.Fatal(string(output))
+		return "", fmt.Errorf(string(output))
 	}
-	return string(output)
+	return string(output), nil
 }
 
 // MkRandomDir creates a new directory with a random name made of numbers
