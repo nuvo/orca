@@ -472,7 +472,6 @@ func lockEnvironment(name, kubeContext string, print bool) error {
 		return err
 	}
 	state := ns.Annotations[stateAnnotation]
-	fmt.Println(state)
 	if state != "" {
 		if state != freeState && state != busyState {
 			return fmt.Errorf("Environment state is %s", state)
