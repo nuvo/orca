@@ -485,10 +485,9 @@ func lockEnvironment(name, kubeContext string, print bool) error {
 	}
 	// There is a race condition here, may need to attend to it in the future
 	annotations := map[string]string{stateAnnotation: busyState}
-	if err := utils.UpdateNamespace(name, kubeContext, annotations, print); err != nil {
-		return err
-	}
-	return nil
+	err = utils.UpdateNamespace(name, kubeContext, annotations, print)
+
+	return err
 }
 
 // unlockEnvironment annotates a namespace with "free"
@@ -504,10 +503,9 @@ func unlockEnvironment(name, kubeContext string, print bool) error {
 		}
 	}
 	annotations := map[string]string{stateAnnotation: freeState}
-	if err := utils.UpdateNamespace(name, kubeContext, annotations, print); err != nil {
-		return err
-	}
-	return nil
+	err = utils.UpdateNamespace(name, kubeContext, annotations, print)
+
+	return err
 }
 
 // markEnvironmentForDeletion annotates a namespace with "delete"
@@ -518,35 +516,31 @@ func markEnvironmentForDeletion(name, kubeContext string, force, print bool) err
 		}
 	}
 	annotations := map[string]string{stateAnnotation: deleteState}
-	if err := utils.UpdateNamespace(name, kubeContext, annotations, print); err != nil {
-		return err
-	}
-	return nil
+	err := utils.UpdateNamespace(name, kubeContext, annotations, print)
+
+	return err
 }
 
 // markEnvironmentAsFailed annotates a namespace with "failed"
 func markEnvironmentAsFailed(name, kubeContext string, print bool) error {
 	annotations := map[string]string{stateAnnotation: failedState}
-	if err := utils.UpdateNamespace(name, kubeContext, annotations, print); err != nil {
-		return err
-	}
-	return nil
+	err := utils.UpdateNamespace(name, kubeContext, annotations, print)
+
+	return err
 }
 
 // markEnvironmentAsUnknown annotates a namespace with "unknown"
 func markEnvironmentAsUnknown(name, kubeContext string, print bool) error {
 	annotations := map[string]string{stateAnnotation: unknownState}
-	if err := utils.UpdateNamespace(name, kubeContext, annotations, print); err != nil {
-		return err
-	}
-	return nil
+	err := utils.UpdateNamespace(name, kubeContext, annotations, print)
+
+	return err
 }
 
 // unlockEnvironment annotates a namespace with "unknown"
 func removeStateAnnotationsFromEnvironment(name, kubeContext string, print bool) error {
 	annotations := map[string]string{}
-	if err := utils.UpdateNamespace(name, kubeContext, annotations, print); err != nil {
-		return err
-	}
-	return nil
+	err := utils.UpdateNamespace(name, kubeContext, annotations, print)
+
+	return err
 }

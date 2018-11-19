@@ -309,10 +309,9 @@ type LintOptions struct {
 // Lint takes a path to a chart and runs a series of tests to verify that the chart is well-formed
 func Lint(o LintOptions) error {
 	cmd := []string{"helm", "lint", o.Path}
-	if err := PrintExec(cmd, o.Print); err != nil {
-		return err
-	}
-	return nil
+	err := PrintExec(cmd, o.Print)
+
+	return err
 }
 
 // AddRepositoryOptions are options passed to AddRepository
@@ -329,19 +328,17 @@ func AddRepository(o AddRepositoryOptions) error {
 		"helm", "repo",
 		"add", repoName, repoURL,
 	}
-	if err := PrintExec(cmd, o.Print); err != nil {
-		return err
-	}
-	return nil
+	err := PrintExec(cmd, o.Print)
+
+	return err
 }
 
 // UpdateRepositories updates helm repositories
 func UpdateRepositories(print bool) error {
 	cmd := []string{"helm", "repo", "update"}
-	if err := PrintExec(cmd, print); err != nil {
-		return err
-	}
-	return nil
+	err := PrintExec(cmd, print)
+
+	return err
 }
 
 // FetchChartOptions are options passed to FetchChart
@@ -364,10 +361,9 @@ func FetchChart(o FetchChartOptions) error {
 		"--untar",
 		"-d", o.Dir,
 	}
-	if err := PrintExec(cmd, o.Print); err != nil {
-		return err
-	}
-	return nil
+	err := PrintExec(cmd, o.Print)
+
+	return err
 }
 
 // PushChartOptions are options passed to PushChart
@@ -382,10 +378,9 @@ func PushChart(o PushChartOptions) error {
 	repoName, _ := SplitInTwo(o.Repo, "=")
 
 	cmd := []string{"helm", "push", o.Path, repoName}
-	if err := PrintExec(cmd, o.Print); err != nil {
-		return err
-	}
-	return nil
+	err := PrintExec(cmd, o.Print)
+
+	return err
 }
 
 // UpdateChartDependenciesOptions are options passed to UpdateChartDependencies
@@ -397,10 +392,9 @@ type UpdateChartDependenciesOptions struct {
 // UpdateChartDependencies performs helm dependency update
 func UpdateChartDependencies(o UpdateChartDependenciesOptions) error {
 	cmd := []string{"helm", "dependency", "update", o.Path}
-	if err := PrintExec(cmd, o.Print); err != nil {
-		return err
-	}
-	return nil
+	err := PrintExec(cmd, o.Print)
+
+	return err
 }
 
 // UpgradeReleaseOptions are options passed to UpgradeRelease
@@ -438,10 +432,9 @@ func UpgradeRelease(o UpgradeReleaseOptions) error {
 	cmd = append(cmd, o.Set...)
 	cmd = append(cmd, "--timeout", fmt.Sprintf("%d", o.Timeout))
 	cmd = append(cmd, getTLS(o.TLS, o.KubeContext, o.HelmTLSStore)...)
-	if err := PrintExec(cmd, o.Print); err != nil {
-		return err
-	}
-	return nil
+	err := PrintExec(cmd, o.Print)
+
+	return err
 }
 
 // DeleteReleaseOptions are options passed to DeleteRelease
@@ -464,10 +457,9 @@ func DeleteRelease(o DeleteReleaseOptions) error {
 		cmd = append(cmd, "--kube-context", o.KubeContext)
 	}
 	cmd = append(cmd, getTLS(o.TLS, o.KubeContext, o.HelmTLSStore)...)
-	if err := PrintExec(cmd, o.Print); err != nil {
-		return err
-	}
-	return nil
+	err := PrintExec(cmd, o.Print)
+
+	return err
 }
 
 // createValuesChain will create a chain of values files to use
