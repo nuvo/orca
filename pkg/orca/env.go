@@ -220,7 +220,18 @@ func NewDeployEnvCmd(out io.Writer) *cobra.Command {
 					log.Fatal(err)
 				}
 			}
+			envValid, err := utils.IsEnvValidWithLoopBackOff(e.name, e.kubeContext)
 			unlockEnvironment(e.name, e.kubeContext, true)
+
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			if !envValid {
+				log.Fatalf("environment \"%s\" validation failed!", e.name)
+			}
+			// If we have made it so far, the environment is validated
+			log.Printf("environment \"%s\" validated!", e.name)
 		},
 	}
 
@@ -460,6 +471,57 @@ func NewDiffEnvCmd(out io.Writer) *cobra.Command {
 	f.StringVar(&e.nameRight, "name-right", os.Getenv("ORCA_NAME_RIGHT"), "name of right environment to compare. Overrides $ORCA_NAME_RIGHT")
 	f.StringVar(&e.kubeContextLeft, "kube-context-left", os.Getenv("ORCA_KUBE_CONTEXT_LEFT"), "name of the left kubeconfig context to use. Overrides $ORCA_KUBE_CONTEXT_LEFT")
 	f.StringVar(&e.kubeContextRight, "kube-context-right", os.Getenv("ORCA_KUBE_CONTEXT_RIGHT"), "name of the right kubeconfig context to use. Overrides $ORCA_KUBE_CONTEXT_RIGHT")
+
+	return cmd
+}
+
+// NewValidateEnvCmd represents the validate env command
+func NewValidateEnvCmd(out io.Writer) *cobra.Command {
+	e := &envCmd{out: out}
+
+	cmd := &cobra.Command{
+		Use:   "env",
+		Short: "Validate an environment (Kubernetes namespace)",
+		Long:  ``,
+		Args: func(cmd *cobra.Command, args []string) error {
+			if e.name == "" {
+				return errors.New("name can not be empty")
+			}
+			return nil
+		},
+		Run: func(cmd *cobra.Command, args []string) {
+			nsExists, err := utils.NamespaceExists(e.name, e.kubeContext)
+			if err != nil {
+				log.Fatal(err)
+			}
+			if !nsExists {
+				log.Fatalf("environment \"%s\" not found", e.name)
+			}
+			if err := lockEnvironment(e.name, e.kubeContext, false); err != nil {
+				log.Fatal(err)
+			}
+			log.Printf("locked environment \"%s\" for validation", e.name)
+
+			envValid, err := utils.IsEnvValid(e.name, e.kubeContext)
+			unlockEnvironment(e.name, e.kubeContext, false)
+			log.Printf("unlocked environment \"%s\" after validation", e.name)
+
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			if !envValid {
+				log.Fatalf("environment \"%s\" validation failed!", e.name)
+			}
+			// If we have made it so far, the environment is validated
+			log.Printf("environment \"%s\" validated!", e.name)
+		},
+	}
+
+	f := cmd.Flags()
+
+	f.StringVarP(&e.name, "name", "n", os.Getenv("ORCA_NAME"), "name of environment (namespace) to delete. Overrides $ORCA_NAME")
+	f.StringVar(&e.kubeContext, "kube-context", os.Getenv("ORCA_KUBE_CONTEXT"), "name of the kubeconfig context to use. Overrides $ORCA_KUBE_CONTEXT")
 
 	return cmd
 }

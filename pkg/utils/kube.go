@@ -109,6 +109,36 @@ func NamespaceExists(name, kubeContext string) (bool, error) {
 	return false, nil
 }
 
+// GetPods returns a pods list
+func getPods(namespace, kubeContext string) (*v1.PodList, error) {
+
+	clientset, err := getClientSet(kubeContext)
+	if err != nil {
+		return nil, err
+	}
+	pods, err := clientset.CoreV1().Pods(namespace).List(metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	return pods, nil
+}
+
+// getEndpoints returns an endpoints list
+func getEndpoints(namespace, kubeContext string) (*v1.EndpointsList, error) {
+
+	clientset, err := getClientSet(kubeContext)
+	if err != nil {
+		return nil, err
+	}
+	endpoints, err := clientset.CoreV1().Endpoints(namespace).List(metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	return endpoints, nil
+}
+
 func buildConfigFromFlags(context, kubeconfigPath string) (*rest.Config, error) {
 	return clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
 		&clientcmd.ClientConfigLoadingRules{ExplicitPath: kubeconfigPath},

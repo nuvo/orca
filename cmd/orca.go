@@ -40,6 +40,7 @@ Instead of writing scripts on top of scripts, Orca holds all the logic.
 	cmd.AddCommand(NewLockCmd(out))
 	cmd.AddCommand(NewUnlockCmd(out))
 	cmd.AddCommand(NewDiffCmd(out))
+	cmd.AddCommand(NewValidateCmd(out))
 
 	return cmd
 }
@@ -161,6 +162,19 @@ func NewDiffCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd.AddCommand(orca.NewDiffEnvCmd(out))
+
+	return cmd
+}
+
+// NewValidateCmd represents the validate command
+func NewValidateCmd(out io.Writer) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "validate",
+		Short: "Validation functions",
+		Long:  ``,
+	}
+
+	cmd.AddCommand(orca.NewValidateEnvCmd(out))
 
 	return cmd
 }
