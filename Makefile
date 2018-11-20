@@ -5,8 +5,11 @@ GIT_TAG := $(shell git describe --tags --always)
 GIT_COMMIT := $(shell git rev-parse --short HEAD)
 LDFLAGS := "-X main.GitTag=${GIT_TAG} -X main.GitCommit=${GIT_COMMIT}"
 DIST := $(CURDIR)/dist
+DOCKER_USER := $(shell printenv DOCKER_USER)
+DOCKER_PASSWORD := $(shell printenv DOCKER_PASSWORD)
+TRAVIS := $(shell printenv TRAVIS)
 
-all: bootstrap test build
+all: bootstrap test build docker push
 
 fmt:
 	go fmt ./pkg/... ./cmd/...
@@ -21,6 +24,23 @@ test: fmt vet
 # Build orca binary
 build: fmt vet
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags $(LDFLAGS) -o bin/orca cmd/orca.go
+
+# Build orca docker image
+docker: fmt vet
+	cp bin/orca orca
+	docker build -t nuvo/orca:latest .
+	rm orca
+
+# Push will only happen in travis ci
+push:
+ifdef TRAVIS
+ifdef DOCKER_USER
+ifdef DOCKER_PASSWORD
+	docker login -u $(DOCKER_USER) -p $(DOCKER_PASSWORD)
+	docker push nuvo/orca:latest
+endif
+endif
+endif
 
 bootstrap:
 ifndef HAS_DEP

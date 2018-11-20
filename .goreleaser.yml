@@ -26,4 +26,3 @@ dockers:
   dockerfile: Dockerfile
   image_templates:
   - "nuvo/{{.ProjectName}}:{{ .Tag }}"
-  - "nuvo/{{.ProjectName}}:latest"
