@@ -41,6 +41,8 @@ git clone https://github.com/nuvo/orca.git && cd orca
 make
 ```
 
+* Please note that the `master` branch and the `latest` docker image are unstable. For a stable and tested version, use a tagged release or a tagged docker image.
+
 ## Why should you use Orca?
 
 What Orca does best is manage environments. An Environment is a Kubernetes namespace with a set of Helm charts installed on it.
