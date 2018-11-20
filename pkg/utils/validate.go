@@ -49,21 +49,27 @@ func validatePods(name, kubeContext string, envValid bool) (bool, error) {
 		return envValid, err
 	}
 
-	log.Println("validating that all pods are in \"Running\" phase")
+	log.Println("validating that all pods are in a valid phase")
 	for _, pod := range pods.Items {
 		phase := pod.Status.Phase
 		if phase == "Running" {
+			continue
+		}
+		if phase == "Succeeded" && pod.OwnerReferences[0].Kind == "Job" {
 			continue
 		}
 		log.Printf("pod %s is in phase \"%s\"", pod.Name, phase)
 		envValid = false
 	}
 
-	log.Println("validating that all containers are in \"Ready\" status")
+	log.Println("validating that all containers are ready")
 	for _, pod := range pods.Items {
 		statuses := pod.Status.ContainerStatuses
 		for _, status := range statuses {
 			if status.Ready {
+				continue
+			}
+			if pod.OwnerReferences[0].Kind == "Job" {
 				continue
 			}
 			log.Printf("container %s/%s is not in \"Ready\" status", pod.Name, status.Name)
