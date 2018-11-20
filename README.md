@@ -171,6 +171,7 @@ delete env              Delete an environment (Kubernetes namespace) along with 
 diff env                Show differences in Helm releases between environments (Kubernetes namespace)
 lock env                Lock an environment (Kubernetes namespace)
 unlock env              Unlock an environment (Kubernetes namespace)
+validate env            Validate an environment (Kubernetes namespace)
 create resource         Create or update a resource via REST API
 get resource            Get a resource via REST API
 delete resource         Delete a resource via REST API

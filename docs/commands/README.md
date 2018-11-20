@@ -151,6 +151,18 @@ Flags:
   -n, --name string           name of environment (namespace) to delete. Overrides $ORCA_NAME
 ```
 
+### Validate env
+```
+Validate an environment (Kubernetes namespace)
+
+Usage:
+  orca validate env [flags]
+
+Flags:
+      --kube-context string   name of the kubeconfig context to use. Overrides $ORCA_KUBE_CONTEXT
+  -n, --name string           name of environment (namespace) to delete. Overrides $ORCA_NAME
+```
+
 ### Create resource
 ```
 Create or update a resource via REST API
