@@ -492,6 +492,7 @@ func NewValidateEnvCmd(out io.Writer) *cobra.Command {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
+			log.Printf("validating environment \"%s\"", e.name)
 			nsExists, err := utils.NamespaceExists(e.name, e.kubeContext)
 			if err != nil {
 				log.Fatal(err)
@@ -499,15 +500,8 @@ func NewValidateEnvCmd(out io.Writer) *cobra.Command {
 			if !nsExists {
 				log.Fatalf("environment \"%s\" not found", e.name)
 			}
-			if err := lockEnvironment(e.name, e.kubeContext, false); err != nil {
-				log.Fatal(err)
-			}
-			log.Printf("locked environment \"%s\" for validation", e.name)
 
 			envValid, err := utils.IsEnvValid(e.name, e.kubeContext)
-			unlockEnvironment(e.name, e.kubeContext, false)
-			log.Printf("unlocked environment \"%s\" after validation", e.name)
-
 			if err != nil {
 				log.Fatal(err)
 			}
