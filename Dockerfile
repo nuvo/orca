@@ -12,6 +12,5 @@ RUN addgroup -g 1001 -S orca \
 USER orca
 WORKDIR /home/orca
 RUN helm init -c \
-    && helm plugin install https://github.com/chartmuseum/helm-push \
-    && helm plugin install https://github.com/maorfr/helm-inject
+    && helm plugin install https://github.com/chartmuseum/helm-push
 CMD ["orca"]
