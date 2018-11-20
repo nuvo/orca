@@ -147,6 +147,7 @@ func NewDeployEnvCmd(out io.Writer) *cobra.Command {
 				log.Fatal(err)
 			}
 
+			log.Printf("deploying environment \"%s\"", e.name)
 			nsPreExists, err := utils.NamespaceExists(e.name, e.kubeContext)
 			if err != nil {
 				log.Fatal(err)
@@ -220,6 +221,8 @@ func NewDeployEnvCmd(out io.Writer) *cobra.Command {
 					log.Fatal(err)
 				}
 			}
+			log.Printf("deployed environment \"%s\"", e.name)
+			log.Printf("validating environment \"%s\"", e.name)
 			envValid, err := utils.IsEnvValidWithLoopBackOff(e.name, e.kubeContext)
 			unlockEnvironment(e.name, e.kubeContext, true)
 
