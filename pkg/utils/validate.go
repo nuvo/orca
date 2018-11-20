@@ -7,6 +7,7 @@ import (
 
 // IsEnvValidWithLoopBackOff validates the state of a namespace with back off loop
 func IsEnvValidWithLoopBackOff(name, kubeContext string) (bool, error) {
+	log.Printf("validating environment \"%s\"", name)
 	envValid := false
 	maxAttempts := 30
 	for i := 1; i <= maxAttempts; i++ {

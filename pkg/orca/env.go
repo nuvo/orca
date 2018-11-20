@@ -222,7 +222,6 @@ func NewDeployEnvCmd(out io.Writer) *cobra.Command {
 				}
 			}
 			log.Printf("deployed environment \"%s\"", e.name)
-			log.Printf("validating environment \"%s\"", e.name)
 			envValid, err := utils.IsEnvValidWithLoopBackOff(e.name, e.kubeContext)
 			unlockEnvironment(e.name, e.kubeContext, true)
 
