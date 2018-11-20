@@ -6,11 +6,6 @@ RUN apk --no-cache add ca-certificates git bash curl \
     && tar -zxvf helm-${HELM_VERSION}-${HELM_OS_ARCH}.tar.gz ${HELM_OS_ARCH}/helm \
     && mv ${HELM_OS_ARCH}/helm /usr/local/bin/helm \
     && rm -rf ${HELM_OS_ARCH} helm-${HELM_VERSION}-${HELM_OS_ARCH}.tar.gz
-ARG LINKERD_VERSION=stable-2.0.0
-ARG LINKERD_OS=linux
-RUN wget -q https://github.com/linkerd/linkerd2/releases/download/${LINKERD_VERSION}/linkerd2-cli-${LINKERD_VERSION}-${LINKERD_OS} -O linkerd \
-    && chmod +x linkerd \
-    && mv linkerd /usr/local/bin/linkerd
 COPY orca /usr/local/bin/orca
 RUN addgroup -g 1001 -S orca \
     && adduser -u 1001 -D -S -G orca orca
