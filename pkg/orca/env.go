@@ -41,6 +41,9 @@ type envCmd struct {
 	deployOnlyOverrideIfEnvExists bool
 	parallel                      int
 	timeout                       int
+	annotations                   []string
+	labels                        []string
+	skipValidation                bool
 
 	out io.Writer
 }
@@ -130,7 +133,7 @@ func NewDeployEnvCmd(out io.Writer) *cobra.Command {
 					return errors.New("override has to be defined when using deploy-only-override-if-env-exists")
 				}
 			}
-			if circular := utils.CheckCircularDependencies(utils.InitReleasesFromChartsFile(e.chartsFile, e.name)); circular {
+			if e.chartsFile != "" && utils.CheckCircularDependencies(utils.InitReleasesFromChartsFile(e.chartsFile, e.name)) {
 				return errors.New("Circular dependency found")
 			}
 			return nil
@@ -162,14 +165,32 @@ func NewDeployEnvCmd(out io.Writer) *cobra.Command {
 				log.Fatal(err)
 			}
 
+			annotations := map[string]string{}
+			for _, a := range e.annotations {
+				k, v := utils.SplitInTwo(a, "=")
+				annotations[k] = v
+			}
+			labels := map[string]string{}
+			for _, a := range e.labels {
+				k, v := utils.SplitInTwo(a, "=")
+				labels[k] = v
+			}
+			if err := utils.UpdateNamespace(e.name, e.kubeContext, annotations, labels, true); err != nil {
+				log.Fatal(err)
+			}
+
+			log.Print("initializing releases to deploy")
 			var desiredReleases []utils.ReleaseSpec
 			if nsPreExists && e.deployOnlyOverrideIfEnvExists {
 				desiredReleases = utils.InitReleases(e.name, e.override)
 			} else {
-				desiredReleases = utils.InitReleasesFromChartsFile(e.chartsFile, e.name)
+				if e.chartsFile != "" {
+					desiredReleases = utils.InitReleasesFromChartsFile(e.chartsFile, e.name)
+				}
 				desiredReleases = utils.OverrideReleases(desiredReleases, e.override, e.name)
 			}
 
+			log.Print("getting currently deployed releases")
 			installedReleases, err := utils.GetInstalledReleases(utils.GetInstalledReleasesOptions{
 				KubeContext:   e.kubeContext,
 				Namespace:     e.name,
@@ -179,8 +200,10 @@ func NewDeployEnvCmd(out io.Writer) *cobra.Command {
 				unlockEnvironment(e.name, e.kubeContext, true)
 				log.Fatal(err)
 			}
+			log.Print("calculating delta between desired releases and currently deployed releases")
 			releasesToInstall := utils.GetReleasesDelta(desiredReleases, installedReleases)
 
+			log.Print("deploying releases")
 			if err := utils.DeployChartsFromRepository(utils.DeployChartsFromRepositoryOptions{
 				ReleasesToInstall: releasesToInstall,
 				KubeContext:       e.kubeContext,
@@ -199,6 +222,7 @@ func NewDeployEnvCmd(out io.Writer) *cobra.Command {
 			}
 
 			if !e.deployOnlyOverrideIfEnvExists {
+				log.Print("getting currently deployed releases")
 				installedReleases, err := utils.GetInstalledReleases(utils.GetInstalledReleasesOptions{
 					KubeContext:   e.kubeContext,
 					Namespace:     e.name,
@@ -208,7 +232,9 @@ func NewDeployEnvCmd(out io.Writer) *cobra.Command {
 					markEnvironmentAsUnknown(e.name, e.kubeContext, true)
 					log.Fatal(err)
 				}
+				log.Print("calculating delta between desired releases and currently deployed releases")
 				releasesToDelete := utils.GetReleasesDelta(installedReleases, desiredReleases)
+				log.Print("deleting undesired releases")
 				if err := utils.DeleteReleases(utils.DeleteReleasesOptions{
 					ReleasesToDelete: releasesToDelete,
 					KubeContext:      e.kubeContext,
@@ -222,14 +248,22 @@ func NewDeployEnvCmd(out io.Writer) *cobra.Command {
 				}
 			}
 			log.Printf("deployed environment \"%s\"", e.name)
-			envValid, err := utils.IsEnvValidWithLoopBackOff(e.name, e.kubeContext)
+
+			var envValid bool
+			if !e.skipValidation {
+				envValid, err = utils.IsEnvValidWithLoopBackOff(e.name, e.kubeContext)
+			}
+
 			unlockEnvironment(e.name, e.kubeContext, true)
 
+			if e.skipValidation {
+				return
+			}
 			if err != nil {
 				log.Fatal(err)
 			}
-
 			if !envValid {
+				markEnvironmentAsFailed(e.name, e.kubeContext, true)
 				log.Fatalf("environment \"%s\" validation failed!", e.name)
 			}
 			// If we have made it so far, the environment is validated
@@ -252,6 +286,9 @@ func NewDeployEnvCmd(out io.Writer) *cobra.Command {
 	f.BoolVarP(&e.deployOnlyOverrideIfEnvExists, "deploy-only-override-if-env-exists", "x", false, "if environment exists - deploy only override(s) (support for features spanning multiple services). Overrides $ORCA_DEPLOY_ONLY_OVERRIDE_IF_ENV_EXISTS")
 	f.IntVarP(&e.parallel, "parallel", "p", utils.GetIntEnvVar("ORCA_PARALLEL", 1), "number of releases to act on in parallel. set this flag to 0 for full parallelism. Overrides $ORCA_PARALLEL")
 	f.IntVar(&e.timeout, "timeout", utils.GetIntEnvVar("ORCA_TIMEOUT", 300), "time in seconds to wait for any individual Kubernetes operation (like Jobs for hooks). Overrides $ORCA_TIMEOUT")
+	f.StringSliceVar(&e.annotations, "annotations", []string{}, "additional environment (namespace) annotations (can specify multiple): annotation=value")
+	f.StringSliceVar(&e.labels, "labels", []string{}, "environment (namespace) labels (can specify multiple): label=value")
+	f.BoolVar(&e.skipValidation, "skip-validation", utils.GetBoolEnvVar("ORCA_SKIP_VALIDATION", false), "skip environment validation after deployment. Overrides $ORCA_SKIP_VALIDATION")
 
 	f.BoolVar(&e.createNS, "create-ns", utils.GetBoolEnvVar("ORCA_CREATE_NS", false), "should create new namespace. Overrides $ORCA_CREATE_NS")
 	f.MarkDeprecated("create-ns", "namespace will be created if it does not exist")
@@ -291,6 +328,7 @@ func NewDeleteEnvCmd(out io.Writer) *cobra.Command {
 				log.Printf("environment \"%s\" not found", e.name)
 			}
 
+			log.Print("getting currently deployed releases")
 			releases, err := utils.GetInstalledReleases(utils.GetInstalledReleasesOptions{
 				KubeContext:   e.kubeContext,
 				Namespace:     e.name,
@@ -299,6 +337,7 @@ func NewDeleteEnvCmd(out io.Writer) *cobra.Command {
 			if err != nil {
 				log.Fatal(err)
 			}
+			log.Print("deleting releases")
 			if err := utils.DeleteReleases(utils.DeleteReleasesOptions{
 				ReleasesToDelete: releases,
 				KubeContext:      e.kubeContext,
@@ -547,7 +586,7 @@ func lockEnvironment(name, kubeContext string, print bool) error {
 	}
 	// There is a race condition here, may need to attend to it in the future
 	annotations := map[string]string{stateAnnotation: busyState}
-	err = utils.UpdateNamespace(name, kubeContext, annotations, print)
+	err = utils.UpdateNamespace(name, kubeContext, annotations, map[string]string{}, print)
 
 	return err
 }
@@ -565,7 +604,7 @@ func unlockEnvironment(name, kubeContext string, print bool) error {
 		}
 	}
 	annotations := map[string]string{stateAnnotation: freeState}
-	err = utils.UpdateNamespace(name, kubeContext, annotations, print)
+	err = utils.UpdateNamespace(name, kubeContext, annotations, map[string]string{}, print)
 
 	return err
 }
@@ -578,7 +617,7 @@ func markEnvironmentForDeletion(name, kubeContext string, force, print bool) err
 		}
 	}
 	annotations := map[string]string{stateAnnotation: deleteState}
-	err := utils.UpdateNamespace(name, kubeContext, annotations, print)
+	err := utils.UpdateNamespace(name, kubeContext, annotations, map[string]string{}, print)
 
 	return err
 }
@@ -586,7 +625,7 @@ func markEnvironmentForDeletion(name, kubeContext string, force, print bool) err
 // markEnvironmentAsFailed annotates a namespace with "failed"
 func markEnvironmentAsFailed(name, kubeContext string, print bool) error {
 	annotations := map[string]string{stateAnnotation: failedState}
-	err := utils.UpdateNamespace(name, kubeContext, annotations, print)
+	err := utils.UpdateNamespace(name, kubeContext, annotations, map[string]string{}, print)
 
 	return err
 }
@@ -594,7 +633,7 @@ func markEnvironmentAsFailed(name, kubeContext string, print bool) error {
 // markEnvironmentAsUnknown annotates a namespace with "unknown"
 func markEnvironmentAsUnknown(name, kubeContext string, print bool) error {
 	annotations := map[string]string{stateAnnotation: unknownState}
-	err := utils.UpdateNamespace(name, kubeContext, annotations, print)
+	err := utils.UpdateNamespace(name, kubeContext, annotations, map[string]string{}, print)
 
 	return err
 }
@@ -602,7 +641,7 @@ func markEnvironmentAsUnknown(name, kubeContext string, print bool) error {
 // unlockEnvironment annotates a namespace with "unknown"
 func removeStateAnnotationsFromEnvironment(name, kubeContext string, print bool) error {
 	annotations := map[string]string{}
-	err := utils.UpdateNamespace(name, kubeContext, annotations, print)
+	err := utils.UpdateNamespace(name, kubeContext, annotations, map[string]string{}, print)
 
 	return err
 }

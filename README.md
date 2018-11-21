@@ -67,6 +67,11 @@ Additional flags:
 * Use the `-f` flag to specify different values files to use during deployment.
 * Use the `-s` flag to set additional parameteres.
 
+Additional actions:
+
+* After the deployment is complete, orca will validate that the environment is in a healthy state.
+* You can skip the validation using the `--skip-validation` flag.
+
 #### Get the "stable" environment and deploy the same configuration to a new environment, with override(s)
 
 Useful for creating test environments for a single service.

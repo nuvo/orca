@@ -48,24 +48,52 @@ func GetNamespace(name, kubeContext string) (*v1.Namespace, error) {
 }
 
 // UpdateNamespace updates a namespace
-func UpdateNamespace(name, kubeContext string, annotations map[string]string, print bool) error {
+func UpdateNamespace(name, kubeContext string, annotationsToUpdate, labelsToUpdate map[string]string, print bool) error {
+	if len(annotationsToUpdate) == 0 && len(labelsToUpdate) == 0 {
+		return nil
+	}
+
 	clientset, err := getClientSet(kubeContext)
 	if err != nil {
 		return err
 	}
 
+	ns, err := GetNamespace(name, kubeContext)
+	if err != nil {
+		return err
+	}
+	annotations := overrideAttributes(ns.Annotations, annotationsToUpdate)
+	labels := overrideAttributes(ns.Labels, labelsToUpdate)
 	nsSpec := &v1.Namespace{ObjectMeta: metav1.ObjectMeta{
 		Name:        name,
 		Annotations: annotations,
+		Labels:      labels,
 	}}
 	_, err = clientset.Core().Namespaces().Update(nsSpec)
 	if err != nil {
 		return err
 	}
 	if print {
-		log.Printf("updated namespace \"%s\" with annotations (%s)", name, annotations)
+		if len(annotationsToUpdate) != 0 {
+			log.Printf("updated namespace \"%s\" with annotations (%s)", name, annotations)
+		}
+		if len(labelsToUpdate) != 0 {
+			log.Printf("updated namespace \"%s\" with labels (%s)", name, labels)
+		}
 	}
 	return nil
+}
+
+func overrideAttributes(currentAttributes, attributesToUpdate map[string]string) map[string]string {
+	attributes := currentAttributes
+	if len(attributes) == 0 {
+		attributes = attributesToUpdate
+	} else {
+		for k, v := range attributesToUpdate {
+			attributes[k] = v
+		}
+	}
+	return attributes
 }
 
 // DeleteNamespace deletes a namespace

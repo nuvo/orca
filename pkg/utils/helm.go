@@ -26,8 +26,10 @@ type DeployChartsFromRepositoryOptions struct {
 
 // DeployChartsFromRepository deploys a list of Helm charts from a repository in parallel
 func DeployChartsFromRepository(o DeployChartsFromRepositoryOptions) error {
-
 	releasesToInstall := o.ReleasesToInstall
+	if len(releasesToInstall) == 0 {
+		return nil
+	}
 	parallel := o.Parallel
 
 	totalReleases := len(releasesToInstall)
@@ -134,6 +136,9 @@ type DeleteReleasesOptions struct {
 // DeleteReleases deletes a list of releases in parallel
 func DeleteReleases(o DeleteReleasesOptions) error {
 	releasesToDelete := o.ReleasesToDelete
+	if len(releasesToDelete) == 0 {
+		return nil
+	}
 	parallel := o.Parallel
 
 	print := false

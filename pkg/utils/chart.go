@@ -47,7 +47,7 @@ func GetReleasesDelta(fromReleases, toReleases []ReleaseSpec) []ReleaseSpec {
 
 // InitReleasesFromChartsFile initializes a slice of ReleaseSpec from a yaml formatted charts file
 func InitReleasesFromChartsFile(file, env string) []ReleaseSpec {
-	var charts []ReleaseSpec
+	var releases []ReleaseSpec
 
 	data, err := ioutil.ReadFile(file)
 	if err != nil {
@@ -70,10 +70,10 @@ func InitReleasesFromChartsFile(file, env string) []ReleaseSpec {
 				c.Dependencies = append(c.Dependencies, depStr)
 			}
 		}
-		charts = append(charts, c)
+		releases = append(releases, c)
 	}
 
-	return charts
+	return releases
 }
 
 // InitReleases initializes a slice of ReleaseSpec from a string slice
