@@ -75,10 +75,10 @@ func UpdateNamespace(name, kubeContext string, annotationsToUpdate, labelsToUpda
 	}
 	if print {
 		if len(annotationsToUpdate) != 0 {
-			log.Printf("updated namespace \"%s\" with annotations (%s)", name, annotations)
+			log.Printf("updated environment \"%s\" with annotations (%s)", name, MapToString(annotations))
 		}
 		if len(labelsToUpdate) != 0 {
-			log.Printf("updated namespace \"%s\" with labels (%s)", name, labels)
+			log.Printf("updated environment \"%s\" with labels (%s)", name, MapToString(labels))
 		}
 	}
 	return nil

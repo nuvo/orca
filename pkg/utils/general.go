@@ -76,3 +76,12 @@ func SplitInTwo(s, sep string) (string, string) {
 	split := strings.Split(s, sep)
 	return split[0], split[1]
 }
+
+// MapToString returns a string representation of a map
+func MapToString(m map[string]string) string {
+	var output string
+	for k, v := range m {
+		output += fmt.Sprintf("%s=%s, ", k, v)
+	}
+	return strings.TrimRight(output, ", ")
+}
