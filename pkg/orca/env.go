@@ -140,7 +140,7 @@ func NewDeployEnvCmd(out io.Writer) *cobra.Command {
 		},
 		Run: func(cmd *cobra.Command, args []string) {
 
-			log.Println("initiating chart repository")
+			log.Println("initializing chart repository configuration")
 			if err := utils.AddRepository(utils.AddRepositoryOptions{
 				Repo:  e.repo,
 				Print: false,
