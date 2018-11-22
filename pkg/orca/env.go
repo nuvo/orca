@@ -140,13 +140,14 @@ func NewDeployEnvCmd(out io.Writer) *cobra.Command {
 		},
 		Run: func(cmd *cobra.Command, args []string) {
 
+			log.Println("initiating chart repository")
 			if err := utils.AddRepository(utils.AddRepositoryOptions{
 				Repo:  e.repo,
-				Print: true,
+				Print: false,
 			}); err != nil {
 				log.Fatal(err)
 			}
-			if err := utils.UpdateRepositories(true); err != nil {
+			if err := utils.UpdateRepositories(false); err != nil {
 				log.Fatal(err)
 			}
 
