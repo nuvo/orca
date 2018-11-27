@@ -43,7 +43,7 @@ type envCmd struct {
 	timeout                       int
 	annotations                   []string
 	labels                        []string
-	skipValidation                bool
+	validate                      bool
 
 	out io.Writer
 }
@@ -91,13 +91,6 @@ func NewGetEnvCmd(out io.Writer) *cobra.Command {
 	f.StringVar(&e.kubeContext, "kube-context", os.Getenv("ORCA_KUBE_CONTEXT"), "name of the kubeconfig context to use. Overrides $ORCA_KUBE_CONTEXT")
 	f.StringVarP(&e.output, "output", "o", os.Getenv("ORCA_OUTPUT"), "output format (yaml, md, table). Overrides $ORCA_OUTPUT")
 
-	f.BoolVar(&e.tls, "tls", utils.GetBoolEnvVar("ORCA_TLS", false), "enable TLS for request. Overrides $ORCA_TLS")
-	f.StringVar(&e.helmTLSStore, "helm-tls-store", os.Getenv("HELM_TLS_STORE"), "path to TLS certs and keys. Overrides $HELM_TLS_STORE")
-	f.BoolVar(&e.onlyManaged, "only-managed", utils.GetBoolEnvVar("ORCA_ONLY_MANAGED", true), "list only releases managed by orca. Overrides $ORCA_ONLY_MANAGED")
-
-	f.MarkDeprecated("tls", "this command is no longer executed using helm")
-	f.MarkDeprecated("helm-tls-store", "this command is no longer executed using helm")
-	f.MarkDeprecated("only-managed", "environment is considered managed in any case")
 	return cmd
 }
 
@@ -251,13 +244,13 @@ func NewDeployEnvCmd(out io.Writer) *cobra.Command {
 			log.Printf("deployed environment \"%s\"", e.name)
 
 			var envValid bool
-			if !e.skipValidation {
+			if e.validate {
 				envValid, err = utils.IsEnvValidWithLoopBackOff(e.name, e.kubeContext)
 			}
 
 			unlockEnvironment(e.name, e.kubeContext, true)
 
-			if e.skipValidation {
+			if !e.validate {
 				return
 			}
 			if err != nil {
@@ -289,10 +282,8 @@ func NewDeployEnvCmd(out io.Writer) *cobra.Command {
 	f.IntVar(&e.timeout, "timeout", utils.GetIntEnvVar("ORCA_TIMEOUT", 300), "time in seconds to wait for any individual Kubernetes operation (like Jobs for hooks). Overrides $ORCA_TIMEOUT")
 	f.StringSliceVar(&e.annotations, "annotations", []string{}, "additional environment (namespace) annotations (can specify multiple): annotation=value")
 	f.StringSliceVar(&e.labels, "labels", []string{}, "environment (namespace) labels (can specify multiple): label=value")
-	f.BoolVar(&e.skipValidation, "skip-validation", utils.GetBoolEnvVar("ORCA_SKIP_VALIDATION", false), "skip environment validation after deployment. Overrides $ORCA_SKIP_VALIDATION")
+	f.BoolVar(&e.validate, "validate", utils.GetBoolEnvVar("ORCA_VALIDATE", true), "perform environment validation after deployment. Overrides $ORCA_VALIDATE")
 
-	f.BoolVar(&e.createNS, "create-ns", utils.GetBoolEnvVar("ORCA_CREATE_NS", false), "should create new namespace. Overrides $ORCA_CREATE_NS")
-	f.MarkDeprecated("create-ns", "namespace will be created if it does not exist")
 	return cmd
 }
 
