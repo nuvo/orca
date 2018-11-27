@@ -201,11 +201,13 @@ type DeployChartFromRepositoryOptions struct {
 	IsIsolated   bool
 	Inject       bool
 	Timeout      int
+	Validate     bool
 }
 
 // DeployChartFromRepository deploys a Helm chart from a chart repository
 func DeployChartFromRepository(o DeployChartFromRepositoryOptions) error {
 	tempDir := MkRandomDir()
+	defer os.RemoveAll(tempDir)
 
 	if o.ReleaseName == "" {
 		o.ReleaseName = o.Name
@@ -258,7 +260,19 @@ func DeployChartFromRepository(o DeployChartFromRepositoryOptions) error {
 		return err
 	}
 
-	os.RemoveAll(tempDir)
+	if !o.Validate {
+		return nil
+	}
+	envValid, err := IsEnvValidWithLoopBackOff(o.Namespace, o.KubeContext)
+	if err != nil {
+		return err
+	}
+	if !envValid {
+		return fmt.Errorf("environment \"%s\" validation failed", o.Namespace)
+	}
+	// If we have made it so far, the environment is validated
+	log.Printf("environment \"%s\" validated!", o.Namespace)
+
 	return nil
 }
 
