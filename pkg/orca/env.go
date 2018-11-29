@@ -282,7 +282,7 @@ func NewDeployEnvCmd(out io.Writer) *cobra.Command {
 	f.IntVar(&e.timeout, "timeout", utils.GetIntEnvVar("ORCA_TIMEOUT", 300), "time in seconds to wait for any individual Kubernetes operation (like Jobs for hooks). Overrides $ORCA_TIMEOUT")
 	f.StringSliceVar(&e.annotations, "annotations", []string{}, "additional environment (namespace) annotations (can specify multiple): annotation=value")
 	f.StringSliceVar(&e.labels, "labels", []string{}, "environment (namespace) labels (can specify multiple): label=value")
-	f.BoolVar(&e.validate, "validate", utils.GetBoolEnvVar("ORCA_VALIDATE", true), "perform environment validation after deployment. Overrides $ORCA_VALIDATE")
+	f.BoolVar(&e.validate, "validate", utils.GetBoolEnvVar("ORCA_VALIDATE", false), "perform environment validation after deployment. Overrides $ORCA_VALIDATE")
 
 	return cmd
 }
