@@ -188,3 +188,8 @@ For a more detailed description of all commands, see the [Commands](/docs/comman
 ## Examples
 
 Be sure to check out the [Examples](/docs/examples) section!
+
+## References
+
+* [The Nuvo Group CI\CD journey](https://medium.com/nuvo-group-tech/the-nuvo-group-ci-cd-journey-132ab70bf452)
+* [Dynamic Kubernetes Environments with Orca](https://medium.com/nuvo-group-tech/dynamic-kubernetes-environments-with-orca-a288afd36aa8)
