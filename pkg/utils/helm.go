@@ -53,20 +53,20 @@ func DeployChartsFromRepository(o DeployChartsFromRepositoryOptions) error {
 			go func(r ReleaseSpec) {
 				defer bwg.Done()
 
-				// If there has been an error in a concurrent deployment - don`t deploy anymore
-				if len(errc) != 0 {
-					return
-				}
-
 				// If there are (still) any dependencies - leave this chart for a later iteration
 				if len(r.Dependencies) != 0 {
 					return
 				}
 
+				mutex.Lock()
+				// If there has been an error in a concurrent deployment - don`t deploy anymore
+				if len(errc) != 0 {
+					mutex.Unlock()
+					return
+				}
 				// Find index of chart in slice
 				// may have changed by now since we are using go routines
 				// If chart was not found - another routine is taking care of it
-				mutex.Lock()
 				index := GetChartIndex(releasesToInstall, r.ChartName)
 				if index == -1 {
 					mutex.Unlock()
