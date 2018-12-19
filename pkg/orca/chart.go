@@ -134,9 +134,9 @@ func NewPushChartCmd(out io.Writer) *cobra.Command {
 
 	f := cmd.Flags()
 
-	f.StringVar(&c.path, "path", os.Getenv("HELM_PATH"), "path to chart. Overrides $ORCA_PATH")
-	f.StringVar(&c.append, "append", os.Getenv("HELM_APPEND"), "string to append to version. Overrides $ORCA_APPEND")
-	f.StringVar(&c.repo, "repo", os.Getenv("HELM_REPO"), "chart repository (name=url). Overrides $ORCA_REPO")
+	f.StringVar(&c.path, "path", os.Getenv("ORCA_PATH"), "path to chart. Overrides $ORCA_PATH")
+	f.StringVar(&c.append, "append", os.Getenv("ORCA_APPEND"), "string to append to version. Overrides $ORCA_APPEND")
+	f.StringVar(&c.repo, "repo", os.Getenv("ORCA_REPO"), "chart repository (name=url). Overrides $ORCA_REPO")
 	f.BoolVar(&c.lint, "lint", utils.GetBoolEnvVar("ORCA_LINT", false), "should perform lint before push. Overrides $ORCA_LINT")
 
 	return cmd
