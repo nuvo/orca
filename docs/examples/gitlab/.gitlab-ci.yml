@@ -1,0 +1,148 @@
+image: nuvo/orca
+stages:
+  - build
+  - update_chart
+  - upload_chart
+  - deploy
+  - delete
+variables:
+  KUBECONFIG: /etc/kube/config # path to mounted kubeconfig file, change as you see fit
+  ORCA_KUBE_CONTEXT: mycluster.example.com # name of kube context to operate in (can be overridden at job level variables)
+  ORCA_REPO: myRepo=https://mychartrepo.example.com # chart repository to use for push and deployment
+  IMAGE_NAME: $CI_REGISTRY_IMAGE # change as you see fit
+  IMAGE_TAG: $CI_PIPELINE_ID # change as you see fit
+  SERVICE_NAME: example-service # change this
+
+# Repository structure
+#
+# Assuming the source code is under the src/ directory,
+# and the Helm chart is under the kubernetes/$SERVICE_NAME/ directory
+
+# Source code pipeline
+#
+# Triggered by changes in the src/ directory (GitLab 11.4+)
+
+build:
+  stage: build
+  only:
+    changes: [src/**/*]
+  image: docker:stable
+  services:
+    - docker:dind
+  variables:
+    DOCKER_HOST: tcp://localhost:2375
+  script: |
+    docker build -t $IMAGE_NAME:$IMAGE_TAG src/
+    docker login -u $CI_USER_NAME -p $CI_USER_TOKEN $CI_REGISTRY
+    docker push $IMAGE_NAME:$IMAGE_TAG
+
+# Triggered by changes in the src/ directory on branch master
+
+update_chart:
+  stage: update_chart
+  only:
+    refs: [master]
+    changes: [src/**/*]
+  image: nuvo/build-utils
+  script: |
+    yawn set kubernetes/$SERVICE_NAME/values.yaml image.tag $IMAGE_TAG
+    git remote set-url origin $(git remote get-url origin | sed 's|.*@|https://'$CI_USER_NAME:$CI_USER_TOKEN'@|') # set these variables at project level (Settings -> CI\CD)
+    git config --global user.email "$GITLAB_USER_EMAIL"
+    git config --global user.name "$GITLAB_USER_NAME"
+    git checkout $CI_COMMIT_REF_NAME
+    git add kubernetes/$SERVICE_NAME/values.yaml
+    git commit -m "Update chart with new image tag (during pipeline $CI_PIPELINE_ID)"
+    git push -u origin $CI_COMMIT_REF_NAME
+
+# Helm chart pipeline
+#
+# Triggered by changes only in the kubernetes/ directory on branch master
+
+upload_chart_mainline:
+  stage: upload_chart
+  only:
+    refs: [master]
+    changes: [kubernetes/**/*]
+  except:
+    changes: [src/**/*]
+  artifacts:
+    paths: [.chartversion]
+    expire_in: 1 hrs
+  script: |
+    # chart version is set to <chartVersion>-$CI_PIPELINE_ID. for example, 0.1.0-2357
+    orca push chart \
+      --path kubernetes/$SERVICE_NAME/ \
+      --append $CI_PIPELINE_ID \
+      --lint > .chartversion
+
+# Assuming that you want to deploy to a namespace called demo
+# Have this namespace created beforehand
+
+deploy_mainline:
+  stage: deploy
+  only:
+    refs: [master]
+    changes: [kubernetes/**/*]
+  except:
+    changes: [src/**/*]
+  environment:
+    name: demo # can be used in the script as $CI_ENVIRONMENT_NAME
+  dependencies: [upload_chart_mainline]
+  script: |
+    orca deploy chart \
+      --name $SERVICE_NAME \
+      --version $(cat .chartversion) \
+      --release-name demo-$SERVICE_NAME \
+      --namespace demo \
+      -f demo-values.yaml
+
+# Merge request pipeline
+#
+# Assuming you are triggering a pipeline on merge request events,
+# by either using a plugin or an external service (usually a web server)
+
+update_chart_mr:
+  stage: update_chart
+  only: [trigger]
+  image: nuvo/build-utils
+  artifacts:
+    paths: [kubernetes]
+    expire_in: 1 hrs
+  script: |
+    yawn set kubernetes/$SERVICE_NAME/values.yaml image.tag $CI_PIPELINE_ID
+
+upload_chart_mr:
+  stage: upload_chart
+  only: [trigger]
+  dependencies: [update_chart_mr]
+  artifacts:
+    paths: [.chartversion]
+    expire_in: 1 hrs
+  script: |
+    orca push chart \
+      --path kubernetes/$SERVICE_NAME/ \
+      --append $CI_PIPELINE_ID \
+      --lint > .chartversion
+
+deploy_dynamic_mr:
+  stage: deploy
+  only: [trigger]
+  environment:
+    name: $CI_COMMIT_REF_SLUG # assuming branch names are identical across related services, change as you see fit
+  script: |
+    orca get env --name demo > charts.yaml
+    orca deploy env \
+      --name $CI_COMMIT_REF_SLUG \
+      -c charts.yaml \
+      -f demo-values.yaml \ # change according to deploy_mainline
+      --override $SERVICE_NAME=$(cat .chartversion) \
+      --set ingress.host=$CI_COMMIT_REF_SLUG.$ORCA_KUBE_CONTEXT \ # change as you see fit
+      -x
+
+delete_dynamic_mr:
+  stage: delete
+  when: manual
+  only: [trigger]
+  script: |
+    orca delete env --name $CI_COMMIT_REF_SLUG \ # change according to deploy_dynamic_mr
+      --force
