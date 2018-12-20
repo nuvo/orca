@@ -334,6 +334,7 @@ type DiffOptions struct {
 	EnvNameRight      string
 	ReleasesSpecLeft  []ReleaseSpec
 	ReleasesSpecRight []ReleaseSpec
+	Output            string
 }
 
 type diff struct {
@@ -342,22 +343,42 @@ type diff struct {
 	versionRight string
 }
 
-// PrintDiffTable prints a table of differences between two environments
-func PrintDiffTable(o DiffOptions) {
+// PrintDiff prints a table of differences between two environments
+func PrintDiff(o DiffOptions) {
 	if len(o.ReleasesSpecLeft) == 0 && len(o.ReleasesSpecRight) == 0 {
 		return
 	}
+	diffs := getDiffs(o.ReleasesSpecLeft, o.ReleasesSpecRight)
+	if len(diffs) == 0 {
+		return
+	}
+
+	switch o.Output {
+	case "yaml":
+		printDiffYaml(diffs)
+	case "table":
+		printDiffTable(o, diffs)
+	case "":
+		printDiffTable(o, diffs)
+	}
+
+}
+
+func printDiffYaml(diffs []diff) {
+	fmt.Println("charts:")
+	for _, d := range diffs {
+		fmt.Println("- name:", d.chartName)
+		fmt.Println("  versionLeft:", d.versionLeft)
+		fmt.Println("  versionRight:", d.versionRight)
+	}
+}
+
+func printDiffTable(o DiffOptions, diffs []diff) {
 	tbl := uitable.New()
 	tbl.MaxColWidth = 60
 	leftColHeader := initHeader(o.KubeContextLeft, o.EnvNameLeft)
 	rightColHeader := initHeader(o.KubeContextRight, o.EnvNameRight)
 	tbl.AddRow("chart", leftColHeader, rightColHeader)
-
-	diffs := getDiffs(o.ReleasesSpecLeft, o.ReleasesSpecRight)
-
-	if len(diffs) == 0 {
-		return
-	}
 
 	for _, d := range diffs {
 		tbl.AddRow(d.chartName, d.versionLeft, d.versionRight)
