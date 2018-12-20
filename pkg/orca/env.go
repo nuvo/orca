@@ -506,7 +506,7 @@ func NewDiffEnvCmd(out io.Writer) *cobra.Command {
 	f.StringVar(&e.nameRight, "name-right", os.Getenv("ORCA_NAME_RIGHT"), "name of right environment to compare. Overrides $ORCA_NAME_RIGHT")
 	f.StringVar(&e.kubeContextLeft, "kube-context-left", os.Getenv("ORCA_KUBE_CONTEXT_LEFT"), "name of the left kubeconfig context to use. Overrides $ORCA_KUBE_CONTEXT_LEFT")
 	f.StringVar(&e.kubeContextRight, "kube-context-right", os.Getenv("ORCA_KUBE_CONTEXT_RIGHT"), "name of the right kubeconfig context to use. Overrides $ORCA_KUBE_CONTEXT_RIGHT")
-	f.StringVarP(&e.output, "output", "o", os.Getenv("ORCA_OUTPUT"), "output format (yaml, md, table). Overrides $ORCA_OUTPUT")
+	f.StringVarP(&e.output, "output", "o", utils.GetStringEnvVar("ORCA_OUTPUT", "yaml"), "output format (yaml, table). Overrides $ORCA_OUTPUT")
 
 	return cmd
 }

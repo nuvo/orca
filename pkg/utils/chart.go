@@ -359,7 +359,7 @@ func PrintDiff(o DiffOptions) {
 	case "table":
 		printDiffTable(o, diffs)
 	case "":
-		printDiffTable(o, diffs)
+		printDiffYaml(diffs)
 	}
 
 }
