@@ -665,6 +665,10 @@ func updateProtectedCharts(name, kubeContext string, protectedChartsToAdd []stri
 	}
 
 	protectedCharts := strings.Split(ns.Annotations[protectedAnnotation], ",")
+	if len(protectedCharts) == 0 && len(protectedChartsToAdd) == 0 {
+		return []string{}, nil
+	}
+
 	for _, pcta := range protectedChartsToAdd {
 		if utils.Contains(protectedCharts, pcta) {
 			continue
