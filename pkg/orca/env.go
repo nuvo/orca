@@ -672,6 +672,9 @@ func updateProtectedCharts(name, kubeContext string, protectedChartsToAdd []stri
 		protectedCharts = append(protectedCharts, pcta)
 	}
 
+	annotationValue := strings.Join(protectedCharts, ",")
+	annotations := map[string]string{protectedAnnotation: annotationValue}
+
 	protectedChartsWithoutAdds := []string{}
 	for _, pr := range protectedCharts {
 		if utils.Contains(protectedChartsToAdd, pr) {
@@ -680,9 +683,6 @@ func updateProtectedCharts(name, kubeContext string, protectedChartsToAdd []stri
 		protectedChartsWithoutAdds = append(protectedChartsWithoutAdds, pr)
 	}
 
-	annotationValue := strings.Join(protectedChartsWithoutAdds, ",")
-	annotations := map[string]string{protectedAnnotation: annotationValue}
 	err = utils.UpdateNamespace(name, kubeContext, annotations, map[string]string{}, print)
-
 	return protectedChartsWithoutAdds, err
 }
