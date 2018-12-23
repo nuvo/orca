@@ -66,7 +66,7 @@ commit_chart:
     git config --global user.email "$GITLAB_USER_EMAIL"
     git config --global user.name "$GITLAB_USER_NAME"
     git checkout $CI_BUILD_REF_NAME
-    git add kubernetes/service-a/values.yaml
+    git add kubernetes/$SERVICE_NAME/values.yaml
     git commit -m "Update chart with new image tag (during pipeline $CI_PIPELINE_ID)"
     git push -u origin $CI_BUILD_REF_NAME
 
