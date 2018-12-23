@@ -195,8 +195,9 @@ func NewDeployEnvCmd(out io.Writer) *cobra.Command {
 			}
 			for _, pc := range protectedCharts {
 				desiredReleases = utils.RemoveChartFromDependencies(desiredReleases, pc)
-				pci := utils.GetChartIndex(desiredReleases, pc)
-				desiredReleases = utils.RemoveChartFromCharts(desiredReleases, pci)
+				if pci := utils.GetChartIndex(desiredReleases, pc); pci != -1 {
+					desiredReleases = utils.RemoveChartFromCharts(desiredReleases, pci)
+				}
 			}
 
 			log.Print("getting currently deployed releases")
