@@ -2,6 +2,7 @@ image: nuvo/orca
 stages:
   - build
   - update_chart
+  - commit_chart
   - upload_chart
   - deploy
   - delete
@@ -20,11 +21,12 @@ variables:
 
 # Source code pipeline
 #
-# Triggered by changes in the src/ directory (GitLab 11.4+)
+# Triggered by changes in the src/ directory (GitLab 11.4+) on all branches and on merge requests (Gitlab 11.6+)
 
 build:
   stage: build
   only:
+    refs: [branches,merge_requests]
     changes: [src/**/*]
   image: docker:stable
   services:
@@ -36,23 +38,37 @@ build:
     docker login -u $CI_USER_NAME -p $CI_USER_TOKEN $CI_REGISTRY
     docker push $IMAGE_NAME:$IMAGE_TAG
 
-# Triggered by changes in the src/ directory on branch master
+# Triggered by changes in the src/ directory on branch master and on merge requests
 
 update_chart:
   stage: update_chart
   only:
+    refs: [master,merge_requests]
+    changes: [src/**/*]
+  image: nuvo/build-utils
+  artifacts:
+    paths: [kubernetes]
+    expire_in: 1 hrs
+  script: |
+    yawn set kubernetes/$SERVICE_NAME/values.yaml image.tag $IMAGE_TAG
+
+# Triggered by changes in the src/ directory on branch master
+
+commit_chart:
+  stage: commit_chart
+  only:
     refs: [master]
     changes: [src/**/*]
   image: nuvo/build-utils
+  dependencies: [update_chart]
   script: |
-    yawn set kubernetes/$SERVICE_NAME/values.yaml image.tag $IMAGE_TAG
-    git remote set-url origin $(git remote get-url origin | sed 's|.*@|https://'$CI_USER_NAME:$CI_USER_TOKEN'@|') # set these variables at project level (Settings -> CI\CD)
+    git remote set-url origin $(git remote get-url origin | sed 's|.*@|https://'$CI_USER_NAME:$CI_USER_TOKEN'@|')
     git config --global user.email "$GITLAB_USER_EMAIL"
     git config --global user.name "$GITLAB_USER_NAME"
-    git checkout $CI_COMMIT_REF_NAME
-    git add kubernetes/$SERVICE_NAME/values.yaml
+    git checkout $CI_BUILD_REF_NAME
+    git add kubernetes/service-a/values.yaml
     git commit -m "Update chart with new image tag (during pipeline $CI_PIPELINE_ID)"
-    git push -u origin $CI_COMMIT_REF_NAME
+    git push -u origin $CI_BUILD_REF_NAME
 
 # Helm chart pipeline
 #
@@ -98,23 +114,12 @@ deploy_mainline:
 
 # Merge request pipeline
 #
-# Assuming you are triggering a pipeline on merge request events,
-# by either using a plugin or an external service (usually a web server)
-
-update_chart_mr:
-  stage: update_chart
-  only: [trigger]
-  image: nuvo/build-utils
-  artifacts:
-    paths: [kubernetes]
-    expire_in: 1 hrs
-  script: |
-    yawn set kubernetes/$SERVICE_NAME/values.yaml image.tag $CI_PIPELINE_ID
+# Continuing some jobs from previous steps
 
 upload_chart_mr:
   stage: upload_chart
-  only: [trigger]
-  dependencies: [update_chart_mr]
+  only: [merge_requests]
+  dependencies: [update_chart]
   artifacts:
     paths: [.chartversion]
     expire_in: 1 hrs
@@ -126,7 +131,7 @@ upload_chart_mr:
 
 deploy_dynamic_mr:
   stage: deploy
-  only: [trigger]
+  only: [merge_requests]
   environment:
     name: $CI_COMMIT_REF_SLUG # assuming branch names are identical across related services, change as you see fit
   script: |
@@ -142,7 +147,7 @@ deploy_dynamic_mr:
 delete_dynamic_mr:
   stage: delete
   when: manual
-  only: [trigger]
+  only: [merge_requests]
   script: |
     orca delete env --name $CI_COMMIT_REF_SLUG \ # change according to deploy_dynamic_mr
       --force
