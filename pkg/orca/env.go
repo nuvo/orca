@@ -672,7 +672,7 @@ func updateProtectedCharts(name, kubeContext string, protectedChartsToAdd []stri
 		protectedCharts = append(protectedCharts, pcta)
 	}
 
-	annotationValue := strings.Join(protectedCharts, ",")
+	annotationValue := strings.Trim(strings.Join(protectedCharts, ","), ",")
 	annotations := map[string]string{protectedAnnotation: annotationValue}
 
 	protectedChartsWithoutAdds := []string{}
