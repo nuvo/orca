@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/nuvo/orca/pkg/utils"
@@ -14,13 +15,14 @@ import (
 )
 
 const (
-	annotationPrefix string = "orca.nuvocares.com"
-	stateAnnotation  string = annotationPrefix + "/state"
-	busyState        string = "busy"
-	freeState        string = "free"
-	deleteState      string = "delete"
-	failedState      string = "failed"
-	unknownState     string = "unknown"
+	annotationPrefix    string = "orca.nuvocares.com"
+	stateAnnotation     string = annotationPrefix + "/state"
+	protectedAnnotation string = annotationPrefix + "/protected"
+	busyState           string = "busy"
+	freeState           string = "free"
+	deleteState         string = "delete"
+	failedState         string = "failed"
+	unknownState        string = "unknown"
 )
 
 type envCmd struct {
@@ -44,6 +46,7 @@ type envCmd struct {
 	annotations                   []string
 	labels                        []string
 	validate                      bool
+	protectedCharts               []string
 
 	out io.Writer
 }
@@ -184,6 +187,18 @@ func NewDeployEnvCmd(out io.Writer) *cobra.Command {
 				desiredReleases = utils.OverrideReleases(desiredReleases, e.override, e.name)
 			}
 
+			log.Print("updating protected charts")
+			protectedCharts, err := updateProtectedCharts(e.name, e.kubeContext, e.protectedCharts, true)
+			if err != nil {
+				unlockEnvironment(e.name, e.kubeContext, true)
+				log.Fatal(err)
+			}
+			for _, pc := range protectedCharts {
+				desiredReleases = utils.RemoveChartFromDependencies(desiredReleases, pc)
+				pci := utils.GetChartIndex(desiredReleases, pc)
+				desiredReleases = utils.RemoveChartFromCharts(desiredReleases, pci)
+			}
+
 			log.Print("getting currently deployed releases")
 			installedReleases, err := utils.GetInstalledReleases(utils.GetInstalledReleasesOptions{
 				KubeContext:   e.kubeContext,
@@ -277,12 +292,13 @@ func NewDeployEnvCmd(out io.Writer) *cobra.Command {
 	f.BoolVar(&e.tls, "tls", utils.GetBoolEnvVar("ORCA_TLS", false), "enable TLS for request. Overrides $ORCA_TLS")
 	f.StringVar(&e.helmTLSStore, "helm-tls-store", os.Getenv("HELM_TLS_STORE"), "path to TLS certs and keys. Overrides $HELM_TLS_STORE")
 	f.BoolVar(&e.inject, "inject", utils.GetBoolEnvVar("ORCA_INJECT", false), "enable injection during helm upgrade. Overrides $ORCA_INJECT (requires helm inject plugin: https://github.com/maorfr/helm-inject)")
-	f.BoolVarP(&e.deployOnlyOverrideIfEnvExists, "deploy-only-override-if-env-exists", "x", false, "if environment exists - deploy only override(s) (support for features spanning multiple services). Overrides $ORCA_DEPLOY_ONLY_OVERRIDE_IF_ENV_EXISTS")
 	f.IntVarP(&e.parallel, "parallel", "p", utils.GetIntEnvVar("ORCA_PARALLEL", 1), "number of releases to act on in parallel. set this flag to 0 for full parallelism. Overrides $ORCA_PARALLEL")
 	f.IntVar(&e.timeout, "timeout", utils.GetIntEnvVar("ORCA_TIMEOUT", 300), "time in seconds to wait for any individual Kubernetes operation (like Jobs for hooks). Overrides $ORCA_TIMEOUT")
 	f.StringSliceVar(&e.annotations, "annotations", []string{}, "additional environment (namespace) annotations (can specify multiple): annotation=value")
 	f.StringSliceVar(&e.labels, "labels", []string{}, "environment (namespace) labels (can specify multiple): label=value")
 	f.BoolVar(&e.validate, "validate", utils.GetBoolEnvVar("ORCA_VALIDATE", false), "perform environment validation after deployment. Overrides $ORCA_VALIDATE")
+	f.StringSliceVar(&e.protectedCharts, "protected-chart", []string{}, "chart name to protect from being overridden (can specify multiple)")
+	f.BoolVarP(&e.deployOnlyOverrideIfEnvExists, "deploy-only-override-if-env-exists", "x", utils.GetBoolEnvVar("ORCA_DEPLOY_ONLY_OVERRIDE_IF_ENV_EXISTS", false), "if environment exists - deploy only override(s) (avoid environment update). Overrides $ORCA_DEPLOY_ONLY_OVERRIDE_IF_ENV_EXISTS")
 
 	return cmd
 }
@@ -639,4 +655,33 @@ func removeStateAnnotationsFromEnvironment(name, kubeContext string, print bool)
 	err := utils.UpdateNamespace(name, kubeContext, annotations, map[string]string{}, print)
 
 	return err
+}
+
+func updateProtectedCharts(name, kubeContext string, protectedChartsToAdd []string, print bool) ([]string, error) {
+	ns, err := utils.GetNamespace(name, kubeContext)
+	if err != nil {
+		return nil, err
+	}
+
+	protectedCharts := strings.Split(ns.Annotations[protectedAnnotation], ",")
+	for _, pcta := range protectedChartsToAdd {
+		if utils.Contains(protectedCharts, pcta) {
+			continue
+		}
+		protectedCharts = append(protectedCharts, pcta)
+	}
+
+	protectedChartsWithoutAdds := []string{}
+	for _, pr := range protectedCharts {
+		if utils.Contains(protectedChartsToAdd, pr) {
+			continue
+		}
+		protectedChartsWithoutAdds = append(protectedChartsWithoutAdds, pr)
+	}
+
+	annotationValue := strings.Join(protectedChartsWithoutAdds, ",")
+	annotations := map[string]string{protectedAnnotation: annotationValue}
+	err = utils.UpdateNamespace(name, kubeContext, annotations, map[string]string{}, print)
+
+	return protectedChartsWithoutAdds, err
 }
