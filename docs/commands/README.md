@@ -79,7 +79,7 @@ Aliases:
 Flags:
       --annotations strings                  additional environment (namespace) annotations (can specify multiple): annotation=value
   -c, --charts-file string                   path to file with list of Helm charts to install. Overrides $ORCA_CHARTS_FILE
-  -x, --deploy-only-override-if-env-exists   if environment exists - deploy only override(s) (support for features spanning multiple services). Overrides $ORCA_DEPLOY_ONLY_OVERRIDE_IF_ENV_EXISTS
+  -x, --deploy-only-override-if-env-exists   if environment exists - deploy only override(s) (avoid environment update). Overrides $ORCA_DEPLOY_ONLY_OVERRIDE_IF_ENV_EXISTS
       --helm-tls-store string                path to TLS certs and keys. Overrides $HELM_TLS_STORE
       --inject                               enable injection during helm upgrade. Overrides $ORCA_INJECT (requires helm inject plugin: https://github.com/maorfr/helm-inject)
       --kube-context string                  name of the kubeconfig context to use. Overrides $ORCA_KUBE_CONTEXT
@@ -87,6 +87,7 @@ Flags:
   -n, --name string                          name of environment (namespace) to deploy to. Overrides $ORCA_NAME
       --override strings                     chart to override with different version (can specify multiple): chart=version
   -p, --parallel int                         number of releases to act on in parallel. set this flag to 0 for full parallelism. Overrides $ORCA_PARALLEL (default 1)
+      --protected-chart strings              chart name to protect from being overridden (can specify multiple)
       --repo string                          chart repository (name=url). Overrides $ORCA_REPO
   -s, --set strings                          set additional parameters
       --timeout int                          time in seconds to wait for any individual Kubernetes operation (like Jobs for hooks). Overrides $ORCA_TIMEOUT (default 300)
