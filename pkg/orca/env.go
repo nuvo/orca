@@ -187,19 +187,6 @@ func NewDeployEnvCmd(out io.Writer) *cobra.Command {
 				desiredReleases = utils.OverrideReleases(desiredReleases, e.override, e.name)
 			}
 
-			log.Print("updating protected charts")
-			protectedCharts, err := updateProtectedCharts(e.name, e.kubeContext, e.protectedCharts, true)
-			if err != nil {
-				unlockEnvironment(e.name, e.kubeContext, true)
-				log.Fatal(err)
-			}
-			for _, pc := range protectedCharts {
-				desiredReleases = utils.RemoveChartFromDependencies(desiredReleases, pc)
-				if pci := utils.GetChartIndex(desiredReleases, pc); pci != -1 {
-					desiredReleases = utils.RemoveChartFromCharts(desiredReleases, pci)
-				}
-			}
-
 			log.Print("getting currently deployed releases")
 			installedReleases, err := utils.GetInstalledReleases(utils.GetInstalledReleasesOptions{
 				KubeContext:   e.kubeContext,
@@ -210,6 +197,23 @@ func NewDeployEnvCmd(out io.Writer) *cobra.Command {
 				unlockEnvironment(e.name, e.kubeContext, true)
 				log.Fatal(err)
 			}
+
+			log.Print("updating protected charts")
+			protectedCharts, err := updateProtectedCharts(e.name, e.kubeContext, e.protectedCharts, true)
+			if err != nil {
+				unlockEnvironment(e.name, e.kubeContext, true)
+				log.Fatal(err)
+			}
+
+			for _, ir := range installedReleases {
+				for _, pc := range protectedCharts {
+					if pc != ir.ChartName {
+						continue
+					}
+					desiredReleases = utils.OverrideReleases(desiredReleases, []string{ir.ChartName + "=" + ir.ChartVersion}, e.name)
+				}
+			}
+
 			log.Print("calculating delta between desired releases and currently deployed releases")
 			releasesToInstall := utils.GetReleasesDelta(desiredReleases, installedReleases)
 
