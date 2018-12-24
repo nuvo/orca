@@ -31,14 +31,17 @@ type GetInstalledReleasesOptions struct {
 func GetInstalledReleases(o GetInstalledReleasesOptions) ([]ReleaseSpec, error) {
 
 	tillerNamespace := "kube-system"
-	tillerResourceLabel := "OWNER=TILLER"
+	labels := "OWNER=TILLER,STATUS in (DEPLOYED,FAILED)"
+	if !o.IncludeFailed {
+		labels = strings.Replace(labels, "FAILED", "", -1)
+	}
 	storage, err := getTillerStorage(o.KubeContext, tillerNamespace)
 	if err != nil {
 		return nil, err
 	}
 
 	var releaseSpecs []ReleaseSpec
-	list, err := listReleases(o.KubeContext, o.Namespace, storage, tillerNamespace, tillerResourceLabel)
+	list, err := listReleases(o.KubeContext, o.Namespace, storage, tillerNamespace, labels)
 	if err != nil {
 		return nil, err
 	}
@@ -127,7 +130,7 @@ type releaseData struct {
 	time      time.Time
 }
 
-func listReleases(kubeContext, namespace, storage, tillerNamespace, label string) ([]releaseData, error) {
+func listReleases(kubeContext, namespace, storage, tillerNamespace, labels string) ([]releaseData, error) {
 	clientset, err := getClientSet(kubeContext)
 	if err != nil {
 		return nil, err
@@ -137,7 +140,7 @@ func listReleases(kubeContext, namespace, storage, tillerNamespace, label string
 	switch storage {
 	case "secrets":
 		secrets, err := coreV1.Secrets(tillerNamespace).List(metav1.ListOptions{
-			LabelSelector: label,
+			LabelSelector: labels,
 		})
 		if err != nil {
 			return nil, err
@@ -151,7 +154,7 @@ func listReleases(kubeContext, namespace, storage, tillerNamespace, label string
 		}
 	case "cfgmaps":
 		configMaps, err := coreV1.ConfigMaps(tillerNamespace).List(metav1.ListOptions{
-			LabelSelector: label,
+			LabelSelector: labels,
 		})
 		if err != nil {
 			return nil, err
@@ -174,10 +177,10 @@ func listReleases(kubeContext, namespace, storage, tillerNamespace, label string
 
 func getReleaseData(namespace, itemReleaseData string) *releaseData {
 	data, _ := decodeRelease(itemReleaseData)
-
 	if namespace != "" && data.Namespace != namespace {
 		return nil
 	}
+
 	deployTime := time.Unix(data.Info.LastDeployed.Seconds, 0)
 	chartMeta := data.GetChart().Metadata
 	releaseData := releaseData{
