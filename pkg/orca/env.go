@@ -368,7 +368,7 @@ func NewDeleteEnvCmd(out io.Writer) *cobra.Command {
 
 			if nsExists {
 				if utils.Contains([]string{"default", "kube-system", "kube-public"}, e.name) {
-					removeStateAnnotationsFromEnvironment(e.name, e.kubeContext, true)
+					removeAnnotationsFromEnvironment(e.name, e.kubeContext, true)
 				} else {
 					utils.DeleteNamespace(e.name, e.kubeContext, false)
 				}
@@ -657,8 +657,8 @@ func markEnvironmentAsUnknown(name, kubeContext string, print bool) error {
 	return err
 }
 
-// unlockEnvironment annotates a namespace with "unknown"
-func removeStateAnnotationsFromEnvironment(name, kubeContext string, print bool) error {
+// removeAnnotationsFromEnvironment removes annotations from a namespace
+func removeAnnotationsFromEnvironment(name, kubeContext string, print bool) error {
 	annotations := map[string]string{}
 	err := utils.UpdateNamespace(name, kubeContext, annotations, map[string]string{}, print)
 
