@@ -67,8 +67,9 @@ Additional actions:
 
 #### Get the "stable" environment and deploy the same configuration to a new environment, with override(s)
 
-Useful for creating test environments for a single service.
+Useful for creating test environments for a single service or for multiple services. Handy for testing a single feature spanning across one or more services.
 This will deploy the "stable" configuration to a destination namespace, except for the specified override(s), which will be deployed with version `CHART_VERSION`.
+The following commands will be a part of all CI\CD processes in all services:
 
 ```
 orca get env --name $SRC_NS --kube-context $SRC_KUBE_CONTEXT > charts.yaml
@@ -78,10 +79,14 @@ orca deploy env --name $DST_NS -c charts.yaml \
     --override $CHART_NAME=$CHART_VERSION
 ```
 
-#### Get the "stable" environment and deploy the same configuration to a new environment, with override(s) and existence check
+* If the environment already exists, only the specified override(s) will be deployed.
+* After deploying from (for example) 3 different repositories, the new environment will have the "stable" configuration, except for the 3 services which are currently under test, which will be deployed with their respective `CHART_VERSION`s.
+* Orca also handles a potential race condition between 2 or more services by "locking" the environment during deployment (using a `busy` annotation on the namespace).
 
-Useful for creating test environments for multiple services. Handy for testing a single feature spanning across multiple services.
-This will deploy the same configuration to a destination namespace, except for the specified override(s), which will be deployed with version CHART_VERSION. If the environment already exists, only the specified override(s) will be deployed (using the `-x` flag - deploy only override if environment exists).
+#### Get the "stable" environment and deploy the same configuration to the same new environment from multiple CI\CD processes with environment refresh
+
+Useful for creating test environments for a single service or for multiple services, when you have a rapidly changing reference environment.
+This will deploy the same configuration to a destination namespace, except for the specified override(s), which will be deployed with version CHART_VERSION. If the reference environment has changed between environment deployments, the new environment will be updated with these changes.
 The following commands will be a part of all CI\CD processes in all services:
 
 ```
@@ -90,15 +95,14 @@ orca deploy env --name $DST_NS -c charts.yaml \
     --kube-context $DST_KUBE_CONTEXT \
     --repo myrepo=$REPO_URL \
     --override $CHART_NAME=$CHART_VERSION \
-    -x
+    --protected-chart $CHART_NAME \
+    --refresh
 ```
 
-When the first service's process starts, it creates the environment and deploys the configuration from the "stable" environment (exactly the same as the previous example). When the Nth service's process starts, the environment already exists, and only the specified override(s) are deployed.
-Orca also handles a potential race condition between 2 or more services by "locking" the environment during deployment (using a `busy` annotation on the namespace).
+When the first service's process starts, it creates the environment and deploys the configuration from the "stable" environment (exactly the same as the previous example). In addition, it will set an annotation stating that `CHART_NAME` is protected and can only be overridden by itself.
+When the Nth service's process starts, the environment already exists, and a previous chart that was deployed is `protected`. The current service will also be marked as `protected`, and will update the environment, without changing the previous protected service(s).
 
-Using the `-x` flag, after deploying from (for example) 3 different repositories, the new environment will have the "stable" configuration, except for the 3 services which are currently under test, which will be deployed with their respective `CHART_VERSION`s.
-
-You can add the `-x` flag even if this service is completely isolated (for consistency).
+* You can add the `--protected-chart` flag even if this service is completely isolated (for consistency).
 
 ### Create and update static environments
 
