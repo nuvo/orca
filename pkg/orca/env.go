@@ -40,13 +40,14 @@ type envCmd struct {
 	output                        string
 	inject                        bool
 	force                         bool
-	deployOnlyOverrideIfEnvExists bool
 	parallel                      int
 	timeout                       int
 	annotations                   []string
 	labels                        []string
 	validate                      bool
 	protectedCharts               []string
+	refresh                       bool
+	deployOnlyOverrideIfEnvExists bool
 
 	out io.Writer
 }
@@ -125,8 +126,8 @@ func NewDeployEnvCmd(out io.Writer) *cobra.Command {
 				if e.chartsFile == "" {
 					return errors.New("either charts-file or override has to be defined")
 				}
-				if e.deployOnlyOverrideIfEnvExists {
-					return errors.New("override has to be defined when using deploy-only-override-if-env-exists")
+				if !e.refresh {
+					return errors.New("override has to be defined when using not using refresh")
 				}
 			}
 			if e.chartsFile != "" && utils.CheckCircularDependencies(utils.InitReleasesFromChartsFile(e.chartsFile, e.name)) {
@@ -178,7 +179,7 @@ func NewDeployEnvCmd(out io.Writer) *cobra.Command {
 
 			log.Print("initializing releases to deploy")
 			var desiredReleases []utils.ReleaseSpec
-			if nsPreExists && e.deployOnlyOverrideIfEnvExists {
+			if nsPreExists && !e.refresh {
 				desiredReleases = utils.InitReleases(e.name, e.override)
 			} else {
 				if e.chartsFile != "" {
@@ -235,7 +236,7 @@ func NewDeployEnvCmd(out io.Writer) *cobra.Command {
 				log.Fatal(err)
 			}
 
-			if !e.deployOnlyOverrideIfEnvExists {
+			if e.refresh {
 				log.Print("getting currently deployed releases")
 				installedReleases, err := utils.GetInstalledReleases(utils.GetInstalledReleasesOptions{
 					KubeContext:   e.kubeContext,
@@ -303,8 +304,10 @@ func NewDeployEnvCmd(out io.Writer) *cobra.Command {
 	f.StringSliceVar(&e.labels, "labels", []string{}, "environment (namespace) labels (can specify multiple): label=value")
 	f.BoolVar(&e.validate, "validate", utils.GetBoolEnvVar("ORCA_VALIDATE", false), "perform environment validation after deployment. Overrides $ORCA_VALIDATE")
 	f.StringSliceVar(&e.protectedCharts, "protected-chart", []string{}, "chart name to protect from being overridden (can specify multiple)")
-	f.BoolVarP(&e.deployOnlyOverrideIfEnvExists, "deploy-only-override-if-env-exists", "x", utils.GetBoolEnvVar("ORCA_DEPLOY_ONLY_OVERRIDE_IF_ENV_EXISTS", false), "if environment exists - deploy only override(s) (avoid environment update). Overrides $ORCA_DEPLOY_ONLY_OVERRIDE_IF_ENV_EXISTS")
+	f.BoolVar(&e.refresh, "refresh", utils.GetBoolEnvVar("ORCA_REFRESH", false), "refresh the environment based on reference environment. Overrides $ORCA_REFRESH")
 
+	f.BoolVarP(&e.deployOnlyOverrideIfEnvExists, "deploy-only-override-if-env-exists", "x", utils.GetBoolEnvVar("ORCA_DEPLOY_ONLY_OVERRIDE_IF_ENV_EXISTS", false), "if environment exists - deploy only override(s) (avoid environment update). Overrides $ORCA_DEPLOY_ONLY_OVERRIDE_IF_ENV_EXISTS")
+	f.MarkDeprecated("deploy-only-override-if-env-exists", "this is now the default behavior. use --refresh to deploy all")
 	return cmd
 }
 
