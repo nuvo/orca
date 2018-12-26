@@ -9,9 +9,23 @@ Usage:
   orca deploy artifact [flags]
 
 Flags:
-      --file string       path to file to deploy. Overrides $ORCA_FILE
-      --token string      token to use for deployment. Overrides $ORCA_TOKEN
-      --url string        url to deploy to. Overrides $ORCA_URL
+      --file string    path of file to deploy. Overrides $ORCA_FILE
+      --token string   artifactory token to use. Overrides $ORCA_TOKEN
+      --url string     url of file to deploy. Overrides $ORCA_URL
+```
+
+
+### Get artifact
+```
+Get an artifact from Artifactory
+
+Usage:
+  orca get artifact [flags]
+
+Flags:
+      --file string    path of file to write. Overrides $ORCA_FILE
+      --token string   artifactory token to use. Overrides $ORCA_TOKEN
+      --url string     url of file to get. Overrides $ORCA_URL
 ```
 
 ### Deploy chart

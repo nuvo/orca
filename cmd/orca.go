@@ -97,6 +97,7 @@ func NewGetCmd(out io.Writer) *cobra.Command {
 
 	cmd.AddCommand(orca.NewGetEnvCmd(out))
 	cmd.AddCommand(orca.NewGetResourceCmd(out))
+	cmd.AddCommand(orca.NewGetArtifactCmd(out))
 
 	return cmd
 }
