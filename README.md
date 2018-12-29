@@ -65,28 +65,13 @@ Additional actions:
 * After the deployment is complete, orca will validate that the environment is in a healthy state.
 * You can skip the validation using the `--skip-validation` flag.
 
-#### Get the "stable" environment and deploy the same configuration to a new environment, with override(s)
+#### Get the "stable" environment and deploy the same configuration to a new environment, with override(s) and environment refresh
 
-Useful for creating test environments for a single service or for multiple services. Handy for testing a single feature spanning across one or more services.
-This will deploy the "stable" configuration to a destination namespace, except for the specified override(s), which will be deployed with version `CHART_VERSION`.
-The following commands will be a part of all CI\CD processes in all services:
+Useful for creating test environments for a single service or for multiple services.
+Handy for testing a single feature spanning across one or more services.
+This will deploy the "stable" configuration to a destination namespace, except for the specified override(s), which will be deployed with version `CHART_VERSION`. In addition, it will set an annotation stating that `CHART_NAME` is protected and can only be overridden by itself.
+If the reference environment has changed between environment deployments, the new environment will be updated with these changes.   
 
-```
-orca get env --name $SRC_NS --kube-context $SRC_KUBE_CONTEXT > charts.yaml
-orca deploy env --name $DST_NS -c charts.yaml \
-    --kube-context $DST_KUBE_CONTEXT \
-    --repo myrepo=$REPO_URL \
-    --override $CHART_NAME=$CHART_VERSION
-```
-
-* If the environment already exists, only the specified override(s) will be deployed.
-* After deploying from (for example) 3 different repositories, the new environment will have the "stable" configuration, except for the 3 services which are currently under test, which will be deployed with their respective `CHART_VERSION`s.
-* Orca also handles a potential race condition between 2 or more services by "locking" the environment during deployment (using a `busy` annotation on the namespace).
-
-#### Get the "stable" environment and deploy the same configuration to the same new environment from multiple CI\CD processes with environment refresh
-
-Useful for creating test environments for a single service or for multiple services, when you have a rapidly changing reference environment.
-This will deploy the same configuration to a destination namespace, except for the specified override(s), which will be deployed with version CHART_VERSION. If the reference environment has changed between environment deployments, the new environment will be updated with these changes.
 The following commands will be a part of all CI\CD processes in all services:
 
 ```
@@ -95,14 +80,37 @@ orca deploy env --name $DST_NS -c charts.yaml \
     --kube-context $DST_KUBE_CONTEXT \
     --repo myrepo=$REPO_URL \
     --override $CHART_NAME=$CHART_VERSION \
-    --protected-chart $CHART_NAME \
-    --refresh
+    --protected-chart $CHART_NAME
 ```
 
-When the first service's process starts, it creates the environment and deploys the configuration from the "stable" environment (exactly the same as the previous example). In addition, it will set an annotation stating that `CHART_NAME` is protected and can only be overridden by itself.
-When the Nth service's process starts, the environment already exists, and a previous chart that was deployed is `protected`. The current service will also be marked as `protected`, and will update the environment, without changing the previous protected service(s).
-
+* When the first service's process starts, it creates the environment and deploys the configuration from the "stable" environment (exactly the same as the previous example).
+* When the Nth service's process starts, the environment already exists, and a previous chart that was deployed is `protected`. The current service will also be marked as `protected`, and will update the environment, without changing the previous protected service(s).
+* After deploying from (for example) 3 different repositories, the new environment will have the latest "stable" configuration, except for the 3 services which are currently under test, which will be deployed with their respective `CHART_VERSION`s (protected by `--protected-chart`)
 * You can add the `--protected-chart` flag even if this service is completely isolated (for consistency).
+* Orca also handles a potential race condition between 2 or more services by "locking" the environment during deployment (using a `busy` annotation on the namespace).
+
+#### Get the "stable" environment and deploy the same configuration to a new environment, with override(s) and without environment refresh
+
+Useful for creating test environments for a single service or for multiple services.
+Handy for testing a single feature spanning across one or more services, when you want to prevent updates from the reference environment after the initial creation of the new environment.
+This will deploy the "stable" configuration to a destination namespace, except for the specified override(s), which will be deployed with version `CHART_VERSION`.
+If the reference environment has changed between environment deployments, the new environment will NOT be updated with these changes.
+
+The following commands will be a part of all CI\CD processes in all services:
+
+```
+orca get env --name $SRC_NS --kube-context $SRC_KUBE_CONTEXT > charts.yaml
+orca deploy env --name $DST_NS -c charts.yaml \
+    --kube-context $DST_KUBE_CONTEXT \
+    --repo myrepo=$REPO_URL \
+    --override $CHART_NAME=$CHART_VERSION \
+    -x
+```
+
+* When the first service's process starts, it creates the environment and deploys the configuration from the "stable" environment (exactly the same as the previous example).
+* When the Nth service's process starts, the environment already exists, so only the specified override(s) will be deployed.
+* Assuming each process deployes a different chart (or charts), there is no need to protect them using the `--protectec-chart`.
+
 
 ### Create and update static environments
 
