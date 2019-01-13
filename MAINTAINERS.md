@@ -1,1 +1,2 @@
-* Maor Friedman <maor.friedman@nuvocares.com>
+* Hagai Barel <hagai.barel@nuvocares.com>
+* Maor Friedman <maorfr@gmail.com>
