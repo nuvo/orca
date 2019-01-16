@@ -24,29 +24,42 @@
 #   go-tests = true
 #   unused-packages = true
 
+
+[[constraint]]
+  name = "github.com/golang/protobuf"
+  version = "1.2.0"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/gosuri/uitable"
+
 [[constraint]]
   name = "github.com/spf13/cobra"
   version = "0.0.3"
 
 [[constraint]]
   name = "gopkg.in/src-d/go-git.v4"
-  version = "4.6.0"
+  version = "4.8.1"
 
 [[constraint]]
   name = "gopkg.in/yaml.v2"
-  version = "2.2.1"
+  version = "2.2.2"
 
 [[constraint]]
+  branch = "master"
   name = "k8s.io/api"
-  version = "kubernetes-1.11.2"
 
 [[constraint]]
+  branch = "master"
   name = "k8s.io/apimachinery"
-  version = "kubernetes-1.11.2"
 
 [[constraint]]
   name = "k8s.io/client-go"
-  version = "kubernetes-1.11.2"
+  version = "9.0.0"
+
+[[constraint]]
+  name = "k8s.io/helm"
+  version = "2.12.2"
 
 [prune]
   go-tests = true
