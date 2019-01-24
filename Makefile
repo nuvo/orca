@@ -1,6 +1,5 @@
 HAS_DEP := $(shell command -v dep;)
 DEP_VERSION := v0.5.0
-TEST_FILES := $(shell find ./test -type f -name "*.go")
 GIT_TAG := $(shell git describe --tags --always)
 GIT_COMMIT := $(shell git rev-parse --short HEAD)
 LDFLAGS := "-X main.GitTag=${GIT_TAG} -X main.GitCommit=${GIT_COMMIT}"
@@ -12,14 +11,14 @@ TRAVIS := $(shell printenv TRAVIS)
 all: bootstrap test build docker push
 
 fmt:
-	go fmt ./pkg/... ./cmd/...
+	go fmt ./...
 
 vet:
-	go vet ./pkg/... ./cmd/...
+	go vet ./...
 
 # Run tests
 test: fmt vet
-	for f in $(TEST_FILES); do go test -v $$f; done 
+	go test ./... -coverprofile cover.out
 
 # Build orca binary
 build: fmt vet
