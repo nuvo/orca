@@ -58,7 +58,7 @@ Additional flags:
 
 * Use the `-p` (parallel) flag to specify parallelism of chart deployments.
 * Use the `-f` flag to specify different values files to use during deployment.
-* Use the `-s` flag to set additional parameteres.
+* Use the `-s` flag to set additional parameters.
 
 #### Get the "stable" environment and deploy the same configuration to a new environment, with override(s) and environment refresh
 
@@ -104,7 +104,7 @@ orca deploy env --name $DST_NS -c charts.yaml \
 
 * When the first service's process starts, it creates the environment and deploys the configuration from the "stable" environment (exactly the same as the previous example).
 * When the Nth service's process starts, the environment already exists, so only the specified override(s) will be deployed.
-* Assuming each process deployes a different chart (or charts), there is no need to protect them using the `--protectec-chart`.
+* Assuming each process deploys a different chart (or charts), there is no need to protect them using the `--protected-chart`.
 
 
 ### Create and update static environments
@@ -130,7 +130,7 @@ This is a bonus! If you need to document changes in your environments, you can u
 orca get env --name $SRC_NS --kube-context $SRC_KUBE_CONTEXT -o md
 ```
 
-This will print the list of currently installed charts in Mardown format.
+This will print the list of currently installed charts in Markdown format.
 
 ### Prepare for disaster recovery
 
@@ -152,7 +152,7 @@ orca get env \
     --name <namespace>
 ```
 
-You can also set the appropriate envrionment variables (ORCA_FLAG, _ instead of -):
+You can also set the appropriate environment variables (ORCA_FLAG, _ instead of -):
 
 ```
 export ORCA_KUBE_CONTEXT=<kubeContext>
