@@ -30,17 +30,19 @@ Instead of writing scripts on top of scripts, Orca holds all the logic.
 
 	out := cmd.OutOrStdout()
 
-	cmd.AddCommand(NewDeleteCmd(out))
-	cmd.AddCommand(NewDeployCmd(out))
-	cmd.AddCommand(NewDetermineCmd(out))
-	cmd.AddCommand(NewGetCmd(out))
-	cmd.AddCommand(NewPushCmd(out))
-	cmd.AddCommand(NewCreateCmd(out))
-	cmd.AddCommand(NewVersionCmd(out))
-	cmd.AddCommand(NewLockCmd(out))
-	cmd.AddCommand(NewUnlockCmd(out))
-	cmd.AddCommand(NewDiffCmd(out))
-	cmd.AddCommand(NewValidateCmd(out))
+	cmd.AddCommand(
+		NewDeleteCmd(out),
+		NewDeployCmd(out),
+		NewDetermineCmd(out),
+		NewGetCmd(out),
+		NewPushCmd(out),
+		NewCreateCmd(out),
+		NewVersionCmd(out),
+		NewLockCmd(out),
+		NewUnlockCmd(out),
+		NewDiffCmd(out),
+		NewValidateCmd(out),
+	)
 
 	return cmd
 }
@@ -53,8 +55,10 @@ func NewDeleteCmd(out io.Writer) *cobra.Command {
 		Long:  ``,
 	}
 
-	cmd.AddCommand(orca.NewDeleteEnvCmd(out))
-	cmd.AddCommand(orca.NewDeleteResourceCmd(out))
+	cmd.AddCommand(
+		orca.NewDeleteEnvCmd(out),
+		orca.NewDeleteResourceCmd(out),
+	)
 
 	return cmd
 }
@@ -67,9 +71,11 @@ func NewDeployCmd(out io.Writer) *cobra.Command {
 		Long:  ``,
 	}
 
-	cmd.AddCommand(orca.NewDeployChartCmd(out))
-	cmd.AddCommand(orca.NewDeployEnvCmd(out))
-	cmd.AddCommand(orca.NewDeployArtifactCmd(out))
+	cmd.AddCommand(
+		orca.NewDeployChartCmd(out),
+		orca.NewDeployEnvCmd(out),
+		orca.NewDeployArtifactCmd(out),
+	)
 
 	return cmd
 }
@@ -95,9 +101,11 @@ func NewGetCmd(out io.Writer) *cobra.Command {
 		Long:  ``,
 	}
 
-	cmd.AddCommand(orca.NewGetEnvCmd(out))
-	cmd.AddCommand(orca.NewGetResourceCmd(out))
-	cmd.AddCommand(orca.NewGetArtifactCmd(out))
+	cmd.AddCommand(
+		orca.NewGetEnvCmd(out),
+		orca.NewGetResourceCmd(out),
+		orca.NewGetArtifactCmd(out),
+	)
 
 	return cmd
 }
