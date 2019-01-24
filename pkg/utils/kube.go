@@ -24,7 +24,7 @@ func CreateNamespace(name, kubeContext string, print bool) error {
 	nsSpec := &v1.Namespace{ObjectMeta: metav1.ObjectMeta{
 		Name: name,
 	}}
-	_, err = clientset.Core().Namespaces().Create(nsSpec)
+	_, err = clientset.CoreV1().Namespaces().Create(nsSpec)
 	if err != nil {
 		return err
 	}
@@ -41,7 +41,7 @@ func GetNamespace(name, kubeContext string) (*v1.Namespace, error) {
 		return nil, err
 	}
 	getOptions := metav1.GetOptions{}
-	nsSpec, err := clientset.Core().Namespaces().Get(name, getOptions)
+	nsSpec, err := clientset.CoreV1().Namespaces().Get(name, getOptions)
 	if err != nil {
 		return nil, err
 	}
@@ -70,7 +70,7 @@ func UpdateNamespace(name, kubeContext string, annotationsToUpdate, labelsToUpda
 		Annotations: annotations,
 		Labels:      labels,
 	}}
-	_, err = clientset.Core().Namespaces().Update(nsSpec)
+	_, err = clientset.CoreV1().Namespaces().Update(nsSpec)
 	if err != nil {
 		return err
 	}
@@ -104,7 +104,7 @@ func DeleteNamespace(name, kubeContext string, print bool) error {
 		return err
 	}
 	deleteOptions := &metav1.DeleteOptions{}
-	err = clientset.Core().Namespaces().Delete(name, deleteOptions)
+	err = clientset.CoreV1().Namespaces().Delete(name, deleteOptions)
 	if err != nil {
 		return err
 	}
@@ -122,7 +122,7 @@ func NamespaceExists(name, kubeContext string) (bool, error) {
 	}
 
 	listOptions := metav1.ListOptions{}
-	namespaces, err := clientset.Core().Namespaces().List(listOptions)
+	namespaces, err := clientset.CoreV1().Namespaces().List(listOptions)
 	if err != nil {
 		return false, err
 	}
