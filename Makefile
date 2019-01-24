@@ -26,7 +26,7 @@ build: fmt vet
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags $(LDFLAGS) -o bin/orca cmd/orca.go
 
 # Build orca docker image
-docker: fmt vet
+docker: build
 	cp bin/orca orca
 	docker build -t nuvo/orca:latest .
 	rm orca
