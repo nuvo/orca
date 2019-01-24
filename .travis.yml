@@ -1,7 +1,8 @@
 # .travis.yml
 language: go
+
 go:
-- 1.11.2
+- 1.11.4
 
 services:
 - docker
