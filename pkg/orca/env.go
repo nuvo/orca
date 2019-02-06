@@ -288,7 +288,7 @@ func NewDeployEnvCmd(out io.Writer) *cobra.Command {
 
 	f := cmd.Flags()
 
-	f.StringSliceVar(&e.chartsFile, "charts-file", []string{}, "path to file with list of Helm charts to install (can specify multiple)")
+	f.StringSliceVarP(&e.chartsFile, "charts-file", "c", []string{}, "path to file with list of Helm charts to install (can specify multiple)")
 	f.StringSliceVar(&e.override, "override", []string{}, "chart to override with different version (can specify multiple): chart=version")
 	f.StringVarP(&e.name, "name", "n", os.Getenv("ORCA_NAME"), "name of environment (namespace) to deploy to. Overrides $ORCA_NAME")
 	f.StringVar(&e.repo, "repo", os.Getenv("ORCA_REPO"), "chart repository (name=url). Overrides $ORCA_REPO")
