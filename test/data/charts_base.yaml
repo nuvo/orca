@@ -1,0 +1,10 @@
+charts:
+- name: cassandra
+  version: nil
+- name: mariadb
+  version: nil
+- name: kaa
+  version: nil
+  depends_on:
+  - cassandra
+  - mariadb

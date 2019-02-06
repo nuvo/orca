@@ -45,6 +45,20 @@ func GetReleasesDelta(fromReleases, toReleases []ReleaseSpec) []ReleaseSpec {
 	return releasesDelta
 }
 
+// InitReleasesFromChartsFiles initializes a slice of ReleaseSpec from a set of yaml formatted charts files, overriding versions from left to right
+func InitReleasesFromChartsFiles(files []string, env string) []ReleaseSpec {
+	if len(files) == 0 {
+		return nil
+	}
+	desiredReleases := InitReleasesFromChartsFile(files[0], env)
+	for i := 1; i < len(files); i++ {
+		releasesToMerge := InitReleasesFromChartsFile(files[i], env)
+		desiredReleases = MergeReleases(desiredReleases, releasesToMerge, env)
+	}
+
+	return desiredReleases
+}
+
 // InitReleasesFromChartsFile initializes a slice of ReleaseSpec from a yaml formatted charts file
 func InitReleasesFromChartsFile(file, env string) []ReleaseSpec {
 	var releases []ReleaseSpec
@@ -165,6 +179,17 @@ func OverrideReleases(releases []ReleaseSpec, overrides []string, env string) []
 	}
 
 	return outReleases
+}
+
+// MergeReleases will merge releases with releasesToMerge (currently will only override the version field)
+func MergeReleases(releases, releasesToMerge []ReleaseSpec, env string) []ReleaseSpec {
+	var overrides []string
+	for _, rtm := range releasesToMerge {
+		override := rtm.ChartName + "=" + rtm.ChartVersion
+		overrides = append(overrides, override)
+	}
+
+	return OverrideReleases(releases, overrides, env)
 }
 
 // RemoveChartFromDependencies removes a release from other releases ReleaseSpec depends_on field

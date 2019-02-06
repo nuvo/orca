@@ -26,7 +26,7 @@ const (
 )
 
 type envCmd struct {
-	chartsFile                    string
+	chartsFile                    []string
 	name                          string
 	override                      []string
 	packedValues                  []string
@@ -123,14 +123,14 @@ func NewDeployEnvCmd(out io.Writer) *cobra.Command {
 				}
 			}
 			if len(e.override) == 0 {
-				if e.chartsFile == "" {
+				if len(e.chartsFile) == 0 {
 					return errors.New("either charts-file or override has to be defined")
 				}
 				if e.deployOnlyOverrideIfEnvExists {
 					return errors.New("override has to be defined when using using deploy-only-override-if-env-exists")
 				}
 			}
-			if e.chartsFile != "" && utils.CheckCircularDependencies(utils.InitReleasesFromChartsFile(e.chartsFile, e.name)) {
+			if len(e.chartsFile) != 0 && utils.CheckCircularDependencies(utils.InitReleasesFromChartsFiles(e.chartsFile, e.name)) {
 				return errors.New("Circular dependency found")
 			}
 			return nil
@@ -182,8 +182,8 @@ func NewDeployEnvCmd(out io.Writer) *cobra.Command {
 			if nsPreExists && e.deployOnlyOverrideIfEnvExists {
 				desiredReleases = utils.InitReleases(e.name, e.override)
 			} else {
-				if e.chartsFile != "" {
-					desiredReleases = utils.InitReleasesFromChartsFile(e.chartsFile, e.name)
+				if len(e.chartsFile) != 0 {
+					desiredReleases = utils.InitReleasesFromChartsFiles(e.chartsFile, e.name)
 				}
 				desiredReleases = utils.OverrideReleases(desiredReleases, e.override, e.name)
 			}
@@ -288,7 +288,7 @@ func NewDeployEnvCmd(out io.Writer) *cobra.Command {
 
 	f := cmd.Flags()
 
-	f.StringVarP(&e.chartsFile, "charts-file", "c", os.Getenv("ORCA_CHARTS_FILE"), "path to file with list of Helm charts to install. Overrides $ORCA_CHARTS_FILE")
+	f.StringSliceVar(&e.chartsFile, "charts-file", []string{}, "path to file with list of Helm charts to install (can specify multiple)")
 	f.StringSliceVar(&e.override, "override", []string{}, "chart to override with different version (can specify multiple): chart=version")
 	f.StringVarP(&e.name, "name", "n", os.Getenv("ORCA_NAME"), "name of environment (namespace) to deploy to. Overrides $ORCA_NAME")
 	f.StringVar(&e.repo, "repo", os.Getenv("ORCA_REPO"), "chart repository (name=url). Overrides $ORCA_REPO")

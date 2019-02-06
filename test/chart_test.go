@@ -23,6 +23,48 @@ func TestGetReleasesDelta(t *testing.T) {
 		t.Errorf("Expected: true, Actual: false")
 	}
 }
+func TestChartsMultipleYamlToReleases_SingleOverride(t *testing.T) {
+	files := []string{"data/charts_base.yaml", "data/charts_override.1.yaml"}
+	rel0 := utils.ReleaseSpec{ChartName: "cassandra", ChartVersion: "0.4.0", ReleaseName: "test-cassandra"}
+	rel1 := utils.ReleaseSpec{ChartName: "mariadb", ChartVersion: "0.5.4", ReleaseName: "test-mariadb"}
+	rel2 := utils.ReleaseSpec{ChartName: "kaa", ChartVersion: "0.1.7", ReleaseName: "test-kaa"}
+
+	releases := utils.InitReleasesFromChartsFiles(files, "test")
+
+	if len(releases) != 3 {
+		t.Errorf("Expected: 3, Actual: " + (string)(len(releases)))
+	}
+	if !releases[0].Equals(rel0) {
+		t.Errorf("Expected: true, Actual: false")
+	}
+	if !releases[1].Equals(rel1) {
+		t.Errorf("Expected: true, Actual: false")
+	}
+	if !releases[2].Equals(rel2) {
+		t.Errorf("Expected: true, Actual: false")
+	}
+}
+func TestChartsMultipleYamlToReleases_MultipleOverride(t *testing.T) {
+	files := []string{"data/charts_base.yaml", "data/charts_override.1.yaml", "data/charts_override.2.yaml"}
+	rel0 := utils.ReleaseSpec{ChartName: "cassandra", ChartVersion: "0.4.0", ReleaseName: "test-cassandra"}
+	rel1 := utils.ReleaseSpec{ChartName: "mariadb", ChartVersion: "0.5.4", ReleaseName: "test-mariadb"}
+	rel2 := utils.ReleaseSpec{ChartName: "kaa", ChartVersion: "0.1.8", ReleaseName: "test-kaa"}
+
+	releases := utils.InitReleasesFromChartsFiles(files, "test")
+
+	if len(releases) != 3 {
+		t.Errorf("Expected: 3, Actual: " + (string)(len(releases)))
+	}
+	if !releases[0].Equals(rel0) {
+		t.Errorf("Expected: true, Actual: false")
+	}
+	if !releases[1].Equals(rel1) {
+		t.Errorf("Expected: true, Actual: false")
+	}
+	if !releases[2].Equals(rel2) {
+		t.Errorf("Expected: true, Actual: false")
+	}
+}
 func TestChartsYamlToReleases(t *testing.T) {
 	file := "data/charts.yaml"
 	rel0 := utils.ReleaseSpec{ChartName: "cassandra", ChartVersion: "0.4.0", ReleaseName: "test-cassandra"}

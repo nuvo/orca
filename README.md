@@ -59,6 +59,7 @@ Additional flags:
 * Use the `-p` (parallel) flag to specify parallelism of chart deployments.
 * Use the `-f` flag to specify different values files to use during deployment.
 * Use the `-s` flag to set additional parameters.
+* Use the `-c` flag multiple times to specify multiple charts files to be merged from left to right (currently only merges version fields)
 
 #### Get the "stable" environment and deploy the same configuration to a new environment, with override(s) and environment refresh
 

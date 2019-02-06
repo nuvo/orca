@@ -92,7 +92,7 @@ Aliases:
 
 Flags:
       --annotations strings                  additional environment (namespace) annotations (can specify multiple): annotation=value
-  -c, --charts-file string                   path to file with list of Helm charts to install. Overrides $ORCA_CHARTS_FILE
+      --charts-file strings                  path to file with list of Helm charts to install (can specify multiple)
   -x, --deploy-only-override-if-env-exists   if environment exists - deploy only override(s) (avoid environment update). Overrides $ORCA_DEPLOY_ONLY_OVERRIDE_IF_ENV_EXISTS
       --helm-tls-store string                path to TLS certs and keys. Overrides $HELM_TLS_STORE
       --inject                               enable injection during helm upgrade. Overrides $ORCA_INJECT (requires helm inject plugin: https://github.com/maorfr/helm-inject)
