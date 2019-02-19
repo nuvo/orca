@@ -155,7 +155,7 @@ Usage:
 
 Flags:
       --kube-context string   name of the kubeconfig context to use. Overrides $ORCA_KUBE_CONTEXT
-  -n, --name string           name of environment (namespace) to delete. Overrides $ORCA_NAME
+  -n, --name string           name of environment (namespace) to lock. Overrides $ORCA_NAME
 ```
 
 ### Unlock env
@@ -167,7 +167,7 @@ Usage:
 
 Flags:
       --kube-context string   name of the kubeconfig context to use. Overrides $ORCA_KUBE_CONTEXT
-  -n, --name string           name of environment (namespace) to delete. Overrides $ORCA_NAME
+  -n, --name string           name of environment (namespace) to unlock. Overrides $ORCA_NAME
 ```
 
 ### Validate env
@@ -179,7 +179,7 @@ Usage:
 
 Flags:
       --kube-context string   name of the kubeconfig context to use. Overrides $ORCA_KUBE_CONTEXT
-  -n, --name string           name of environment (namespace) to delete. Overrides $ORCA_NAME
+  -n, --name string           name of environment (namespace) to validate. Overrides $ORCA_NAME
 ```
 
 ### Create resource
