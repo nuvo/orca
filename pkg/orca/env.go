@@ -422,7 +422,7 @@ func NewLockEnvCmd(out io.Writer) *cobra.Command {
 
 	f := cmd.Flags()
 
-	f.StringVarP(&e.name, "name", "n", os.Getenv("ORCA_NAME"), "name of environment (namespace) to delete. Overrides $ORCA_NAME")
+	f.StringVarP(&e.name, "name", "n", os.Getenv("ORCA_NAME"), "name of environment (namespace) to lock. Overrides $ORCA_NAME")
 	f.StringVar(&e.kubeContext, "kube-context", os.Getenv("ORCA_KUBE_CONTEXT"), "name of the kubeconfig context to use. Overrides $ORCA_KUBE_CONTEXT")
 
 	return cmd
@@ -460,7 +460,7 @@ func NewUnlockEnvCmd(out io.Writer) *cobra.Command {
 
 	f := cmd.Flags()
 
-	f.StringVarP(&e.name, "name", "n", os.Getenv("ORCA_NAME"), "name of environment (namespace) to delete. Overrides $ORCA_NAME")
+	f.StringVarP(&e.name, "name", "n", os.Getenv("ORCA_NAME"), "name of environment (namespace) to unlock. Overrides $ORCA_NAME")
 	f.StringVar(&e.kubeContext, "kube-context", os.Getenv("ORCA_KUBE_CONTEXT"), "name of the kubeconfig context to use. Overrides $ORCA_KUBE_CONTEXT")
 
 	return cmd
@@ -574,7 +574,7 @@ func NewValidateEnvCmd(out io.Writer) *cobra.Command {
 
 	f := cmd.Flags()
 
-	f.StringVarP(&e.name, "name", "n", os.Getenv("ORCA_NAME"), "name of environment (namespace) to delete. Overrides $ORCA_NAME")
+	f.StringVarP(&e.name, "name", "n", os.Getenv("ORCA_NAME"), "name of environment (namespace) to validate. Overrides $ORCA_NAME")
 	f.StringVar(&e.kubeContext, "kube-context", os.Getenv("ORCA_KUBE_CONTEXT"), "name of the kubeconfig context to use. Overrides $ORCA_KUBE_CONTEXT")
 
 	return cmd
