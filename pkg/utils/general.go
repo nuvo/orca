@@ -2,7 +2,6 @@ package utils
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
 	exec "os/exec"
 	"strings"
@@ -36,16 +35,6 @@ func Exec(cmd []string) (string, error) {
 		return "", fmt.Errorf(string(output))
 	}
 	return string(output), nil
-}
-
-// MkRandomDir creates a new directory in the os tmp location
-func MkRandomDir() string {
-	dir, err := ioutil.TempDir("", "")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return dir
 }
 
 // AddIfNotContained adds a string to a slice if it is not contained in it and not empty
