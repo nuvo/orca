@@ -283,14 +283,7 @@ func (r ReleaseSpec) Print() {
 
 // Equals compares two ReleaseSpecs
 func (r ReleaseSpec) Equals(b ReleaseSpec) bool {
-	equals := false
-	if r.ReleaseName == b.ReleaseName &&
-		r.ChartName == b.ChartName &&
-		r.ChartVersion == b.ChartVersion {
-		equals = true
-	}
-
-	return equals
+	return r.ReleaseName == b.ReleaseName && r.ChartName == b.ChartName && r.ChartVersion == b.ChartVersion
 }
 
 // PrintReleasesYaml prints releases in yaml format

@@ -6,45 +6,6 @@ import (
 	"github.com/nuvo/orca/pkg/utils"
 )
 
-func TestGetReleasesDelta(t *testing.T) {
-	rel1 := utils.ReleaseSpec{ChartName: "chart1", ChartVersion: "1.0.0", ReleaseName: "dev-chart1"}
-	rel2 := utils.ReleaseSpec{ChartName: "chart2", ChartVersion: "2.0.0", ReleaseName: "dev-chart2"}
-
-	fromReleases := []utils.ReleaseSpec{rel1, rel2}
-	toReleases := []utils.ReleaseSpec{rel1}
-
-	releasesDelta := utils.GetReleasesDelta(fromReleases, toReleases)
-
-	if len(releasesDelta) != 1 {
-		t.Errorf("Expected: 1, Actual: " + (string)(len(releasesDelta)))
-	}
-
-	if !releasesDelta[0].Equals(rel2) {
-		t.Errorf("Expected: true, Actual: false")
-	}
-}
-func TestChartsYamlToReleases(t *testing.T) {
-	file := "data/charts.yaml"
-	rel0 := utils.ReleaseSpec{ChartName: "cassandra", ChartVersion: "0.4.0", ReleaseName: "test-cassandra"}
-	rel1 := utils.ReleaseSpec{ChartName: "mariadb", ChartVersion: "0.5.4", ReleaseName: "test-mariadb"}
-	rel2 := utils.ReleaseSpec{ChartName: "kaa", ChartVersion: "0.1.7", ReleaseName: "test-kaa"}
-
-	releases := utils.InitReleasesFromChartsFile(file, "test")
-
-	if len(releases) != 3 {
-		t.Errorf("Expected: 3, Actual: " + (string)(len(releases)))
-	}
-	if !releases[0].Equals(rel0) {
-		t.Errorf("Expected: true, Actual: false")
-	}
-	if !releases[1].Equals(rel1) {
-		t.Errorf("Expected: true, Actual: false")
-	}
-	if !releases[2].Equals(rel2) {
-		t.Errorf("Expected: true, Actual: false")
-	}
-}
-
 func TestOverrideReleases_WithOverride(t *testing.T) {
 	rel0 := utils.ReleaseSpec{ChartName: "cassandra", ChartVersion: "0.4.0", ReleaseName: "test-cassandra"}
 	rel1 := utils.ReleaseSpec{ChartName: "mariadb", ChartVersion: "0.5.4", ReleaseName: "test-mariadb"}
@@ -133,19 +94,4 @@ func TestUpdateChartVersion(t *testing.T) {
 	}
 
 	utils.ResetChartVersion("data/", "0.1.1")
-}
-func TestEquals_True(t *testing.T) {
-	rel := utils.ReleaseSpec{ChartName: "mariadb", ChartVersion: "0.5.4", ReleaseName: "test-mariadb"}
-	equals := rel.Equals(rel)
-	if !equals {
-		t.Errorf("Expected: true, Actual: false")
-	}
-}
-func TestEquals_False(t *testing.T) {
-	rel := utils.ReleaseSpec{ChartName: "mariadb", ChartVersion: "0.5.4", ReleaseName: "test-mariadb"}
-	relDiff := utils.ReleaseSpec{ChartName: "mariadba", ChartVersion: "0.5.4", ReleaseName: "test-mariadb"}
-	equals := rel.Equals(relDiff)
-	if equals {
-		t.Errorf("Expected: false, Actual: true")
-	}
 }
