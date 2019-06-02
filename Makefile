@@ -2,7 +2,7 @@ HAS_DEP := $(shell command -v dep;)
 DEP_VERSION := v0.5.0
 GIT_TAG := $(shell git describe --tags --always)
 GIT_COMMIT := $(shell git rev-parse --short HEAD)
-LDFLAGS := "-X main.GitTag=${GIT_TAG} -X main.GitCommit=${GIT_COMMIT}"
+LDFLAGS := "-s -w -X main.GitTag=${GIT_TAG} -X main.GitCommit=${GIT_COMMIT}"
 DIST := $(CURDIR)/dist
 DOCKER_USER := $(shell printenv DOCKER_USER)
 DOCKER_PASSWORD := $(shell printenv DOCKER_PASSWORD)
@@ -21,7 +21,7 @@ test: fmt vet
 	go test ./... -coverprofile cover.out
 
 # Build orca binary
-build: fmt vet
+build: test
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags $(LDFLAGS) -o bin/orca cmd/orca.go
 
 # Build orca docker image
