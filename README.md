@@ -1,4 +1,4 @@
-<img src="/docs/img/logo.png" width="500px" alt="orca logo">
+<img src="/docs/img/logo.png" width="250px" alt="orca logo">
 
 
 [![Release](https://img.shields.io/github/release/nuvo/orca.svg)](https://github.com/nuvo/orca/releases)
