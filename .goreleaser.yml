@@ -1,4 +1,11 @@
 # .goreleaser.yml
+env:
+  - GO111MODULE=on
+
+before:
+  hooks:
+    - go mod download
+
 builds:
 - main: cmd/orca.go
   binary: orca
