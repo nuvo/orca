@@ -44,20 +44,7 @@ func TestChartsYamlToReleases(t *testing.T) {
 		t.Errorf("Expected: true, Actual: false")
 	}
 }
-func TestCheckCircularDependencies_False(t *testing.T) {
-	file := "data/charts.yaml"
-	circular := utils.CheckCircularDependencies(utils.InitReleasesFromChartsFile(file, "test"))
-	if circular {
-		t.Errorf("Expected: false, Actual: true")
-	}
-}
-func TestCheckCircularDependencies_True(t *testing.T) {
-	file := "data/circular.yaml"
-	circular := utils.CheckCircularDependencies(utils.InitReleasesFromChartsFile(file, "test"))
-	if !circular {
-		t.Errorf("Expected: true, Actual: false")
-	}
-}
+
 func TestOverrideReleases_WithOverride(t *testing.T) {
 	rel0 := utils.ReleaseSpec{ChartName: "cassandra", ChartVersion: "0.4.0", ReleaseName: "test-cassandra"}
 	rel1 := utils.ReleaseSpec{ChartName: "mariadb", ChartVersion: "0.5.4", ReleaseName: "test-mariadb"}
@@ -119,15 +106,7 @@ func TestRemoveChartFromDependencies(t *testing.T) {
 		t.Errorf("Expected: cassandra, Actual: " + releases[2].Dependencies[0])
 	}
 }
-func TestGetChartIndex(t *testing.T) {
-	file := "data/charts.yaml"
-	releases := utils.InitReleasesFromChartsFile(file, "test")
-	index := utils.GetChartIndex(releases, "cassandra")
 
-	if index != 0 {
-		t.Errorf("Expected: 0, Actual: " + (string)(index))
-	}
-}
 func TestRemoveChartFromCharts(t *testing.T) {
 	rel1 := utils.ReleaseSpec{ChartName: "mariadb", ChartVersion: "0.5.4", ReleaseName: "test-mariadb"}
 	rel0 := utils.ReleaseSpec{ChartName: "kaa", ChartVersion: "0.1.7", ReleaseName: "test-kaa"}

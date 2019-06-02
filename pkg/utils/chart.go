@@ -11,12 +11,17 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
+// ChartsFile represents the structure of a passed in charts file
+type ChartsFile struct {
+	Releases []ReleaseSpec `yaml:"charts"`
+}
+
 // ReleaseSpec holds data relevant to deploying a release
 type ReleaseSpec struct {
-	ReleaseName  string
-	ChartName    string
-	ChartVersion string
-	Dependencies []string
+	ReleaseName  string   `yaml:"release_name,omitempty"`
+	ChartName    string   `yaml:"name,omitempty"`
+	ChartVersion string   `yaml:"version,omitempty"`
+	Dependencies []string `yaml:"depends_on,omitempty"`
 }
 
 // GetReleasesDelta returns the delta between two slices of ReleaseSpec
@@ -54,20 +59,23 @@ func InitReleasesFromChartsFile(file, env string) []ReleaseSpec {
 		log.Fatalln(err)
 	}
 
-	var v map[string][]map[string]interface{}
+	v := ChartsFile{}
 	err = yaml.Unmarshal(data, &v)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	for _, chart := range v["charts"] {
+	for _, chart := range v.Releases {
 
-		c := initReleaseSpec(env, chart["name"].(string), chart["version"].(string))
+		c := ReleaseSpec{
+			ReleaseName:  env + "-" + chart.ChartName,
+			ChartName:    chart.ChartName,
+			ChartVersion: chart.ChartVersion,
+		}
 
-		if chart["depends_on"] != nil {
-			for _, dep := range chart["depends_on"].([]interface{}) {
-				depStr := dep.(string)
-				c.Dependencies = append(c.Dependencies, depStr)
+		if chart.Dependencies != nil {
+			for _, dep := range chart.Dependencies {
+				c.Dependencies = append(c.Dependencies, dep)
 			}
 		}
 		releases = append(releases, c)
@@ -82,19 +90,17 @@ func InitReleases(env string, releases []string) []ReleaseSpec {
 
 	for _, release := range releases {
 		chartName, chartVersion := SplitInTwo(release, "=")
-		r := initReleaseSpec(env, chartName, chartVersion)
+
+		r := ReleaseSpec{
+			ReleaseName:  env + "-" + chartName,
+			ChartName:    chartName,
+			ChartVersion: chartVersion,
+		}
+
 		outReleases = append(outReleases, r)
 	}
 
 	return outReleases
-}
-
-func initReleaseSpec(env, name, version string) ReleaseSpec {
-	return ReleaseSpec{
-		ReleaseName:  env + "-" + name,
-		ChartName:    name,
-		ChartVersion: version,
-	}
 }
 
 // CheckCircularDependencies verifies that there are no circular dependencies between ReleaseSpecs
