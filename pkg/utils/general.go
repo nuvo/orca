@@ -2,13 +2,10 @@ package utils
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
-	"math/rand"
-	"os"
 	exec "os/exec"
-	"strconv"
 	"strings"
-	"time"
 )
 
 // PrintExec takes a command and executes it, with or without printing
@@ -41,12 +38,14 @@ func Exec(cmd []string) (string, error) {
 	return string(output), nil
 }
 
-// MkRandomDir creates a new directory with a random name made of numbers
+// MkRandomDir creates a new directory in the os tmp location
 func MkRandomDir() string {
-	r := strconv.Itoa((rand.New(rand.NewSource(time.Now().UnixNano()))).Int())
-	os.Mkdir(r, 0755)
+	dir, err := ioutil.TempDir("", "")
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	return r
+	return dir
 }
 
 // AddIfNotContained adds a string to a slice if it is not contained in it and not empty
