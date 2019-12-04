@@ -5,6 +5,7 @@ import (
 	"log"
 	exec "os/exec"
 	"strings"
+	"sort"
 )
 
 // PrintExec takes a command and executes it, with or without printing
@@ -71,6 +72,8 @@ func MapToString(m map[string]string) string {
 	for k := range m {
 		keys = append(keys, k)
 	}
+	sort.Strings(keys)
+
 	var output string
 	for _, k := range keys {
 		output += fmt.Sprintf("%s=%s, ", k, m[k])
