@@ -484,21 +484,31 @@ func DeleteRelease(o DeleteReleaseOptions) error {
 // createValuesChain will create a chain of values files to use
 func createValuesChain(name, dir string, packedValues []string) []string {
 	var values []string
-	format := "%s/%s/%s"
-	fileToTest := fmt.Sprintf(format, dir, name, "values.yaml")
+	fileToTest := fmt.Sprintf("%s/%s/%s", dir, name, "values.yaml")
 	if _, err := os.Stat(fileToTest); err == nil {
 		values = append(values, "-f", fileToTest)
+	} else {
+		log.Printf("WARNING: regular values.yaml file not found in chart\n")
 	}
 	for _, v := range packedValues {
-		fileToTest = fmt.Sprintf(format, dir, name, v)
-		_, err := os.Stat(fileToTest)
-		if err != nil {
+		if fi, err := os.Stat(v); err == nil && fi.Mode().IsRegular() {
+			if Contains(values, v) {
+				continue
+			}
+			log.Printf("INFO: values file %s found in working directory\n", v)
+			values = append(values, "-f", v)
 			continue
 		}
-		if Contains(values, fileToTest) {
+		fileToTest = fmt.Sprintf("%s/%s/%s", dir, name, v)
+		if fi, err := os.Stat(fileToTest); err == nil && fi.Mode().IsRegular() {
+			if Contains(values, fileToTest) {
+				continue
+			}
+			log.Printf("INFO: values file %s found in chart\n", fileToTest)
+			values = append(values, "-f", fileToTest)
 			continue
 		}
-		values = append(values, "-f", fileToTest)
+		log.Printf("WARNING: values file %s not found in working directory or chart\n", v)
 	}
 	return values
 }
