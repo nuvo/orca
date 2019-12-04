@@ -56,7 +56,7 @@ func TestMapToString(t *testing.T) {
 				"car":    "honda",
 			},
 			},
-			want: "animal=lion, tool=hammer, car=honda",
+			want: "animal=lion, car=honda, tool=hammer",
 		},
 	}
 	for _, tt := range tests {
