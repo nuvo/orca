@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"log"
 	exec "os/exec"
-	"strings"
 	"sort"
+	"strings"
 )
 
 // PrintExec takes a command and executes it, with or without printing
