@@ -18,4 +18,5 @@ bin/
 dist/
 
 .cache/*
+.bash_history
 
