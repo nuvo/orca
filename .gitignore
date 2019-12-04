@@ -16,3 +16,6 @@ vendor/
 
 bin/
 dist/
+
+.cache/*
+
