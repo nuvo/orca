@@ -2,15 +2,16 @@
 language: go
 
 go:
-- 1.11.4
+- 1.12.5
 
 services:
 - docker
 
+# call goreleaser
 deploy:
 - provider: script
   skip_cleanup: true
-  script: curl -sL https://git.io/goreleaser | bash
+  script: docker login -u $DOCKER_USER -p $DOCKER_PASSWORD && curl -sL https://git.io/goreleaser | bash
   on:
     tags: true
     condition: $TRAVIS_OS_NAME = linux

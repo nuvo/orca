@@ -1,6 +1,6 @@
-FROM alpine:3.8
+FROM alpine:3.9
 
-ARG HELM_VERSION=v2.11.0
+ARG HELM_VERSION=v2.14.0
 ARG HELM_OS_ARCH=linux-amd64
 
 RUN apk --no-cache add ca-certificates git bash curl jq \
@@ -18,8 +18,9 @@ USER orca
 
 WORKDIR /home/orca
 
+ENV HELM_HOME /home/orca/.helm
+
 RUN helm init -c \
-  && helm plugin install https://github.com/chartmuseum/helm-push \
-  && helm plugin install https://github.com/maorfr/helm-inject
+  && helm plugin install https://github.com/chartmuseum/helm-push
 
 CMD ["orca"]

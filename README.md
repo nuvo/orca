@@ -1,8 +1,8 @@
-<img src="/docs/img/logo.png" width="500px" alt="orca logo">
+<img src="/docs/img/logo.png" width="250px" alt="orca logo">
 
 
 [![Release](https://img.shields.io/github/release/nuvo/orca.svg)](https://github.com/nuvo/orca/releases)
-[![Travis branch](https://img.shields.io/travis/nuvo/orca/master.svg)](https://travis-ci.org/nuvo/ocra)
+[![Travis branch](https://img.shields.io/travis/nuvo/orca/master.svg)](https://travis-ci.org/nuvo/orca)
 [![Docker Pulls](https://img.shields.io/docker/pulls/nuvo/orca.svg)](https://hub.docker.com/r/nuvo/orca/)
 [![Go Report Card](https://goreportcard.com/badge/github.com/nuvo/orca)](https://goreportcard.com/report/github.com/nuvo/orca)
 [![license](https://img.shields.io/github/license/nuvo/orca.svg)](https://github.com/nuvo/orca/blob/master/LICENSE)

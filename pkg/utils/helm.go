@@ -2,6 +2,7 @@ package utils
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
 	"math"
 	"os"
@@ -206,7 +207,11 @@ type DeployChartFromRepositoryOptions struct {
 
 // DeployChartFromRepository deploys a Helm chart from a chart repository
 func DeployChartFromRepository(o DeployChartFromRepositoryOptions) error {
-	tempDir := MkRandomDir()
+	tempDir, err := ioutil.TempDir("", "")
+	if err != nil {
+		return fmt.Errorf("failed to create tmp dir")
+	}
+
 	defer os.RemoveAll(tempDir)
 
 	if o.ReleaseName == "" {

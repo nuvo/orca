@@ -1,10 +1,15 @@
 # .goreleaser.yml
+env:
+  - GO111MODULE=on
+
+before:
+  hooks:
+    - go mod download
+
 builds:
 - main: cmd/orca.go
   binary: orca
   goos:
-  - windows
-  - darwin
   - linux
   goarch:
   - amd64
@@ -12,17 +17,19 @@ builds:
   - CGO_ENABLED=0
   ldflags:
   - -s -w -X main.GitTag={{.Tag}} -X main.GitCommit={{.ShortCommit}}
-archive:
-  name_template: "{{ .ProjectName }}-{{ .Version }}-{{ .Os }}"
-  format: tar.gz
-  wrap_in_directory: true
-  format_overrides:
-  - goos: windows
-    format: zip
-  replacements:
-    darwin: macos
+
+archives:
+  - 
+    id: orca
+    name_template: "{{ .ProjectName }}-{{ .Version }}-{{ .Os }}"
+    format: tar.gz
+    wrap_in_directory: true
+
 dockers:
-- binary: orca
-  dockerfile: Dockerfile
-  image_templates:
-  - "nuvo/{{.ProjectName}}:{{ .Tag }}"
+  - 
+    binaries: 
+      - orca
+    dockerfile: Dockerfile
+    image_templates:
+    - "nuvo/{{.ProjectName}}:{{ .Tag }}"
+    - "nuvo/{{.ProjectName}}:latest"
