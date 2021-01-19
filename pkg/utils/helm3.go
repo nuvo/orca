@@ -176,7 +176,13 @@ func listReleases(kubeContext, namespace, storage, tillerNamespace, labels strin
 }
 
 func getReleaseData(namespace, itemReleaseData string) *releaseData {
-	data, _ := decodeRelease(itemReleaseData)
+
+	data, err := decodeRelease(itemReleaseData)
+
+	if err != nil {
+		return nil
+	}
+	
 	if namespace != "" && data.Namespace != namespace {
 		return nil
 	}
