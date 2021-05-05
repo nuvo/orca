@@ -1,7 +1,5 @@
 module github.com/nuvo/orca
 
-go 1.12
-
 require (
 	contrib.go.opencensus.io/exporter/ocagent v0.2.0 // indirect
 	github.com/Azure/go-autorest v11.3.1+incompatible // indirect
@@ -44,3 +42,5 @@ require (
 	k8s.io/klog v0.1.0 // indirect
 	sigs.k8s.io/yaml v1.1.0 // indirect
 )
+
+go 1.12
