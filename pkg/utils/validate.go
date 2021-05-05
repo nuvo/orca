@@ -55,7 +55,7 @@ func validatePods(name, kubeContext string, envValid bool) (bool, error) {
 		if phase == "Running" {
 			continue
 		}
-		if phase == "Succeeded" && pod.OwnerReferences[0].Kind == "Job" {
+		if phase == "Succeeded" {
 			continue
 		}
 		log.Printf("pod %s is in phase \"%s\"", pod.Name, phase)

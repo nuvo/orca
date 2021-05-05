@@ -1,6 +1,6 @@
 FROM alpine:3.9
 
-ARG HELM_VERSION=v2.14.0
+ARG HELM_VERSION=v2.17.0
 ARG HELM_OS_ARCH=linux-amd64
 
 RUN apk --no-cache add ca-certificates git bash curl jq \
@@ -20,7 +20,8 @@ WORKDIR /home/orca
 
 ENV HELM_HOME /home/orca/.helm
 
-RUN helm init -c \
+RUN helm init --stable-repo-url=https://charts.helm.sh/stable --client-only \
+  && helm repo add "stable" "https://charts.helm.sh/stable" \
   && helm plugin install https://github.com/chartmuseum/helm-push
 
 CMD ["orca"]
