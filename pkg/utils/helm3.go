@@ -182,7 +182,7 @@ func getReleaseData(namespace, itemReleaseData string) *releaseData {
 	if err != nil {
 		return nil
 	}
-	
+
 	if namespace != "" && data.Namespace != namespace {
 		return nil
 	}
